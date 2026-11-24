@@ -1,0 +1,182 @@
+{
+ "name": "M0_검증",
+ "objects": [
+  {
+   "id": "xbv9",
+   "name": "플레이어",
+   "script": "[[{\"id\": \"dhod\", \"x\": 0, \"y\": 0, \"type\": \"when_run_button_click\", \"params\": [], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"j8ht\", \"x\": 0, \"y\": 0, \"type\": \"locate_xy\", \"params\": [{\"id\": \"zdoc\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"-192\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"9is0\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"xg9e\", \"x\": 0, \"y\": 0, \"type\": \"set_variable\", \"params\": [\"e8gx\", {\"id\": \"9lgm\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"1u33\", \"x\": 0, \"y\": 0, \"type\": \"set_variable\", \"params\": [\"ujzd\", {\"id\": \"dn58\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"1\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], [{\"id\": \"xtpl\", \"x\": 0, \"y\": 0, \"type\": \"when_some_key_pressed\", \"params\": [null, 37], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"0wyo\", \"x\": 0, \"y\": 0, \"type\": \"_if\", \"params\": [{\"id\": \"eh60\", \"x\": 0, \"y\": 0, \"type\": \"boolean_basic_operator\", \"params\": [{\"id\": \"pft7\", \"x\": 0, \"y\": 0, \"type\": \"get_variable\", \"params\": [\"e8gx\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, \"EQUAL\", {\"id\": \"5v2s\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [[{\"id\": \"0ce9\", \"x\": 0, \"y\": 0, \"type\": \"set_variable\", \"params\": [\"e8gx\", {\"id\": \"kvj5\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"1\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"3efr\", \"x\": 0, \"y\": 0, \"type\": \"move_x\", \"params\": [{\"id\": \"uvw5\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"-32\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"2syw\", \"x\": 0, \"y\": 0, \"type\": \"move_y\", \"params\": [{\"id\": \"4edt\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"h5dn\", \"x\": 0, \"y\": 0, \"type\": \"change_variable\", \"params\": [\"d6nc\", {\"id\": \"b3wk\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"1\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"z5fk\", \"x\": 0, \"y\": 0, \"type\": \"wait_second\", \"params\": [{\"id\": \"sipz\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0.12\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"i19r\", \"x\": 0, \"y\": 0, \"type\": \"set_variable\", \"params\": [\"e8gx\", {\"id\": \"2z9r\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}]], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], [{\"id\": \"jflj\", \"x\": 0, \"y\": 0, \"type\": \"when_some_key_pressed\", \"params\": [null, 39], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"q4k7\", \"x\": 0, \"y\": 0, \"type\": \"_if\", \"params\": [{\"id\": \"j08x\", \"x\": 0, \"y\": 0, \"type\": \"boolean_basic_operator\", \"params\": [{\"id\": \"ooa5\", \"x\": 0, \"y\": 0, \"type\": \"get_variable\", \"params\": [\"e8gx\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, \"EQUAL\", {\"id\": \"lqsa\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [[{\"id\": \"39zz\", \"x\": 0, \"y\": 0, \"type\": \"set_variable\", \"params\": [\"e8gx\", {\"id\": \"ui6d\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"1\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"zdme\", \"x\": 0, \"y\": 0, \"type\": \"move_x\", \"params\": [{\"id\": \"zzg4\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"32\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"vdga\", \"x\": 0, \"y\": 0, \"type\": \"move_y\", \"params\": [{\"id\": \"n2kh\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"beny\", \"x\": 0, \"y\": 0, \"type\": \"change_variable\", \"params\": [\"d6nc\", {\"id\": \"j8gx\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"1\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"4hh5\", \"x\": 0, \"y\": 0, \"type\": \"wait_second\", \"params\": [{\"id\": \"jqwx\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0.12\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"fjgv\", \"x\": 0, \"y\": 0, \"type\": \"set_variable\", \"params\": [\"e8gx\", {\"id\": \"344t\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}]], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], [{\"id\": \"bn7x\", \"x\": 0, \"y\": 0, \"type\": \"when_some_key_pressed\", \"params\": [null, 38], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"kkib\", \"x\": 0, \"y\": 0, \"type\": \"_if\", \"params\": [{\"id\": \"xkwo\", \"x\": 0, \"y\": 0, \"type\": \"boolean_basic_operator\", \"params\": [{\"id\": \"j8b7\", \"x\": 0, \"y\": 0, \"type\": \"get_variable\", \"params\": [\"e8gx\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, \"EQUAL\", {\"id\": \"tfq7\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [[{\"id\": \"ompz\", \"x\": 0, \"y\": 0, \"type\": \"set_variable\", \"params\": [\"e8gx\", {\"id\": \"886v\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"1\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"wbbr\", \"x\": 0, \"y\": 0, \"type\": \"move_x\", \"params\": [{\"id\": \"om75\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"2wxf\", \"x\": 0, \"y\": 0, \"type\": \"move_y\", \"params\": [{\"id\": \"4qmw\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"32\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"mvn4\", \"x\": 0, \"y\": 0, \"type\": \"change_variable\", \"params\": [\"d6nc\", {\"id\": \"ogo4\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"1\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"hym4\", \"x\": 0, \"y\": 0, \"type\": \"wait_second\", \"params\": [{\"id\": \"a4wf\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0.12\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"z3zf\", \"x\": 0, \"y\": 0, \"type\": \"set_variable\", \"params\": [\"e8gx\", {\"id\": \"l1vf\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}]], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], [{\"id\": \"j3j4\", \"x\": 0, \"y\": 0, \"type\": \"when_some_key_pressed\", \"params\": [null, 40], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"29be\", \"x\": 0, \"y\": 0, \"type\": \"_if\", \"params\": [{\"id\": \"7i1m\", \"x\": 0, \"y\": 0, \"type\": \"boolean_basic_operator\", \"params\": [{\"id\": \"wj99\", \"x\": 0, \"y\": 0, \"type\": \"get_variable\", \"params\": [\"e8gx\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, \"EQUAL\", {\"id\": \"ibag\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [[{\"id\": \"s6pu\", \"x\": 0, \"y\": 0, \"type\": \"set_variable\", \"params\": [\"e8gx\", {\"id\": \"nbqn\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"1\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"dw37\", \"x\": 0, \"y\": 0, \"type\": \"move_x\", \"params\": [{\"id\": \"q80i\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"j76b\", \"x\": 0, \"y\": 0, \"type\": \"move_y\", \"params\": [{\"id\": \"06i8\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"-32\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"lj4h\", \"x\": 0, \"y\": 0, \"type\": \"change_variable\", \"params\": [\"d6nc\", {\"id\": \"2laj\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"1\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"794g\", \"x\": 0, \"y\": 0, \"type\": \"wait_second\", \"params\": [{\"id\": \"9du7\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0.12\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"rcg6\", \"x\": 0, \"y\": 0, \"type\": \"set_variable\", \"params\": [\"e8gx\", {\"id\": \"9dpm\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}]], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], [{\"id\": \"2u66\", \"x\": 0, \"y\": 0, \"type\": \"when_message_cast\", \"params\": [\"pf91\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"846p\", \"x\": 0, \"y\": 0, \"type\": \"set_variable\", \"params\": [\"e8gx\", {\"id\": \"mr26\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"1\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"2i0h\", \"x\": 0, \"y\": 0, \"type\": \"wait_second\", \"params\": [{\"id\": \"7q9m\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0.3\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"p1en\", \"x\": 0, \"y\": 0, \"type\": \"set_variable\", \"params\": [\"ujzd\", {\"id\": \"z2ue\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"2\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"ogz5\", \"x\": 0, \"y\": 0, \"type\": \"locate_xy\", \"params\": [{\"id\": \"thjx\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"-192\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"jqi3\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"6zv0\", \"x\": 0, \"y\": 0, \"type\": \"set_variable\", \"params\": [\"e8gx\", {\"id\": \"kok1\", \"x\": 0, \"y\": 0, \"type\": \"number\", \"params\": [\"0\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}]]",
+   "objectType": "sprite",
+   "rotateMethod": "free",
+   "scene": "scn1",
+   "lock": false,
+   "sprite": {
+    "pictures": [
+     {
+      "id": "mwuf",
+      "name": "플레이어",
+      "fileurl": "temp/a5/e8/image/a5e80cdbc815ebbb.png",
+      "filename": "a5e80cdbc815ebbb",
+      "imageType": "png",
+      "dimension": {
+       "width": 32,
+       "height": 32
+      },
+      "scale": 100
+     }
+    ],
+    "sounds": []
+   },
+   "selectedPictureId": "mwuf",
+   "entity": {
+    "x": -192,
+    "y": 0,
+    "regX": 16.0,
+    "regY": 16.0,
+    "scaleX": 1,
+    "scaleY": 1,
+    "rotation": 0,
+    "direction": 90,
+    "width": 32,
+    "height": 32,
+    "font": "undefinedpx ",
+    "visible": true
+   }
+  },
+  {
+   "id": "rdl1",
+   "name": "문",
+   "script": "[[{\"id\": \"32by\", \"x\": 0, \"y\": 0, \"type\": \"when_run_button_click\", \"params\": [], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"qzj8\", \"x\": 0, \"y\": 0, \"type\": \"repeat_inf\", \"params\": [], \"statements\": [[{\"id\": \"lri1\", \"x\": 0, \"y\": 0, \"type\": \"_if\", \"params\": [{\"id\": \"v7s6\", \"x\": 0, \"y\": 0, \"type\": \"is_touch_object\", \"params\": [\"xbv9\", null], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}], \"statements\": [[{\"id\": \"ehog\", \"x\": 0, \"y\": 0, \"type\": \"message_cast\", \"params\": [\"pf91\"], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}, {\"id\": \"fqrc\", \"x\": 0, \"y\": 0, \"type\": \"wait_second\", \"params\": [1], \"statements\": [], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}]], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}]], \"movable\": null, \"deletable\": 1, \"emphasized\": false, \"readOnly\": null, \"copyable\": true, \"assemble\": true, \"extensions\": []}]]",
+   "objectType": "sprite",
+   "rotateMethod": "free",
+   "scene": "scn1",
+   "lock": false,
+   "sprite": {
+    "pictures": [
+     {
+      "id": "65uf",
+      "name": "문",
+      "fileurl": "temp/ef/85/image/ef85beac2c0cc568.png",
+      "filename": "ef85beac2c0cc568",
+      "imageType": "png",
+      "dimension": {
+       "width": 32,
+       "height": 32
+      },
+      "scale": 100
+     }
+    ],
+    "sounds": []
+   },
+   "selectedPictureId": "65uf",
+   "entity": {
+    "x": 160,
+    "y": 0,
+    "regX": 16.0,
+    "regY": 16.0,
+    "scaleX": 1,
+    "scaleY": 1,
+    "rotation": 0,
+    "direction": 90,
+    "width": 32,
+    "height": 32,
+    "font": "undefinedpx ",
+    "visible": true
+   }
+  }
+ ],
+ "scenes": [
+  {
+   "id": "scn1",
+   "name": "장면 1"
+  }
+ ],
+ "variables": [
+  {
+   "name": "맵ID",
+   "id": "ujzd",
+   "visible": false,
+   "value": "1",
+   "variableType": "variable",
+   "isCloud": false,
+   "isRealTime": false,
+   "cloudDate": false,
+   "object": null,
+   "x": 0,
+   "y": 0
+  },
+  {
+   "name": "입력잠금",
+   "id": "e8gx",
+   "visible": false,
+   "value": "0",
+   "variableType": "variable",
+   "isCloud": false,
+   "isRealTime": false,
+   "cloudDate": false,
+   "object": null,
+   "x": 0,
+   "y": 0
+  },
+  {
+   "name": "걸음수",
+   "id": "d6nc",
+   "visible": false,
+   "value": "0",
+   "variableType": "variable",
+   "isCloud": false,
+   "isRealTime": false,
+   "cloudDate": false,
+   "object": null,
+   "x": 0,
+   "y": 0
+  },
+  {
+   "name": "벽_맵1",
+   "id": "f10e",
+   "visible": false,
+   "value": "",
+   "variableType": "list",
+   "isCloud": false,
+   "isRealTime": false,
+   "cloudDate": false,
+   "object": null,
+   "x": 0,
+   "y": 0,
+   "width": 100,
+   "height": 120,
+   "array": [
+    {
+     "data": "3,0"
+    },
+    {
+     "data": "3,1"
+    },
+    {
+     "data": "3,2"
+    }
+   ]
+  }
+ ],
+ "messages": [
+  {
+   "id": "pf91",
+   "name": "맵전환"
+  }
+ ],
+ "functions": [],
+ "tables": [],
+ "speed": 60,
+ "interface": {
+  "canvasWidth": 480,
+  "menus": {}
+ },
+ "expansionBlocks": [],
+ "aiUtilizeBlocks": [],
+ "hardwareLiteBlocks": [],
+ "externalModules": [],
+ "externalModulesLite": [],
+ "cloudVariable": "[]",
+ "learning": "{}",
+ "isPracticalCourse": false,
+ "category": "etc"
+}
