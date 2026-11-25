@@ -5,7 +5,7 @@ from game_data import *
 def party_lists():
     for p in ("PS","FO"):
         for k in ("sp","lv","exp","hp","st"): l(f"{p}_{k}",[0]*6)
-        l(f"{p}_mv",[0]*24); l(f"{p}_pp",[0]*24); l(f"{p}_stg",[0]*30)
+        l(f"{p}_mv",[0]*24); l(f"{p}_pp",[0]*24); l(f"{p}_stg",[0]*42); l(f"{p}_chg",[0]*6); l(f"{p}_rech",[0]*6)
     for k in ("sp","lv","exp","hp","st"): l(f"BX_{k}",[])
     l("BX_mv",[]); l("BX_pp",[])
     l("PART",[0]*6)
@@ -83,73 +83,88 @@ def logic():
                     ie.other()
                     A.s_("st",0); say(join(l("S_name")[A.g("sp")],"은(는) 잠에서 깼다!"))
             with If((v("ex_ok")==1)&(A.g("st")==3)&(rnd(1,100)<=25)): say(join(l("S_name")[A.g("sp")],"은(는) 몸이 저려 움직일 수 없다!")); v("ex_ok").set(0)
+            v("ex_cont").set(0)
+            with If((v("ex_ok")==1)&(l(A.pre+"_rech")[A.idx]==1)):
+                l(A.pre+"_rech").set(A.idx,0); say(join(l("S_name")[A.g("sp")],"은(는) 반동으로 움직일 수 없다!")); v("ex_ok").set(0)
             with If(v("ex_ok")==1):
                 mvv.set(v("ex_mvidx"))
+                with If(l(A.pre+"_chg")[A.idx]==mvv): v("ex_cont").set(1)
                 # PP use (player only; tackle fallback has no slot)
                 if asideP:
                     v("ex_slot").set(0); j=v("ex_j"); j.set(1)
                     with Repeat(4):
                         with If(A.mv(j)==mvv): v("ex_slot").set(j)
                         j.inc()
-                    with If(v("ex_slot")>0): l("PS_pp").set((A.idx-1)*4+v("ex_slot"),l("PS_pp")[(A.idx-1)*4+v("ex_slot")]-1)
+                    with If((v("ex_slot")>0)&(v("ex_cont")==0)): l("PS_pp").set((A.idx-1)*4+v("ex_slot"),l("PS_pp")[(A.idx-1)*4+v("ex_slot")]-1)
                 say(join(l("S_name")[A.g("sp")],"의 ",l("M_nm")[mvv],"!"))
-                with IfElse(rnd(1,100)>l("MV_acc")[mvv]) as ie:
-                    say("그러나 빗나갔다!"); ie.other()
-                    ds[0].set(A.g("sp")); ds[1].set(A.g("lv")); ds[2].set(A.g("st")); ds[3].set(D.g("sp")); ds[4].set(D.g("lv")); ds[5].set(mvv)
-                    ak=l(A.pre+"_stg"); dk=l(D.pre+"_stg")
-                    with IfElse(l("MV_cls")[mvv]==1) as ie9:
-                        v("ds_asg").set(ak[(A.idx-1)*5+1]); v("ds_dsg").set(dk[(D.idx-1)*5+2]); ie9.other()
-                        v("ds_asg").set(ak[(A.idx-1)*5+3]); v("ds_dsg").set(dk[(D.idx-1)*5+4])
-                    call("calc_damage")
-                    with If(l("MV_pow")[mvv]>0):
-                        with IfElse(ds_e==0) as ie2:
-                            say("효과가 없는 것 같다..."); ie2.other()
-                            v("ex_dealt").set(ds_dmg)
-                            with If(v("ex_dealt")>D.g("hp")): v("ex_dealt").set(D.g("hp"))
-                            D.s_("hp",D.g("hp")-v("ex_dealt")); call("blink_foe" if asideP else "blink_own")
-                            with If(ds_crit==1): say("급소에 맞았다!")
-                            with If(ds_e>1): say("효과는 굉장했다!")
-                            with If(ds_e<1): say("효과는 별로인 듯하다...")
-                            with If(l("MV_drain")[mvv]>0):
-                                st_sp.set(A.g("sp")); st_lv.set(A.g("lv")); call("max_hp")
-                                A.s_("hp",A.g("hp")+floor(v("ex_dealt")*l("MV_drain")[mvv]/100))
-                                with If(A.g("hp")>st_out): A.s_("hp",st_out)
-                            with If(l("MV_drain")[mvv]<0):
-                                A.s_("hp",A.g("hp")-floor(v("ex_dealt")*(0-l("MV_drain")[mvv])/100))
-                                with If(A.g("hp")<0): A.s_("hp",0)
-                                say("반동 피해를 입었다!")
-                    # ailment
-                    with If((D.g("hp")>0)&(l("MV_ail")[mvv]>0)&(D.g("st")==0)&(~((ds_e==0)&(l("MV_pow")[mvv]>0)))):
-                        v("ex_ch").set(l("MV_chance")[mvv])
-                        with If(l("MV_pow")[mvv]==0): v("ex_ch").set(100)
-                        v("ex_imm").set(0); d_sp=D.g("sp")
-                        with If((l("MV_ail")[mvv]==2)&((l("S_t1")[d_sp]==TYIDX["poison"])|(l("S_t2")[d_sp]==TYIDX["poison"])|(l("S_t1")[d_sp]==TYIDX["steel"])|(l("S_t2")[d_sp]==TYIDX["steel"]))): v("ex_imm").set(1)
-                        with If((l("MV_ail")[mvv]==4)&((l("S_t1")[d_sp]==TYIDX["fire"])|(l("S_t2")[d_sp]==TYIDX["fire"]))): v("ex_imm").set(1)
-                        with If((l("MV_ail")[mvv]==3)&(l("MV_type")[mvv]==TYIDX["electric"])&((l("S_t1")[d_sp]==TYIDX["electric"])|(l("S_t2")[d_sp]==TYIDX["electric"]))): v("ex_imm").set(1)
-                        with IfElse((v("ex_imm")==0)&(v("ex_ch")>0)&(rnd(1,100)<=v("ex_ch"))) as ie3:
-                            D.s_("st",l("MV_ail")[mvv]); say(join(l("S_name")[d_sp],"의 상태가 변했다!")); ie3.other()
-                            with If(l("MV_pow")[mvv]==0): say("그러나 실패했다!")
-                    # stat stage changes (self or target)
-                    def apply_sc(side):
-                        sl=l(side.pre+"_stg")
-                        v("sc_ch").set(100)
-                        with If(l("MV_pow")[mvv]>0): v("sc_ch").set(l("MV_schance")[mvv])
-                        with If((side.g("hp")>0)&(v("sc_ch")>0)&(rnd(1,100)<=v("sc_ch"))):
-                            for slot in ("1","2"):
-                                with If(l("MV_s"+slot)[mvv]>0):
-                                    ix=(side.idx-1)*5+l("MV_s"+slot)[mvv]
-                                    v("sc_old").set(sl[ix]); v("sc_new").set(v("sc_old")+l("MV_d"+slot)[mvv])
-                                    with If(v("sc_new")>6): v("sc_new").set(6)
-                                    with If(v("sc_new")<-6): v("sc_new").set(-6)
-                                    sl.set(ix,v("sc_new"))
-                                    with IfElse(v("sc_new")==v("sc_old")) as ie8:
-                                        say(join(l("S_name")[side.g("sp")],"의 능력은 더 이상 변하지 않는다!")); ie8.other()
-                                        with IfElse(l("MV_d"+slot)[mvv]>0) as ie7:
-                                            say(join(l("S_name")[side.g("sp")],"의 ",l("STAT_name")[l("MV_s"+slot)[mvv]],"이(가) 올랐다!")); ie7.other()
-                                            say(join(l("S_name")[side.g("sp")],"의 ",l("STAT_name")[l("MV_s"+slot)[mvv]],"이(가) 떨어졌다!"))
-                    with If(l("MV_s1")[mvv]>0):
-                        with IfElse(l("MV_self")[mvv]==1) as ie6:
-                            apply_sc(A); ie6.other(); apply_sc(D)
+                with If((l("MV_two")[mvv]==1)&(v("ex_cont")==0)):
+                    l(A.pre+"_chg").set(A.idx,mvv); say(join(l("S_name")[A.g("sp")],"은(는) 힘을 모으고 있다!")); v("ex_ok").set(0)
+                with If(v("ex_cont")==1): l(A.pre+"_chg").set(A.idx,0)
+                ak=l(A.pre+"_stg"); dk=l(D.pre+"_stg")
+                v("ex_as").set(ak[(A.idx-1)*7+6]-dk[(D.idx-1)*7+7])
+                with If(v("ex_as")>6): v("ex_as").set(6)
+                with If(v("ex_as")<-6): v("ex_as").set(-6)
+                with IfElse(v("ex_as")>=0) as ie5:
+                    v("ex_am").set((3+v("ex_as"))/3); ie5.other(); v("ex_am").set(3/(3-v("ex_as")))
+                with If(v("ex_ok")==1):
+                    with IfElse(rnd(1,100)>l("MV_acc")[mvv]*v("ex_am")) as ie:
+                        say("그러나 빗나갔다!"); ie.other()
+                        ds[0].set(A.g("sp")); ds[1].set(A.g("lv")); ds[2].set(A.g("st")); ds[3].set(D.g("sp")); ds[4].set(D.g("lv")); ds[5].set(mvv)
+                        ak=l(A.pre+"_stg"); dk=l(D.pre+"_stg")
+                        with IfElse(l("MV_cls")[mvv]==1) as ie9:
+                            v("ds_asg").set(ak[(A.idx-1)*7+1]); v("ds_dsg").set(dk[(D.idx-1)*7+2]); ie9.other()
+                            v("ds_asg").set(ak[(A.idx-1)*7+3]); v("ds_dsg").set(dk[(D.idx-1)*7+4])
+                        call("calc_damage")
+                        with If(l("MV_pow")[mvv]>0):
+                            with IfElse(ds_e==0) as ie2:
+                                say("효과가 없는 것 같다..."); ie2.other()
+                                v("ex_dealt").set(ds_dmg)
+                                with If(v("ex_dealt")>D.g("hp")): v("ex_dealt").set(D.g("hp"))
+                                D.s_("hp",D.g("hp")-v("ex_dealt")); call("blink_foe" if asideP else "blink_own")
+                                with If((l("MV_rech")[mvv]==1)&(D.g("hp")>0)): l(A.pre+"_rech").set(A.idx,1)
+                                with If(ds_crit==1): say("급소에 맞았다!")
+                                with If(ds_e>1): say("효과는 굉장했다!")
+                                with If(ds_e<1): say("효과는 별로인 듯하다...")
+                                with If(l("MV_drain")[mvv]>0):
+                                    st_sp.set(A.g("sp")); st_lv.set(A.g("lv")); call("max_hp")
+                                    A.s_("hp",A.g("hp")+floor(v("ex_dealt")*l("MV_drain")[mvv]/100))
+                                    with If(A.g("hp")>st_out): A.s_("hp",st_out)
+                                with If(l("MV_drain")[mvv]<0):
+                                    A.s_("hp",A.g("hp")-floor(v("ex_dealt")*(0-l("MV_drain")[mvv])/100))
+                                    with If(A.g("hp")<0): A.s_("hp",0)
+                                    say("반동 피해를 입었다!")
+                        # ailment
+                        with If((D.g("hp")>0)&(l("MV_ail")[mvv]>0)&(D.g("st")==0)&(~((ds_e==0)&(l("MV_pow")[mvv]>0)))):
+                            v("ex_ch").set(l("MV_chance")[mvv])
+                            with If(l("MV_pow")[mvv]==0): v("ex_ch").set(100)
+                            v("ex_imm").set(0); d_sp=D.g("sp")
+                            with If((l("MV_ail")[mvv]==2)&((l("S_t1")[d_sp]==TYIDX["poison"])|(l("S_t2")[d_sp]==TYIDX["poison"])|(l("S_t1")[d_sp]==TYIDX["steel"])|(l("S_t2")[d_sp]==TYIDX["steel"]))): v("ex_imm").set(1)
+                            with If((l("MV_ail")[mvv]==4)&((l("S_t1")[d_sp]==TYIDX["fire"])|(l("S_t2")[d_sp]==TYIDX["fire"]))): v("ex_imm").set(1)
+                            with If((l("MV_ail")[mvv]==3)&(l("MV_type")[mvv]==TYIDX["electric"])&((l("S_t1")[d_sp]==TYIDX["electric"])|(l("S_t2")[d_sp]==TYIDX["electric"]))): v("ex_imm").set(1)
+                            with IfElse((v("ex_imm")==0)&(v("ex_ch")>0)&(rnd(1,100)<=v("ex_ch"))) as ie3:
+                                D.s_("st",l("MV_ail")[mvv]); say(join(l("S_name")[d_sp],"의 상태가 변했다!")); ie3.other()
+                                with If(l("MV_pow")[mvv]==0): say("그러나 실패했다!")
+                        # stat stage changes (self or target)
+                        def apply_sc(side):
+                            sl=l(side.pre+"_stg")
+                            v("sc_ch").set(100)
+                            with If(l("MV_pow")[mvv]>0): v("sc_ch").set(l("MV_schance")[mvv])
+                            with If((side.g("hp")>0)&(v("sc_ch")>0)&(rnd(1,100)<=v("sc_ch"))):
+                                for slot in ("1","2"):
+                                    with If(l("MV_s"+slot)[mvv]>0):
+                                        ix=(side.idx-1)*7+l("MV_s"+slot)[mvv]
+                                        v("sc_old").set(sl[ix]); v("sc_new").set(v("sc_old")+l("MV_d"+slot)[mvv])
+                                        with If(v("sc_new")>6): v("sc_new").set(6)
+                                        with If(v("sc_new")<-6): v("sc_new").set(-6)
+                                        sl.set(ix,v("sc_new"))
+                                        with IfElse(v("sc_new")==v("sc_old")) as ie8:
+                                            say(join(l("S_name")[side.g("sp")],"의 능력은 더 이상 변하지 않는다!")); ie8.other()
+                                            with IfElse(l("MV_d"+slot)[mvv]>0) as ie7:
+                                                say(join(l("S_name")[side.g("sp")],"의 ",l("STAT_name")[l("MV_s"+slot)[mvv]],"이(가) 올랐다!")); ie7.other()
+                                                say(join(l("S_name")[side.g("sp")],"의 ",l("STAT_name")[l("MV_s"+slot)[mvv]],"이(가) 떨어졌다!"))
+                        with If(l("MV_s1")[mvv]>0):
+                            with IfElse(l("MV_self")[mvv]==1) as ie6:
+                                apply_sc(A); ie6.other(); apply_sc(D)
     P_=Side("PS",pa); F_=Side("FO",fi)
     gen_exec("exec_p",P_,F_,True); gen_exec("exec_f",F_,P_,False)
     # ---------- progression ----------

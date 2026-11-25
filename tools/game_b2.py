@@ -11,11 +11,12 @@ def logic():
     def speed_of(side,out):
         st_sp=v("st_sp"); st_lv=v("st_lv"); st_kind=v("st_kind"); st_out=v("st_out")
         st_sp.set(side.g("sp")); st_lv.set(side.g("lv")); st_kind.set(6); call("calc_stat"); out.set(st_out)
-        v("sm_g").set(l(side.pre+"_stg")[(side.idx-1)*5+5]); call("stage_mul"); out.set(floor(out*v("sm_out")))
+        v("sm_g").set(l(side.pre+"_stg")[(side.idx-1)*7+5]); call("stage_mul"); out.set(floor(out*v("sm_out")))
         with If(side.g("st")==3): out.set(floor(out/2))
     with proc("reset_stg_p"):  # in rs_i
         k=v("rs_k"); k.set(1)
-        with Repeat(5): l("PS_stg").set((v("rs_i")-1)*5+k,0); k.inc()
+        with Repeat(7): l("PS_stg").set((v("rs_i")-1)*7+k,0); k.inc()
+        l("PS_chg").set(v("rs_i"),0); l("PS_rech").set(v("rs_i"),0)
     with proc("end_status"):  # in es_side 1/2
         with IfElse(v("es_side")==1) as ie:
             with If((l("PS_hp")[pa]>0)&((l("PS_st")[pa]==2)|(l("PS_st")[pa]==4))):
@@ -54,6 +55,8 @@ def logic():
             with If((v("bt_cmd")==3)&(v("bt_ok")==1)):
                 v("ui_item").set(v("bt_item")); v("ui_i").set(v("bt_i")); call("use_item")
                 with If(v("ui_ok")==0): v("bt_ok").set(0)
+            with If((v("bt_cmd")==1)&(v("bt_ok")==1)&(l("PS_chg")[pa]>0)): v("p_act").set(l("PS_chg")[pa]); v("bt_cmd").set(9)
+            with If((v("bt_cmd")==1)&(v("bt_ok")==1)&(l("PS_rech")[pa]==1)): v("p_act").set(l("PS_mv")[(pa-1)*4+1]); v("bt_cmd").set(9)
             with If((v("bt_cmd")==1)&(v("bt_ok")==1)):
                 # validate move
                 v("bt_has").set(0); v("bt_any").set(0); k=v("bt_k"); k.set(1)
@@ -76,7 +79,8 @@ def logic():
                     v("ai_pot").inc(-1); l("FO_hp").set(fi,l("FO_hp")[fi]+120)
                     with If(l("FO_hp")[fi]>v("f_mx")): l("FO_hp").set(fi,v("f_mx"))
                     say("상대는 회복약을 썼다!"); ie2.other()
-                    call("ai_pick"); v("f_act").set(v("ex_mvidx"))
+                    with IfElse(l("FO_chg")[fi]>0) as ie4:
+                        v("f_act").set(l("FO_chg")[fi]); ie4.other(); call("ai_pick"); v("f_act").set(v("ex_mvidx"))
                 # order
                 p_pr=v("p_pr"); f_pr=v("f_pr"); p_sp=v("p_spd"); f_sp=v("f_spd")
                 p_pr.set(-9); f_pr.set(-9)
@@ -126,7 +130,9 @@ def logic():
         j=v("br_j"); j.set(1)
         with Repeat(6): l("PART").set(j,0); j.inc()
         j.set(1)
-        with Repeat(30): l("PS_stg").set(j,0); l("FO_stg").set(j,0); j.inc()
+        with Repeat(42): l("PS_stg").set(j,0); l("FO_stg").set(j,0); j.inc()
+        j.set(1)
+        with Repeat(6): l("PS_chg").set(j,0); l("FO_chg").set(j,0); l("PS_rech").set(j,0); l("FO_rech").set(j,0); j.inc()
         pa.set(0); j.set(1)
         with Repeat(pn):
             with If((l("PS_hp")[j]>0)&(pa==0)): pa.set(j)

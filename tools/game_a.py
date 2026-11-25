@@ -76,7 +76,7 @@ def data_lists():
     l("MV_prio",[m["prio"] for m in MOVES]); l("MV_cls",[CLS[m["cls"]] for m in MOVES]); l("MV_ail",[AIL.get(m["ailment"],0) for m in MOVES]); l("MV_chance",[m["ail_chance"] for m in MOVES]); l("MV_drain",[m["drain"] for m in MOVES]); l("MV_crit",[m["crit"] for m in MOVES])
     def sc(m,i,k): return m["sc"][i][k] if len(m["sc"])>i else 0
     l("MV_s1",[sc(m,0,0) for m in MOVES]); l("MV_d1",[sc(m,0,1) for m in MOVES]); l("MV_s2",[sc(m,1,0) for m in MOVES]); l("MV_d2",[sc(m,1,1) for m in MOVES])
-    l("STAT_name",["","공격","방어","특수공격","특수방어","스피드"]); l("MV_self",[1 if m["sc_self"] else 0 for m in MOVES]); l("MV_schance",[m["stat_chance"] for m in MOVES])
+    l("STAT_name",["","공격","방어","특수공격","특수방어","스피드","명중률","회피율"]); l("MV_two",[m.get("two",0) for m in MOVES]); l("MV_rech",[m.get("rech",0) for m in MOVES]); l("MV_self",[1 if m["sc_self"] else 0 for m in MOVES]); l("MV_schance",[m["stat_chance"] for m in MOVES])
     l("TC",[x for row in TC["chart"] for x in row]); l("TYPE_name",TYPES)
     # trainers
     l("TR_name",[TR[t]["name"] for t in TRIDS]); l("TR_reward",[TR[t]["reward"] for t in TRIDS]); l("TR_badge",[TR[t].get("badge",0) for t in TRIDS]); l("TR_n",[len(TR[t]["party"]) for t in TRIDS])

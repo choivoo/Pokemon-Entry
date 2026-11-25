@@ -34,8 +34,9 @@ E={ "normal":{"rock":.5,"ghost":0,"steel":.5},
 chart=[[E[a].get(d,1) for d in T] for a in T]
 
 # ---------- moves & species ----------
-BAN={"fly","dig","solar-beam","skull-bash","razor-wind","sky-attack","hyper-beam","bide","counter","self-destruct","explosion","fissure","guillotine","horn-drill","dream-eater","transform","metronome","mimic","mirror-move","psywave","super-fang","night-shade","seismic-toss","dragon-rage","sonic-boom","bind","wrap","clamp","fire-spin","whirlwind","roar","substitute","struggle","rage","thrash","petal-dance","razor-leaf" if False else "x","focus-energy","double-team","minimize","haze","mist","light-screen","reflect","leech-seed","conversion","disable","splash","teleport","swift" if False else "x2","jump-kick","high-jump-kick","spore" if False else "x3","absorb" if False else "x4","rest","recover","softboiled","sing" if False else "x5","supersonic","confuse-ray","stun-spore" if False else "x6","poison-gas" if False else "x7"}
-STATIDX={"attack":1,"defense":2,"special-attack":3,"special-defense":4,"speed":5}
+BAN={"bide","counter","self-destruct","explosion","fissure","guillotine","horn-drill","dream-eater","transform","metronome","mimic","mirror-move","psywave","super-fang","night-shade","seismic-toss","dragon-rage","sonic-boom","bind","wrap","clamp","fire-spin","whirlwind","roar","substitute","struggle","rage","thrash","petal-dance","razor-leaf" if False else "x","focus-energy","haze","mist","light-screen","reflect","leech-seed","conversion","disable","splash","teleport","swift" if False else "x2","jump-kick","high-jump-kick","spore" if False else "x3","absorb" if False else "x4","rest","recover","softboiled","sing" if False else "x5","supersonic","confuse-ray","stun-spore" if False else "x6","poison-gas" if False else "x7"}
+STATIDX={"attack":1,"defense":2,"special-attack":3,"special-defense":4,"speed":5,"accuracy":6,"evasion":7}
+TWO={"fly","dig","solar-beam","skull-bash","razor-wind","sky-attack"}; RECH={"hyper-beam"}
 def statfx(m):
     sc=[[STATIDX[a],c] for a,c in m.get("stat_changes",[]) if a in STATIDX]
     return sc if len(sc)==len(m.get("stat_changes",[])) else None
@@ -98,7 +99,7 @@ def natural_level(i):
     return natural_level(e["from"])+ (e.get("level",25) if "level" in e else 25) if False else (e.get("level") or 25)
 moves=[]
 for m in gm.values():
-    d={k:v for k,v in m.items() if k not in('stat_changes','target')}; sc=statfx(m) or []; d['sc']=sc; d['sc_self']=m['target']=='user'; moves.append(d)
+    d={k:v for k,v in m.items() if k not in('stat_changes','target')}; sc=statfx(m) or []; d['sc']=sc; d['sc_self']=m['target']=='user'; d['two']=1 if m['key'] in TWO else 0; d['rech']=1 if m['key'] in RECH else 0; moves.append(d)
 mindex={m["key"]:n for n,m in enumerate(moves)}
 for s in species:
     s["learn"]=[[l,k] for l,k in s["learn"] if k in mindex]

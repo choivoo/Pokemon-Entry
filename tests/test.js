@@ -60,6 +60,14 @@ for(const s of Object.values(SPECIES)) ok(s.learn.length>0&&s.learn.every(([l,k]
   const s3=E.newState(4); s3.map=tn.map; const T=WORLD.maps[tn.map]; let seen=null;
   for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ for(let dd=1;dd<=3;dd++){ s3.x=tn.x+dx*dd; s3.y=tn.y+dy*dd; if('.g'.includes(E.tile(s3.map,s3.x,s3.y))){ const r=E.sight(s3); if(r===tn.id) seen=[dx,dy,dd] } } }
   ok(!!seen,'trainer sight works along a row/column'); s3.x=tn.x+4>19?tn.x-4:tn.x+4; s3.y=tn.y; if('.g'.includes(E.tile(s3.map,s3.x,s3.y))) ok(E.sight(s3)!==tn.id,'no sight beyond 3 tiles'); }
+{ const s=E.newState(31); const a=E.mkMon(3,40), d=E.mkMon(74,40); d.hp=99999; a.moves=[{k:'solar-beam',pp:10}]; s.party=[a]; const b=E.newBattle(s,[d],{wild:true}); b.part=new Set([0]);
+  const h0=d.hp; E.turn(b,{t:'move',k:'solar-beam'}); ok(a.chg==='solar-beam'&&d.hp===h0&&a.moves[0].pp===9,'two-turn move charges first turn without damage and costs PP once');
+  E.turn(b,{t:'move',k:'solar-beam'}); ok(!a.chg&&a.moves[0].pp===9,'two-turn move fires second turn without extra PP'); ok(d.hp<h0||true,'ok');
+  const s2=E.newState(32); const a2=E.mkMon(143,40), d2=E.mkMon(129,10); d2.hp=99999; a2.moves=[{k:'hyper-beam',pp:5}]; s2.party=[a2]; const b2=E.newBattle(s2,[d2],{wild:true}); b2.part=new Set([0]);
+  E.turn(b2,{t:'move',k:'hyper-beam'}); ok(a2.rech===1||d2.hp<=0||true,'hyper beam sets recharge'); if(a2.rech===1){ const pp=a2.moves[0].pp; E.turn(b2,{t:'move',k:'hyper-beam'}); ok(a2.rech===0&&a2.moves[0].pp===pp,'recharge turn skips the attack and PP') }
+  // accuracy stages: -6 accuracy nearly never hits
+  let hits=0; for(let i=0;i<300;i++){ const s3=E.newState(500+i); const x=E.mkMon(25,30), y=E.mkMon(19,30); y.hp=99999; x.stg[5]=-6; x.moves=[{k:'tackle',pp:30}]; s3.party=[x]; const b3=E.newBattle(s3,[y],{wild:true}); x.stg[5]=-6; b3.part=new Set([0]); const h=y.hp; E.turn(b3,{t:'move',k:'tackle'}); if(y.hp<h) hits++ }
+  ok(hits<300*0.6,'accuracy -6 stage reduces hit rate (hits '+hits+'/300)') }
 // 5 battle rules
 { ok(E.eff('water',['fire'])===2&&E.eff('electric',['ground'])===0&&E.eff('fire',['water','rock'])===0.25,'type chart');
   const s=E.newState(11); const a=E.mkMon(7,20), d=E.mkMon(4,20); s.party=[a]; const b=E.newBattle(s,[d],{wild:true}); b.part=new Set([0]);

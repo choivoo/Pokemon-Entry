@@ -19,7 +19,7 @@ const stat=(sp,lv,k)=>Math.floor(2*SPECIES[sp].base[k]*lv/100)+5;
 const expFor=lv=>lv*lv*lv;
 function moveSetAt(sp,lv){const l=SPECIES[sp].learn.filter(x=>x[0]<=lv).map(x=>x[1]);const u=[...new Set(l)].slice(-4);return u.map(k=>({k,pp:MOVES[k].pp}))}
 let UID=1;
-function mkMon(sp,lv,where){return{stg:[0,0,0,0,0],uid:UID++,sp,nick:'',lv,exp:expFor(lv),hp:maxHp(sp,lv),st:'',moves:moveSetAt(sp,lv),where:where||''}}
+function mkMon(sp,lv,where){return{stg:[0,0,0,0,0,0,0],uid:UID++,sp,nick:'',lv,exp:expFor(lv),hp:maxHp(sp,lv),st:'',moves:moveSetAt(sp,lv),where:where||''}}
 function newState(seed){
   const s={ver:1,map:'H01_0',x:3,y:5,flags:{},money:3000,bag:{'monster-ball':5,'potion':5},party:[],box:[],dex:{},badges:0,pika:{aff:0,mood:'idle'},
     settings:{text:2,vol:5,shake:1},cleared:false,seed:seed||12345,rngn:0,stats:{steps:0,battles:0,turns:0,lines:0,throws:0,wipes:0,heals:0}};
@@ -64,7 +64,7 @@ function dmgCalc(a,d,mv,rng,forceCrit){
   let dmg=Math.floor(base*stab*e*(crit?1.5:1)*(0.85+rng()*0.15)); if(e>0&&dmg<1) dmg=1; return {d:dmg,e,crit}
 }
 function newBattle(s,foes,opt){ // opt: {trainer, wild}
-  s.party.forEach(m=>m.stg=[0,0,0,0,0]); foes.forEach(m=>m.stg=[0,0,0,0,0]);
+  s.party.forEach(m=>{m.stg=[0,0,0,0,0,0,0];m.chg=null;m.rech=0}); foes.forEach(m=>{m.stg=[0,0,0,0,0,0,0];m.chg=null;m.rech=0});
   return {s,foes:foes.map(f=>f),fi:0,pi:s.party.findIndex(m=>m.hp>0),log:[],over:false,result:'',trainer:opt.trainer||null,wild:!!opt.wild,turn:0,
     seen:new Set(),sleep:{},aiPot:opt.trainer&&['league','gym','rival','rocket'].includes(opt.trainer.kind)?2:0,part:new Set(),run:0}
 }
@@ -74,11 +74,17 @@ function exec(b,att,def,mvk,side,rng){ // returns false if mon cannot act
   const L=t=>b.log.push(t);
   if(att.st==='sleep'){ if(b.sleep[att.uid]===undefined) b.sleep[att.uid]=1+Math.floor(rng()*3); if(b.sleep[att.uid]-->0){ L(`${name(att)}은(는) 잠들어 있다.`); return } else {att.st=''; delete b.sleep[att.uid]; L(`${name(att)}은(는) 잠에서 깼다!`)} }
   if(att.st==='paralysis'&&rng()<.25){ L(`${name(att)}은(는) 몸이 저려 움직일 수 없다!`); return }
-  const mo=att.moves.find(m=>m.k===mvk); if(side==='p'&&mo){ if(mo.pp<=0){L('PP가 없다!');return} mo.pp--; }
-  const M=MOVES[mvk]; L(`${name(att)}의 ${M.name_ko}!`);
-  if(rng()*100>=M.acc){ L('그러나 빗나갔다!'); return }
+  if(att.rech){ att.rech=0; L(`${name(att)}은(는) 반동으로 움직일 수 없다!`); return }
+  const M=MOVES[mvk]; const cont=att.chg===mvk;
+  const mo=att.moves.find(m=>m.k===mvk); if(side==='p'&&mo&&!cont){ if(mo.pp<=0){L('PP가 없다!');return} mo.pp--; }
+  L(`${name(att)}의 ${M.name_ko}!`);
+  if(M.two&&!cont){ att.chg=mvk; L(`${name(att)}은(는) 힘을 모으고 있다!`); return }
+  if(cont) att.chg=null;
+  const as=Math.max(-6,Math.min(6,(att.stg?att.stg[5]:0)-(def.stg?def.stg[6]:0))); const am=as>=0?(3+as)/3:3/(3-as);
+  if(rng()*100>=M.acc*am){ L('그러나 빗나갔다!'); return }
   if(M.power>0){ const r=dmgCalc(att,def,mvk,rng); if(r.e===0){L('효과가 없는 것 같다...');return}
     const dealt=Math.min(def.hp,r.d); def.hp-=dealt; if(r.crit) L('급소에 맞았다!'); if(r.e>1) L('효과는 굉장했다!'); if(r.e<1) L('효과는 별로인 듯하다...');
+    if(M.rech&&def.hp>0) att.rech=1;
     if(M.drain>0){att.hp=Math.min(maxHp(att.sp,att.lv),att.hp+Math.floor(dealt*M.drain/100))}
     if(M.drain<0){att.hp=Math.max(0,att.hp-Math.floor(dealt*-M.drain/100)); L('반동 피해를 입었다!')} }
   if(def.hp>0&&['sleep','poison','paralysis','burn'].includes(M.ailment)&&!def.st){
@@ -86,7 +92,7 @@ function exec(b,att,def,mvk,side,rng){ // returns false if mon cannot act
     if(!imm&&ch>0&&rng()*100<ch){def.st=M.ailment; L(`${name(def)}은(는) ${{sleep:'잠들었다',poison:'독에 걸렸다',paralysis:'마비되었다',burn:'화상을 입었다'}[M.ailment]}!`)}
     else if(M.power===0&&M.ail_chance===0&&!(M.sc&&M.sc.length)) L('그러나 실패했다!') }
   if(M.sc&&M.sc.length){ const tgt=M.sc_self?att:def; const ch=M.power>0?M.stat_chance:100;
-    if(tgt.hp>0&&ch>0&&rng()*100<ch){ const names=['공격','방어','특수공격','특수방어','스피드']; for(const [i,d] of M.sc){ const old=tgt.stg[i-1]; tgt.stg[i-1]=Math.max(-6,Math.min(6,old+d));
+    if(tgt.hp>0&&ch>0&&rng()*100<ch){ const names=['공격','방어','특수공격','특수방어','스피드','명중률','회피율']; for(const [i,d] of M.sc){ const old=tgt.stg[i-1]; tgt.stg[i-1]=Math.max(-6,Math.min(6,old+d));
       L(tgt.stg[i-1]===old?`${name(tgt)}의 ${names[i-1]}은(는) 더 이상 ${d>0?'오르지':'떨어지지'} 않는다!`:`${name(tgt)}의 ${names[i-1]}이(가) ${Math.abs(d)>1?'크게 ':''}${d>0?'올랐다':'떨어졌다'}!`) } } }
 }
 function aiPick(b,rng){
@@ -113,15 +119,17 @@ function handleFaints(b){
 }
 function turn(b,cmd){ // cmd: {t:'move',k} | {t:'switch',i} | {t:'item',k,i} | {t:'run'}
   const s=b.s, rng=()=>rnd(s); b.log=[]; b.turn++; s.stats.turns++;
-  if(b.needSwitch){ if(cmd.t!=='switch'||!s.party[cmd.i]||s.party[cmd.i].hp<=0) return false; active(b).stg=[0,0,0,0,0]; b.pi=cmd.i; active(b).stg=[0,0,0,0,0]; b.part.add(b.pi); b.needSwitch=false; b.log.push(`${name(active(b))}, 나가!`); return true }
+  if(b.needSwitch){ if(cmd.t!=='switch'||!s.party[cmd.i]||s.party[cmd.i].hp<=0) return false; active(b).stg=[0,0,0,0,0,0,0]; active(b).chg=null; active(b).rech=0; b.pi=cmd.i; active(b).stg=[0,0,0,0,0,0,0]; active(b).chg=null; active(b).rech=0; b.part.add(b.pi); b.needSwitch=false; b.log.push(`${name(active(b))}, 나가!`); return true }
   const f=foe(b); let pAct=null;
   if(cmd.t==='run'){ if(!b.wild){b.log.push('트레이너 배틀에서는 도망칠 수 없다!');return false} b.over=true;b.result='run';return true }
-  if(cmd.t==='switch'){ if(cmd.i===b.pi||!s.party[cmd.i]||s.party[cmd.i].hp<=0) return false; active(b).stg=[0,0,0,0,0]; b.pi=cmd.i; active(b).stg=[0,0,0,0,0]; b.part.add(b.pi); b.log.push(`${name(active(b))}, 나가!`) }
+  if(cmd.t==='switch'){ if(cmd.i===b.pi||!s.party[cmd.i]||s.party[cmd.i].hp<=0) return false; active(b).stg=[0,0,0,0,0,0,0]; active(b).chg=null; active(b).rech=0; b.pi=cmd.i; active(b).stg=[0,0,0,0,0,0,0]; active(b).chg=null; active(b).rech=0; b.part.add(b.pi); b.log.push(`${name(active(b))}, 나가!`) }
   else if(cmd.t==='item'){ const it=ITEMS[cmd.k]; if(!it||!(s.bag[cmd.k]>0)) return false; const m=s.party[cmd.i]; if(!m) return false; if(!useItem(s,cmd.k,m,t=>b.log.push(t))) return false }
+  else if(cmd.t==='move'&&active(b).chg){ pAct=active(b).chg }
+  else if(cmd.t==='move'&&active(b).rech){ pAct=cmd.k||active(b).moves[0].k }
   else if(cmd.t==='move'){ const mo=active(b).moves.find(m=>m.k===cmd.k); if(!mo) return false; if(mo.pp<=0&&active(b).moves.some(m=>m.pp>0)) return false; pAct=cmd.k; if(mo.pp<=0){ b.log.push('쓸 수 있는 기술이 없다! 발버둥친다!'); pAct='tackle'; } } else return false;
   // foe decision
   let fk=null;
-  if(b.aiPot>0&&f.hp<maxHp(f.sp,f.lv)*.25){ b.aiPot--; f.hp=Math.min(maxHp(f.sp,f.lv),f.hp+120); b.log.push(`상대는 회복약을 썼다!`) } else fk=aiPick(b,rng);
+  if(b.aiPot>0&&f.hp<maxHp(f.sp,f.lv)*.25){ b.aiPot--; f.hp=Math.min(maxHp(f.sp,f.lv),f.hp+120); b.log.push(`상대는 회복약을 썼다!`) } else fk=f.chg?f.chg:aiPick(b,rng);
   const order=[]; const p=active(b);
   if(pAct) order.push({side:'p',mon:p,k:pAct,pr:MOVES[pAct].prio,sp:calcStat(p,'speed')});
   if(fk) order.push({side:'f',mon:f,k:fk,pr:MOVES[fk].prio,sp:calcStat(f,'speed')});

@@ -178,6 +178,18 @@ for g in (-2,0,3):
     ref=max(1,math.floor(base*stab*e)) if e>0 else 0
     ok(it.var["ds_dmg"]==ref,f"staged damage g={g}: {it.var['ds_dmg']} vs {ref}")
 it.rndfn=None
+# multi-turn + recharge + accuracy stages in blocks
+p,it=fresh2(); it.rndfn=lambda a,b:b; SB=GD.MVIDX["solar-beam"]
+it.setv("pn",0); it.setv("g_sp",3); it.setv("g_lv",40); it.call("add_mon"); it.lst["PS_mv"][0]=SB; it.lst["PS_pp"][0]=10
+it.setv("w_sp",74); it.setv("w_lv",40); it.call("foe_setup_single"); it.lst["FO_hp"][0]=99999; it.setv("pa",1); it.setv("fi",1); it.setv("ex_mvidx",SB)
+it.call("exec_p"); ok(it.lst["PS_chg"][0]==SB and it.lst["FO_hp"][0]==99999 and it.lst["PS_pp"][0]==9,"blocks: two-turn charge turn (chg=%s pp=%s)"%(it.lst["PS_chg"][0],it.lst["PS_pp"][0]))
+it.call("exec_p"); ok(it.lst["PS_chg"][0]==0 and it.lst["FO_hp"][0]<99999 and it.lst["PS_pp"][0]==9,"blocks: second turn hits, PP unchanged")
+HB=GD.MVIDX["hyper-beam"]; it.setv("ex_mvidx",HB); it.lst["FO_hp"][0]=99999; it.rndfn=lambda a,b:(1 if (a,b)==(1,100) else b); it.call("exec_p"); ok(it.lst["PS_rech"][0]==1,"blocks: hyper beam sets recharge")
+h=it.lst["FO_hp"][0]; it.call("exec_p"); ok(it.lst["PS_rech"][0]==0 and it.lst["FO_hp"][0]==h,"blocks: recharge turn does nothing")
+it.rndfn=lambda a,b:a   # rolls minimum: 1 -> always hits; with -6 accuracy need >100*1/3...
+it.lst["PS_stg"][5]=-6; it.setv("ex_mvidx",GD.MVIDX["tackle"]); it.lst["FO_hp"][0]=99999; it.rndfn=lambda a,b:(40 if (a,b)==(1,100) else a)
+it.call("exec_p"); ok(it.lst["FO_hp"][0]==99999,"blocks: -6 accuracy makes a 40-roll miss (tackle acc 100 -> 33)")
+it.rndfn=None
 # trainer sight + rival loss branch
 tn=next(n for n in GD.WORLD["maps"]["R01_2"]["npcs"] if n["kind"]=="trainer" and n["id"]=="n_c1_tr1") if any(n["id"]=="n_c1_tr1" for n in GD.WORLD["maps"]["R01_2"]["npcs"]) else None
 for mid,m in GD.WORLD["maps"].items():

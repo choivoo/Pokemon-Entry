@@ -1,30 +1,30 @@
-maps 213 npcs 592 rules 1369 trainers 173 wild areas 37 added roots 27 species 151 moves 105
+maps 213 npcs 592 rules 1369 trainers 173 wild areas 37 added roots 27 species 151 moves 117
 --- engine invariants (node tests/test.js)
-pass 10247 fail 0
+pass 10253 fail 0
 --- trace dump
-build/trace_fast7.json 100308 events true
-build/trace_normal9.json 48645 events true
+build/trace_fast7.json 90625 events true
+build/trace_normal9.json 47740 events true
 --- blocks replay vs engine
-build/trace_fast7.json replayed in 18s steps 10264320
-build/trace_normal9.json replayed in 9s steps 5181945
+build/trace_fast7.json replayed in 16s steps 9260038
+build/trace_normal9.json replayed in 9s steps 5053898
 pass 26 fail 0
 --- packaged .ent (serialized JSON) replay
-build/trace_fast7.json replayed in 19s steps 10264320
-build/trace_normal9.json replayed in 10s steps 5181945
+build/trace_fast7.json replayed in 17s steps 9260038
+build/trace_normal9.json replayed in 9s steps 5053898
 pass 26 fail 0
 --- blocks unit tests
-blocks2: pass 453 fail 0
+blocks2: pass 458 fail 0
 --- multi seed full playthroughs
 runs 48 failed 0
-fast n 24 total h 15.68 grind h 12.54 wipes 66.63 steps 98260.63 battles 2263.88
-normal n 24 total h 9.80 grind h 6.99 wipes 20.21 steps 61941.21 battles 1463.46
+fast n 24 total h 12.71 grind h 9.72 wipes 28.67 steps 68977.83 battles 2047.96
+normal n 24 total h 9.80 grind h 3.75 wipes 19.58 steps 52100.58 battles 1459.13
 --- chapter report
-fast: total 16.4h grind 12.5h required 3.94h
-normal: total 10.1h grind 6.9h required 3.14h
-normal_shuffled_clues: total 9.1h grind 6.5h required 2.58h
+fast: total 13.4h grind 10.1h required 3.31h
+normal: total 8.2h grind 1.0h required 7.15h
+normal_shuffled_clues: total 9.9h grind 7.3h required 2.65h
 --- assemble
 assets ok 597 KB
-wrote build/Pokemon_Pikachu_Kanto_Journey_1.0.ent 0.9 MB objects 22 blocks 15252 files 491 errors 0
+wrote build/Pokemon_Pikachu_Kanto_Journey_1.0.ent 0.9 MB objects 22 blocks 15580 files 491 errors 0
 []
 docs written
 qa written
