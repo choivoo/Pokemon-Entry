@@ -122,7 +122,7 @@ function run(opt){
     if(!s.flags[sid]) throw new Error('gym puzzle unsolved '+n) }
   // ---- main ----
   const orderOf=(arr)=>opt.shuffleClues?[...arr.filter(x=>x.type!=='clue'),...arr.filter(x=>x.type==='clue').reverse()]:arr;
-  for(let ch=1;ch<=12;ch++){ curCh=ch; chStart={...clk}; let steps=CH[ch];
+  for(let ch=1;ch<=12;ch++){ curCh=ch; chStart={...clk}; const g0=grindSecs; let steps=CH[ch];
     // clue steps are order-free: do them early in shuffled mode, otherwise in listed order
     const clues=steps.filter(x=>x.type==='clue'), rest=steps.filter(x=>x.type!=='clue');
     const key=G.chstep_key[ch]; const tail=rest.filter(x=>x.type==='gym'||x.id===key); const seq=opt.shuffleClues?[...rest.filter(x=>!tail.includes(x)),...clues.slice().reverse(),...tail]:steps;
@@ -135,7 +135,7 @@ function run(opt){
     }
     // optional content in normal mode: gifts available now
     if(opt.mode==='normal'){ for(const nid of Object.keys(E.NPC).filter(k=>k.startsWith('n_gift_'))){ const r=E.RULES_BY[nid][0]; if(s.flags[r.req]&&!s.flags[r.set]){ if(goAdj(nid)){ E.interact(s,nid,io); clk.line+=2 } } } if(s.flags['c'+ch+'_x']){} }
-    perChapter[ch]={clk:Object.fromEntries(Object.keys(clk).map(k=>[k,clk[k]-chStart[k]])),lvTop:Math.max(...s.party.map(m=>m.lv)),party:s.party.length};
+    perChapter[ch]={grind:grindSecs-g0,clk:Object.fromEntries(Object.keys(clk).map(k=>[k,clk[k]-chStart[k]])),lvTop:Math.max(...s.party.map(m=>m.lv)),party:s.party.length};
     evolveStones();
   }
   const secs=Object.fromEntries(Object.keys(perChapter).map(c=>[c,Object.entries(perChapter[c].clk).reduce((a,[k,v])=>a+v*SEC[k],0)]));

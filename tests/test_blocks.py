@@ -9,8 +9,9 @@ def ok(c,m):
     global passes
     if c: passes+=1
     else: fails.append(m)
+ENT=None
 def fresh():
-    p=build_game.build_prog(); it=Interp(p,seed=5); return p,it
+    p=ProgFromEnt(ENT) if ENT else build_game.build_prog(); it=Interp(p,seed=5); return p,it
 def setup_game(it):
     it.inputs=["1"]; it.call("title")  # new game
     return it
@@ -60,12 +61,44 @@ def replay(path,it,limit=None):
     ok(it.var["badges"]==tr["badges"],"badges %s vs %s"%(it.var["badges"],tr["badges"]))
     ok(it.var["cleared"]==1,"cleared flag in blocks")
     return True
+
+def idempotence(it):
+    """after a full playthrough, talking to every NPC twice must not change money/bag/party/flags"""
+    snap=lambda: json.dumps([it.var["money"],it.lst["BAG"],it.var["pn"],it.var["bn"],it.lst["FS"],it.lst["PS_sp"]])
+    it.stubs["trainer_battle"]=lambda i:i.setv("bres",2); it.stubs["static_battle"]=lambda i:i.setv("bres",2)
+    skipk={GD.KIND["center"],GD.KIND["shop"]}; bad=[]
+    for idx,(mid,n) in enumerate(GD.NPCS,1):   # first pass: claim anything still unclaimed (e.g. optional gifts)
+        if GD.KIND[n["kind"]] in skipk: continue
+        it.setv("mp",GD.MIDX[mid]); it.setv("cur_npc",idx); it.call("run_rules")
+    for idx,(mid,n) in enumerate(GD.NPCS,1):
+        if GD.KIND[n["kind"]] in skipk: continue
+        it.setv("mp",GD.MIDX[mid]); it.setv("cur_npc",idx); b=snap(); it.call("run_rules"); it.call("run_rules")
+        if snap()!=b: bad.append(n["id"])
+    ok(not bad,"re-interaction changed state: %s"%bad[:5])
+def gate_test():
+    p,it=fresh(); it.setv("enc_on",0); it.stubs["place_actors"]=lambda i:None; it.stubs["draw_map"]=lambda i:None
+    # H01_1 right door at (19,5): needs c1_lab,c1_lost
+    it.setv("mp",GD.MIDX["H01_1"]); it.setv("px",18); it.setv("py",5); it.setv("cmd",3); it.call("try_move")
+    ok((it.var["mp"],it.var["px"],it.var["py"])==(GD.MIDX["H01_1"],18,5),"locked door keeps player in place, got %s"%((it.var["mp"],it.var["px"],it.var["py"]),))
+    ok(any("길이 열리지 않았다" in o for o in it.out),"locked door explains what is needed")
+    for f in ("c1_lab","c1_lost"): it.lst["FS"][GD.FIDX[f]-1]=1
+    it.setv("cmd",3); it.call("try_move"); ok(it.var["mp"]==GD.MIDX["R01_0"] and it.var["px"]==1,"door opens after flags, arrival tile not a door")
+    it.setv("cmd",2); it.call("try_move"); ok(it.var["mp"]==GD.MIDX["R01_0"] and it.var["px"]==1 or it.var["mp"]==GD.MIDX["H01_1"],"no instant bounce on arrival")
+    # walls and npc blocking
+    p,it=fresh(); it.stubs["place_actors"]=lambda i:None; it.stubs["draw_map"]=lambda i:None; it.setv("enc_on",0)
+    it.setv("mp",GD.MIDX["H01_0"]); it.setv("px",1); it.setv("py",1); it.setv("cmd",4); it.call("try_move"); ok(it.var["py"]==1,"wall blocks")
+    it.setv("px",3); it.setv("py",4); it.setv("cmd",4); it.call("try_move"); ok(it.var["py"]==4,"npc tile blocks (center at 3,3)")
+    # encounter does not trigger when disabled; busy lock prevents re-entrancy
+    it.setv("busy",1); it.setv("cmd",3); it.call("handle_cmd"); ok(it.var["px"]==3,"busy lock ignores input")
 if __name__=="__main__":
-    which=sys.argv[1:] or ["build/trace_normal9.json"]
+    args=sys.argv[1:]
+    if args and args[0]=="--ent": ENT=args[1]; args=args[2:]
+    which=args or ["build/trace_normal9.json"]
     for path in which:
         p,it=fresh(); setup_game(it); it.stubs["ending_scene"]=lambda i:i.out.append("ENDING")
         ok(it.var["mp"]==GD.MIDX["H01_0"] and it.var["pn"]==1,"new game state")
         t1=time.time(); replay(path,it); print(path,"replayed in %.0fs"%(time.time()-t1),"steps",it.steps)
-        ok("ENDING" in it.out,"ending scene triggered")
+        ok("ENDING" in it.out,"ending scene triggered"); idempotence(it)
+    gate_test()
     print("pass",passes,"fail",len(fails)); [print(" ",f) for f in fails[:10]]
     sys.exit(1 if fails else 0)

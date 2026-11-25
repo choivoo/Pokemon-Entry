@@ -45,6 +45,10 @@ for(const s of Object.values(SPECIES)) ok(s.learn.length>0&&s.learn.every(([l,k]
   // party full -> box, exactly once
   const s3=E.newState(9); while(s3.party.length<6) s3.party.push(E.mkMon(19,5)); s3.bag['ultra-ball']=60; let got=0; for(let i=0;i<20;i++){ const c3=E.newCatch(s3,129,3); const b0=s3.box.length; while(!c3.over&&s3.bag['ultra-ball']>0) E.throwBall(s3,c3,'ultra-ball','excellent'); if(c3.result==='caught'){ got++; ok(s3.box.length===b0+1,'box +1'); ok(s3.party.length===6,'party stays 6'); } }
   ok(got>0,'caught something'); ok(s3.dex[129]===2,'dex caught'); }
+{ const s=E.newState(4); while(s.party.length<6) s.party.push(E.mkMon(19,5)); for(let i=0;i<E.BOX_MAX;i++) s.box.push(E.mkMon(16,3));
+  s.bag['ultra-ball']=50; let c; for(let t=0;t<30;t++){ c=E.newCatch(s,129,3); while(!c.over&&s.bag['ultra-ball']>0) E.throwBall(s,c,'ultra-ball','excellent'); if(c.result==='caught') break }
+  ok(c.result==='caught'&&c.dest==='full','box-full capture released'); ok(s.box.length===E.BOX_MAX&&s.party.length===6,'box cap enforced');
+  s.flags.c2_hub=1; const before=JSON.stringify(s.flags); const out=E.interact(s,'n_gift_squirtle',{}); ok(!s.flags.got_n_gift_squirtle&&out.some(x=>x.includes('가득')),'gift not consumed when box full'); }
 // 5 battle rules
 { ok(E.eff('water',['fire'])===2&&E.eff('electric',['ground'])===0&&E.eff('fire',['water','rock'])===0.25,'type chart');
   const s=E.newState(11); const a=E.mkMon(7,20), d=E.mkMon(4,20); s.party=[a]; const b=E.newBattle(s,[d],{wild:true}); b.part=new Set([0]);

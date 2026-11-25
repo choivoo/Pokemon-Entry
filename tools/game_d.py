@@ -36,7 +36,7 @@ def logic():
         i=v("dm_i"); i.set(l("M_nstart")[mp])
         with Repeat(l("M_ncount")[mp]):
             v("dx_").set(-228+24*l("N_x")[i]); v("dy_").set(123-24*l("N_y")[i]); v("nk").set(l("N_kind")[i]); call("stamp_npc"); i.inc()
-        v("moved_map").set(1); call("place_actors"); v("bgm_theme").set(l("M_theme")[mp]); call("play_bgm")
+        v("moved_map").set(1); call("place_actors"); call("bgm_set_for_map")
     with proc("place_actors"):
         v("pl_x").set(-228+24*px); v("pl_y").set(123-24*py)
         with IfElse(v("moved_map")==1) as ie:
@@ -49,8 +49,6 @@ def logic():
             with If(pf==d): shape(f"PIC:player:{d+1}")
     with proc("actors_move",obj="pika"):
         locate(v("pk_x"),v("pk_y"))
-    with proc("play_bgm",obj="bgm"): 
-        P.emit(blk("sound_something_with_block","BGM"))
     # ---------- new game ----------
     with proc("new_game"):
         i=v("ng_i"); i.set(1)

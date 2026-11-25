@@ -127,9 +127,14 @@ def logic():
         with IfElse(pa==0) as ie:
             bover.set(1); bres.set(2); ie.other()
             l("PART").set(pa,1); v("bturns").set(0)
+            v("bgm_mood").set(4)
+            with If(v("is_trainer")==1):
+                with If(l("TR_kind")[v("tr_idx")]==3): v("bgm_mood").set(5)
+                with If(l("TR_kind")[v("tr_idx")]==2): v("bgm_mood").set(6)
+            call("play_bgm")
             with If(l("DEX")[l("FO_sp")[1]]<1): l("DEX").set(l("FO_sp")[1],1)
             with While(bover==0):
-                v("bturns").inc(); v("stat_turns").inc()
+                v("bturns").inc(); v("stat_turns").inc(); call("refresh_views")
                 with If(v("bturns")>600): bover.set(1); bres.set(0)
                 hud(join(l("S_name")[l("PS_sp")[pa]]," Lv",l("PS_lv")[pa]," HP ",l("PS_hp")[pa]," / 상대 ",l("S_name")[l("FO_sp")[fi]]," Lv",l("FO_lv")[fi]," HP ",l("FO_hp")[fi]))
                 with IfElse(need_sw==1) as ie2:
@@ -142,7 +147,9 @@ def logic():
                     with If(v("bt_cmd")==2): ask("교체할 포켓몬 번호?"); v("bt_i").set(answer())
                     with If(v("bt_cmd")==3): ask("사용할 아이템 번호와 대상(예: 5)?"); v("bt_item").set(answer()); ask("대상 포켓몬 번호?"); v("bt_i").set(answer())
                 call("battle_turn")
-            v("stat_battles").inc()
+            v("stat_battles").inc(); call("hide_foe"); call("hide_own"); call("bgm_set_for_map")
+    with proc("refresh_views"):
+        v("view_foe").set(l("FO_sp")[fi]); v("view_own").set(l("PS_sp")[pa]); call("show_foe"); call("show_own")
     with proc("whiteout"):
         v("stat_wipes").inc(); money.set(floor(money/2)); call("heal_all"); mp.set(v("lastcenter")); px.set(3); py.set(4); call("draw_map")
         say("눈앞이 깜깜해졌다... 포켓몬센터로 돌아왔다.")
@@ -183,11 +190,12 @@ def logic():
             with IfElse(sh==4) as ie2:
                 v("c_over").set(1); v("c_res").set(1); v("g_sp").set(v("c_sp")); v("g_lv").set(v("c_lv")); call("add_mon"); say("잡았다!"); call("catch_hook")
                 with If(v("where")==2): say("파티가 가득 차서 보관함으로 보냈다.")
+                with If(v("where")==3): say("보관함도 가득 차서 놓아주었다. (보관함을 정리하자)")
                 ie2.other()
                 say(join("볼이 ",sh,"번 흔들렸다..."))
                 with If(rnd(1,100)<=18): v("c_over").set(1); v("c_res").set(2); say("포켓몬이 도망쳤다!")
     with proc("capture_screen"):  # in c_sp c_lv
-        v("c_over").set(0); v("c_res").set(0); v("c_bait").set(0); v("c_hp").set(0)
+        v("c_over").set(0); v("c_res").set(0); v("c_bait").set(0); v("c_hp").set(0); v("view_foe").set(v("c_sp")); call("show_foe"); v("bgm_mood").set(3); call("play_bgm")
         v("st_sp").set(v("c_sp")); v("st_lv").set(v("c_lv")); call("max_hp"); v("c_hp").set(v("st_out"))
         with If(l("DEX")[v("c_sp")]<1): l("DEX").set(v("c_sp"),1)
         with While(v("c_over")==0):
@@ -226,6 +234,7 @@ def logic():
                             call("throw_ball")
                             ie3.other(); say("그 볼은 없다.")
                         ie2.other(); say("그 볼은 없다.")
+        call("hide_foe"); call("bgm_set_for_map")
     with proc("wild_roll"):  # uses mp area -> w_sp w_lv (w_sp=0 if none)
         ar=l("M_area")[mp]; v("w_sp").set(0)
         with If(l("W_count")[ar]>0):

@@ -207,12 +207,16 @@ def logic():
                 l("PS_mv").set((i-1)*4+k,v(f"mm_m{k}")); l("PS_pp").set((i-1)*4+k,l("MV_pp")[v(f"mm_m{k}")] if True else 0)
             v("where").set(1)
             ie.other()
-            l("BX_sp").append(v("g_sp")); l("BX_lv").append(v("g_lv")); l("BX_exp").append(v("g_lv")*v("g_lv")*v("g_lv")); l("BX_hp").append(st_out); l("BX_st").append(0)
-            for k in range(1,5): l("BX_mv").append(v(f"mm_m{k}")); l("BX_pp").append(l("MV_pp")[v(f"mm_m{k}")])
-            bn.inc(); v("where").set(2)
+            with IfElse(bn>=200) as ie2:
+                v("where").set(3); ie2.other()
+                l("BX_sp").append(v("g_sp")); l("BX_lv").append(v("g_lv")); l("BX_exp").append(v("g_lv")*v("g_lv")*v("g_lv")); l("BX_hp").append(st_out); l("BX_st").append(0)
+                for k in range(1,5): l("BX_mv").append(v(f"mm_m{k}")); l("BX_pp").append(l("MV_pp")[v(f"mm_m{k}")])
+                bn.inc(); v("where").set(2)
         with If(l("DEX")[v("g_sp")]<2): l("DEX").set(v("g_sp"),2)
     with proc("give_mon"):
-        call("add_mon"); say(join(l("S_name")[v("g_sp")]," 을(를) 받았다!",""))
+        call("add_mon")
+        with IfElse(v("where")==3) as ie:
+            say("보관함이 가득 차서 받을 수 없다. 보관함을 정리하고 다시 말을 걸자."); ie.other(); say(join(l("S_name")[v("g_sp")]," 을(를) 받았다!",""))
     with proc("heal_all"):
         i=v("ha_i"); i.set(1)
         with Repeat(pn):

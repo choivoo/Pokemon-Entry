@@ -2,8 +2,14 @@
 """Python-embedded DSL that emits Entry blocks + a block interpreter used to test the emitted blocks headlessly.
 The interpreter encodes MY ASSUMPTIONS about Entry block semantics (not verified in the Entry editor)."""
 import json, random, string, math
-_r=random.Random(11)
-def uid(): return "".join(_r.choice(string.ascii_lowercase+string.digits) for _ in range(4))
+_r=random.Random(11); _used=set()
+def uid():
+    while True:
+        i="".join(_r.choice(string.ascii_lowercase+string.digits) for _ in range(4))
+        if i not in _used: _used.add(i); return i
+def reset_ids():
+    global _r
+    _r=random.Random(11); _used.clear()
 def blk(type,*params,st=None):
     return {"id":uid(),"x":0,"y":0,"type":type,"params":list(params),"statements":st if st is not None else [],"movable":None,"deletable":1,"emphasized":False,"readOnly":None,"copyable":True,"assemble":True,"extensions":[]}
 class X:
@@ -203,7 +209,7 @@ class Interp:
         for b in body: s.exec(b)
     def exec(s,b):
         s.steps+=1
-        if s.steps>5_000_000: raise Exception("step limit")
+        if s.steps>80_000_000: raise Exception("step limit")
         t=b["type"]; p=b["params"]
         if t=="set_variable": s.var[s.vid[p[0]]]=s.ev(p[1]); return
         if t=="change_variable": n=s.vid[p[0]]; s.var[n]=s.num(s.var[n])+s.num(s.ev(p[1])); return
@@ -257,6 +263,8 @@ class Interp:
             prompt=str(s.fmt(s.ev(p[0]))); s.out.append("?"+prompt)
             s.last_answer=(s.input_fn(s,prompt) if getattr(s,"input_fn",None) else (s.inputs.pop(0) if s.inputs else "")); return
         if t=="stamp": s.stamps+=1; return
+        if t=="sound_something_wait_with_block":
+            s.__dict__.setdefault("sounds",[]).append(p[0]); raise Break()
         if t=="wait_second":
             if getattr(s,"on_wait",None): s.on_wait(s)
             return
@@ -270,3 +278,19 @@ class Interp:
             except Stop: pass
     def get(s,n): return s.var[n]
     def setv(s,n,val): s.var[n]=val
+
+class ProgFromEnt:
+    """Rebuild a Prog-like object from a packed .ent so the SERIALIZED project (not the DSL objects) can be executed."""
+    def __init__(s,path):
+        import tarfile
+        t=tarfile.open(path); proj=json.load(t.extractfile("temp/project.json")); s.proj=proj
+        def co(x):
+            try:
+                f=float(x); return int(f) if f==int(f) and "." not in str(x) else f
+            except: return x
+        s.vars={}; s.vinit={}; s.lists={}; s.msgs={m["name"]:m["id"] for m in proj["messages"]}; s.scripts=[]
+        for v in proj["variables"]:
+            if v["variableType"]=="variable": s.vars[v["name"]]=v["id"]; s.vinit[v["name"]]=co(v["value"])
+            else: s.lists[v["name"]]=[v["id"],[co(x["data"]) for x in v["array"]]]
+        for o in proj["objects"]:
+            for sc in json.loads(o["script"]): s.scripts.append((o["name"],sc))

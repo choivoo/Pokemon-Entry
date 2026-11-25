@@ -1,0 +1,31 @@
+maps 176 npcs 350 rules 713 trainers 127 wild areas 37 added roots 27 species 151 moves 89
+--- engine invariants (node tests/test.js)
+pass 6148 fail 0
+--- trace dump
+build/trace_fast7.json 62651 events true
+build/trace_normal9.json 30262 events true
+--- blocks replay vs engine
+build/trace_fast7.json replayed in 12s steps 5002034
+build/trace_normal9.json replayed in 6s steps 2406208
+pass 21 fail 0
+--- packaged .ent (serialized JSON) replay
+build/trace_fast7.json replayed in 13s steps 5002034
+build/trace_normal9.json replayed in 6s steps 2406208
+pass 21 fail 0
+--- blocks unit tests
+blocks2: pass 426 fail 0
+--- multi seed full playthroughs
+runs 48 failed 0
+fast n 24 total h 17.26 grind h 15.51 wipes 12.50 steps 125854.08 battles 1293.17
+normal n 24 total h 9.10 grind h 7.34 wipes 5.00 steps 42389.17 battles 1595.17
+--- chapter report
+fast: total 10.3h grind 8.6h required 1.69h
+normal: total 7.2h grind 5.5h required 1.69h
+normal_shuffled_clues: total 10.0h grind 8.0h required 1.93h
+--- assemble
+assets ok 346 KB
+wrote build/Pokemon_Pikachu_Kanto_Journey_1.0.ent 0.6 MB objects 19 blocks 10947 files 332 errors 0
+[]
+docs written
+qa written
+ALL-DONE

@@ -28,7 +28,8 @@ function newState(seed){
 function rnd(s){ // stateless-seeded rng for save/replay
   s.rngn++; let x=(s.seed+s.rngn*2654435761)>>>0; x^=x<<13;x>>>=0;x^=x>>>17;x^=x<<5;x>>>=0; return x/4294967296}
 const has=(s,f)=>!f||!!s.flags[f];
-function addMon(s,m){ if(s.party.length<6){s.party.push(m);return 'party'} s.box.push(m); return 'box'; }
+const BOX_MAX=200;
+function addMon(s,m){ if(s.party.length<6){s.party.push(m);return 'party'} if(s.box.length>=BOX_MAX) return 'full'; s.box.push(m); return 'box'; }
 function dexSee(s,sp,caught){ s.dex[sp]=Math.max(s.dex[sp]||0,caught?2:1) }
 function addItem(s,k,n){ s.bag[k]=(s.bag[k]||0)+n; if(s.bag[k]<0) throw new Error('negative '+k) }
 function giveExp(s,mon,amt,log){
@@ -143,7 +144,7 @@ function throwBall(s,c,ball,grade,sneak){ // one input = one ball
   let a=((3*mh-2*hp)*sp.capture*ITEMS[ball].val/(3*mh))*GRADE[grade]*(1+0.5*Math.min(c.bait,2))*(c.mon.st?1.5:1)*(sneak?1.2:1);
   a=Math.min(255,Math.max(1,a)); const b=1048560/Math.sqrt(Math.sqrt(16711680/a)); let shakes=0;
   for(let i=0;i<4;i++){ if(rng()*65536<b) shakes++; else break }
-  if(shakes===4){ c.over=true; c.result='caught'; c.log=['잡았다!']; const m=c.mon; m.where=s.map.split('_')[0]; const dest=addMon(s,m); dexSee(s,c.sp,true); c.dest=dest; }
+  if(shakes===4){ c.over=true; c.result='caught'; c.log=['잡았다!']; const m=c.mon; m.where=s.map.split('_')[0]; const dest=addMon(s,m); dexSee(s,c.sp,true); c.dest=dest; if(dest==='full') c.log.push('보관함이 가득 차서 놓아주었다.'); }
   else { c.log=[`볼이 ${shakes}번 흔들렸다...`]; if(rng()<(c.beh==='flee'?.25:.1)){c.over=true;c.result='fled';c.log.push('포켓몬이 도망쳤다!')} }
   return true }
 // ---- world ----
@@ -172,7 +173,7 @@ function interact0(s,nid,io){
     else if(r.act==='give'){ say(r.text); const [k,q]=r.arg.split(':'); addItem(s,k,+q) }
     else if(r.act==='heal'){ say(r.text); healAll(s); s.stats.heals++ }
     else if(r.act==='shop'){ say(r.text); io&&io.shop&&io.shop(r.arg.split(',')) ; return out }
-    else if(r.act==='gift'){ say(r.text); const [sp,lv]=r.arg.split(':').map(Number); const m=mkMon(sp,lv,'gift'); addMon(s,m); dexSee(s,sp,true) }
+    else if(r.act==='gift'){ say(r.text); const [sp,lv]=r.arg.split(':').map(Number); const m=mkMon(sp,lv,'gift'); const w=addMon(s,m); if(w==='full'){ out.push('(보관함이 가득 차서 받을 수 없다)'); return out } dexSee(s,sp,true) }
     else if(r.act==='static'){ say(r.text); const [sp,lv]=r.arg.split(':').map(Number); const res=io.static&&io.static(sp,lv); if(res!=='caught'&&res!=='win'&&res!=='fled') return out }
     else if(r.act==='battle'){ say(r.text); const res=io.battle(r.arg); if(res!=='win'){ out.push('(패배했다)'); return out }
       const T=TR[r.arg]; if(T.badge){ s.badges|=1<<(T.badge-1); } }
@@ -209,5 +210,5 @@ function decode(code){
     s.party=p[13]?p[13].split('~').map(mon):[]; s.box=p[14]?p[14].split('~').map(mon):[];
     if(s.party.length<1||s.party.length>6) return {err:'파티 오류'}; return {s}
   }catch(e){ return {err:'복원 오류: '+e.message} } }
-module.exports={stat,TRACE,WORLD_IDX,G,WORLD,RULES,TR,WILD,SPECIES,MOVES,ITEMS,NPC,RULES_BY,newState,mkMon,mkFoe,maxHp,newBattle,turn,active,foe,newCatch,throwBall,move,interact,rollWild,healAll,useItem,
+module.exports={BOX_MAX,stat,TRACE,WORLD_IDX,G,WORLD,RULES,TR,WILD,SPECIES,MOVES,ITEMS,NPC,RULES_BY,newState,mkMon,mkFoe,maxHp,newBattle,turn,active,foe,newCatch,throwBall,move,interact,rollWild,healAll,useItem,
   addItem,addMon,dexSee,giveExp,evolve,encode,decode,catchHook,tile,exitAt,npcAt,rnd,name,expFor,eff,FL};

@@ -17,7 +17,7 @@ def data_lists():
         for f in g: gid.append(i+1); gfl.append(FIDX[f])
     l("G_id",gid); l("G_flag",gfl)
     # first row index of gate: simple scan at runtime
-    l("F_name",FLAGS); l("F_title",[TITLES.get(f,"") for f in FLAGS]); l("FS",[0]*len(FLAGS))
+    l("F_clue",[1 if "_clue" in f else 0 for f in FLAGS]); l("F_name",FLAGS); l("F_title",[TITLES.get(f,"") for f in FLAGS]); l("FS",[0]*len(FLAGS))
     l("N_map",[MIDX[m] for m,n in NPCS]); l("N_x",[n["x"] for m,n in NPCS]); l("N_y",[n["y"] for m,n in NPCS]); l("N_kind",[KIND[n["kind"]] for m,n in NPCS]); l("N_label",[n["label"] for m,n in NPCS])
     rs=[];rc=[]; R=[]
     for m,n in NPCS:
@@ -101,7 +101,8 @@ def field_logic():
     with proc("set_flag"):  # in: a1 (flag idx)
         a1=v("a1"); 
         with If(a1>0):
-            FS.set(a1,1)
+            FS.set(a1,1); v("pk_mood").set(2)
+            with If(l("F_clue")[a1]==1): v("pk_mood").set(3)
             with If((a1==FIDX["c12_end"])&(cleared==0)): cleared.set(1); call("ending_scene")
     with proc("gate_check"):  # in: gi -> ok_ (1 if open), gmiss (first missing flag idx)
         ok_.set(1); gmiss.set(0); ei2=v("gci"); ei2.set(1)
@@ -128,7 +129,7 @@ def field_logic():
         with If(cmd==2): dx.set(-1); pf.set(1)
         with If(cmd==3): dx.set(1); pf.set(2)
         with If(cmd==4): dy.set(-1); pf.set(3)
-        tx.set(px+dx); ty.set(py+dy); call("tile_at")
+        tx.set(px+dx); ty.set(py+dy); call("tile_at"); v("pk_mood").set(1)
         with If((tch=="D")|(tch==".")|(tch=="g")):
             call("npc_at")
             with If(hit==0):
@@ -166,7 +167,9 @@ def field_logic():
                     with If(act==4):  # heal
                         call("heal_all"); call("center_menu")
                     with If(act==5): call("shop_menu"); v("do_set").set(0)
-                    with If(act==6): v("g_sp").set(v("ra1")); v("g_lv").set(v("ra2")); call("give_mon")
+                    with If(act==6):
+                        v("g_sp").set(v("ra1")); v("g_lv").set(v("ra2")); call("give_mon")
+                        with If(v("where")==3): v("do_set").set(0)
                     with If(act==7):  # static
                         v("g_sp").set(v("ra1")); v("g_lv").set(v("ra2")); call("static_battle")
                         with If((v("bres")!=3)&(v("bres")!=1)&(v("bres")!=4)): v("do_set").set(0)

@@ -114,6 +114,14 @@ it.input_fn=None
 it.inputs=["2","6"]; it.call("box_view"); ok(it.var["pn"]==5 and it.var["bn"]==2,"deposit moves one mon (pn=%d bn=%d)"%(it.var["pn"],it.var["bn"]))
 it.input_fn=None; it.inputs=["1","1"]; it.call("box_view"); ok(it.var["pn"]==6 and it.var["bn"]==1,"withdraw (pn=%d bn=%d)"%(it.var["pn"],it.var["bn"]))
 it.inputs=["1","1"]; it.call("box_view"); ok(it.var["pn"]==6 and it.var["bn"]==1,"withdraw refused when party full")
+# box full
+p,it=fresh(77)
+for _ in range(5): it.setv("g_sp",19); it.setv("g_lv",5); it.call("add_mon")
+for _ in range(200): it.setv("g_sp",16); it.setv("g_lv",3); it.call("add_mon")
+ok(it.var["pn"]==6 and it.var["bn"]==200,"box fills to 200 (bn=%d)"%it.var["bn"])
+it.setv("g_sp",129); it.setv("g_lv",5); it.call("add_mon"); ok(it.var["where"]==3 and it.var["bn"]==200 and it.var["pn"]==6,"box full -> not added")
+it.setv("mp",GD.MIDX["H02_0"]); it.lst["FS"][GD.FIDX["c2_hub"]-1]=1; gi=GD.NIDX["n_gift_squirtle"]; it.setv("cur_npc",gi); it.call("run_rules")
+ok(it.lst["FS"][GD.FIDX["got_n_gift_squirtle"]-1]==0,"gift flag not set when box full")
 # 6 shop
 p,it=fresh(); it.setv("money",1000); shopidx=1
 it.setv("ra1",1); it.inputs=["1","3","0"]; it.call("shop_menu"); ok(it.var["money"]==1000-3*GD.ITEMS[GD.IIDX[ "monster-ball"]-1]["price"] and it.lst["BAG"][0]==8,"buy 3 balls")

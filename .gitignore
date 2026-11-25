@@ -1,2 +1,5 @@
 __pycache__/
 node_modules/
+build/trace_*.json
+build/run_all.log
+build/M0_project.json
