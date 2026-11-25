@@ -19,7 +19,7 @@ def build(out="build/%s.ent"%NAME):
     objs=[]
     for k in ("floor","wall","grass","water","door"):
         objs.append(Obj("tile_"+k,[(str(i+1),f"{T}{k}_{t}.png",24) for i,t in enumerate(GD.THEMES)],vis=False,size=24))
-    objs.append(Obj("npc_glyph",[(str(k),f"{U}npc{k}.png",24) for k in range(1,9)],vis=False,size=24))
+    objs.append(Obj("npc_glyph",[(str(k),f"{U}npc{k}.png",24) for k in range(1,10)],vis=False,size=24))
     objs.append(Obj("player",[(str(d),f"{U}player{d}.png",24) for d in range(1,5)],x=-204,y=3,size=24))
     objs.append(Obj("pika",[(str(m),f"{U}pika{m}.png",24) for m in (1,2,3)],x=-204,y=3,size=24))
     objs.append(Obj("mon_view",[(str(i),f"assets/sprites/{i:03d}.png",96) for i in range(1,152)],x=150,y=35,vis=False,size=96))

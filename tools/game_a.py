@@ -25,7 +25,7 @@ def data_lists():
     l("N_rstart",rs); l("N_rcount",rc)
     def fi(f): return FIDX[f] if f else 0
     l("R_req",[fi(r["req"]) for r in R]); l("R_nreq",[fi(r["nreq"]) for r in R]); l("R_act",[ACT[r["act"]] for r in R]); l("R_set",[fi(r["set"]) for r in R])
-    cl=[(r["clr"].split(",")+["",""])[:2] for r in R]; l("R_clr1",[fi(c[0]) for c in cl]); l("R_clr2",[fi(c[1]) for c in cl]); l("R_text",[r["text"] for r in R])
+    cl=[(r["clr"].split(",")+["","","",""])[:4] for r in R]; l("R_clr1",[fi(c[0]) for c in cl]); l("R_clr2",[fi(c[1]) for c in cl]); l("R_clr3",[fi(c[2]) for c in cl]); l("R_clr4",[fi(c[3]) for c in cl]); l("R_text",[r["text"] for r in R])
     a1=[];a2=[]; shops=[]
     for r in R:
         x=y=0
@@ -83,6 +83,8 @@ def data_lists():
             for e in ents: wsp.append(e["sp"]); ww.append(e["w"]); wlo.append(e["lo"]); whi.append(e["hi"])
         else: ws.append(0); wc.append(0); wt.append(0)
     l("W_start",ws); l("W_count",wc); l("W_total",wt); l("W_sp",wsp); l("W_w",ww); l("W_lo",wlo); l("W_hi",whi)
+    TL={"town":"(코를 킁킁) 집 냄새가 나. 안심돼.","meadow":"(풀 사이를 가리킨다) 저기 뭔가 움직여!","forest":"(귀를 쫑긋) 나뭇잎 소리 말고 다른 소리가 나.","quarry":"(바위를 톡톡) 단단하다. 낙석 조심해.","cave":"(꼬리를 곧게 세운다) 어두워... 내 뒤에 붙어.","canal":"(물소리에 귀를 기울인다) 물길이 막힌 곳이 있나 봐.","coast":"(바닷바람에 수염이 흔들린다) 짠 냄새!","harbor":"(뺨에서 파직) 전선이 많아. 전기 장치 근처야.","ship":"(몸을 웅크린다) 삐걱거리는 소리가 무서워...","market":"(냄새를 맡는다) 맛있는 열매 냄새!","cellar":"(콜록) 곰팡이 냄새. 환기구를 찾자.","rail":"(귀 끝이 파직 튄다) 선로에 전기가 흐르고 있어.","hill":"(높이 올라가려 한다) 전망이 좋을 것 같아.","lab":"(뺨이 따끔) 기계 소리... 전기 장치 단서가 있을지도.","swamp":"(발을 털며) 질척거려. 조용히 걷자.","city":"(두리번) 사람도 건물도 너무 많아!","tide":"(첨벙) 물이 빠지는 중이야.","volcano":"(땀을 닦는다) 뜨거워! 빨리 지나가자.","desert":"(눈을 가늘게 뜬다) 모래바람이야...","hq":"(털을 곤두세운다) 나쁜 기운이 느껴져.","mountain":"(몸을 부르르) 바람이 차가워.","road":"(앞장서 달려간다) 이 길이 챔피언로드로 이어지는 걸까?","league":"(기대에 찬 눈) 여기가 리그... 두근두근."}
+    l("A_pika",[("(주먹을 불끈) 피카! 관장과의 승부다!" if a["theme"].startswith("gym") else TL[a["theme"]]) for a in WORLD["areas"]]); l("VIS",[0]*len(WORLD["areas"]))
     l("DEX",[0]*151); l("CHAIN_key",[FIDX[G["chstep_key"][str(c)]] for c in range(1,13)])
 
 def field_logic():
@@ -138,6 +140,7 @@ def field_logic():
                 with IfElse(tch=="D") as ie:
                     call("check_exit"); ie.other()
                     call("place_actors")
+                with If((v("moved_map")==0)&(enc_on==1)&(tch!="D")): call("check_visible_wild")
                 with If((tch=="g")&(v("moved_map")==0)&(enc_on==1)): call("maybe_encounter")
     with proc("talk"):  # facing target
         dx=v("dx"); dy=v("dy"); dx.set(0); dy.set(0)
@@ -161,6 +164,8 @@ def field_logic():
                     with If(act==2):   # reset
                         with If(l("R_clr1")[r]>0): FS.set(l("R_clr1")[r],0)
                         with If(l("R_clr2")[r]>0): FS.set(l("R_clr2")[r],0)
+                        with If(l("R_clr3")[r]>0): FS.set(l("R_clr3")[r],0)
+                        with If(l("R_clr4")[r]>0): FS.set(l("R_clr4")[r],0)
                         v("do_set").set(0)
                     with If(act==3):  # give item
                         l("BAG").set(v("ra1"),l("BAG")[v("ra1")]+v("ra2"))

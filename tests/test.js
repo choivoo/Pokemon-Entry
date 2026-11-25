@@ -5,7 +5,7 @@ let pass=0,fail=0; const fails=[];
 const ok=(c,m)=>{ if(c)pass++; else {fail++;fails.push(m)} };
 // 1 map integrity
 const maps=Object.values(WORLD.maps);
-ok(maps.length===176,'map count '+maps.length);
+ok(maps.length===213,'map count '+maps.length);
 const kinds=k=>WORLD.areas.filter(a=>a.kind===k).length;
 ok(kinds('hub')===12&&kinds('road')===24&&kinds('dungeon')===14&&kinds('gym')===8,'area kinds');
 for(const m of maps){
@@ -24,6 +24,7 @@ for(const m of maps){
   for(const e of m.exits) ok(seen.has(e.x+','+e.y),'exit unreachable '+m.id);
   for(const n of m.npcs){ ok('.g'.includes(m.tiles[n.y][n.x]),'npc on blocked '+n.id); ok([[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>seen.has((n.x+dx)+','+(n.y+dy))),'npc unreachable '+n.id) }
 }
+for(const m of maps){ const seen=new Set(); for(const n of m.npcs){ const k=n.x+','+n.y; ok(!seen.has(k),'npc overlap '+m.id+' '+k); seen.add(k) } }
 // 2 rules integrity
 const FS=new Set(G.flags);
 for(const r of RULES){ for(const f of [r.req,r.nreq,r.set,...(r.clr?r.clr.split(','):[])]) if(f) ok(FS.has(f),'unknown flag '+f+' in '+r.npc);

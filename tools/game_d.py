@@ -16,7 +16,7 @@ def logic():
             stamp()
     with proc("stamp_npc",obj="npc_glyph"):
         locate(v("dx_"),v("dy_"))
-        for k in range(1,9):
+        for k in range(1,10):
             with If(v("nk")==k): shape(f"PIC:npc_glyph:{k}")
         stamp()
     with proc("draw_map"):
@@ -36,7 +36,7 @@ def logic():
         i=v("dm_i"); i.set(l("M_nstart")[mp])
         with Repeat(l("M_ncount")[mp]):
             v("dx_").set(-228+24*l("N_x")[i]); v("dy_").set(123-24*l("N_y")[i]); v("nk").set(l("N_kind")[i]); call("stamp_npc"); i.inc()
-        v("moved_map").set(1); call("place_actors"); call("bgm_set_for_map")
+        call("spawn_wild"); v("moved_map").set(1); call("place_actors"); call("bgm_set_for_map"); call("area_greet")
     with proc("place_actors"):
         v("pl_x").set(-228+24*px); v("pl_y").set(123-24*py)
         with IfElse(v("moved_map")==1) as ie:
@@ -167,13 +167,13 @@ def logic():
                 bn.inc(); call("party_remove"); say("보관함에 맡겼다.")
                 ie.other(); say("마지막 한 마리는 맡길 수 없다.")
     with proc("settings"):
-        ask("설정 1 조우율 끄기/켜기  2 조우율 낮춤(5)/보통(12)  3 닫기"); v("se_in").set(answer())
+        ask("설정 1 조우율 끄기/켜기  2 우연 조우 낮춤(1)/높임(12)  3 닫기"); v("se_in").set(answer())
         with If(v("se_in")==1):
             with IfElse(v("enc_on")==1) as ie:
                 v("enc_on").set(0); say("필드 조우를 껐다."); ie.other(); v("enc_on").set(1); say("필드 조우를 켰다.")
         with If(v("se_in")==2):
-            with IfElse(v("enc_rate")==12) as ie:
-                v("enc_rate").set(5); ie.other(); v("enc_rate").set(12)
+            with IfElse(v("enc_rate")!=1) as ie:
+                v("enc_rate").set(1); ie.other(); v("enc_rate").set(12)
             say(join("조우율: ",v("enc_rate"),"%"))
     with proc("main_menu"):
         ask("메뉴 1 파티  2 가방  3 도감  4 보관함  5 세이브  6 설정  7 닫기  8 힌트"); v("mm_in").set(answer())

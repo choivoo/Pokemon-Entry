@@ -7,9 +7,9 @@ W=GD.WORLD; D="docs/"
 def md(path,text): open(path,"w",encoding="utf-8").write(text)
 # ---- DATA.md ----
 o=["# 데이터 유지보수 목록\n\n모든 표는 `tools/world_def.py`(사람이 쓴 설계)와 `tools/build_world.py`(생성기)에서 자동 생성된 `data/*.json`을 기준으로 한다. 수정 순서: `world_def.py` → `python3 tools/build_world.py` → `python3 tools/assemble.py`.\n"]
-o.append("## 1. 지역 (58곳, 176화면)\n\n| ID | 이름 | 종류 | 장 | 화면 | 테마 | 야생 타입 | 비고 |\n|---|---|---|---|---|---|---|---|")
+o.append("## 1. 지역\n\n지역 58곳은 도로·던전 화면을 늘려 총 화면 수가 늘었다.\n\n| ID | 이름 | 종류 | 장 | 화면 | 테마 | 야생 타입 | 비고 |\n|---|---|---|---|---|---|---|---|")
 for a in W["areas"]: o.append(f"| {a['id']} | {a['name']} | {a['kind']} | {a['ch']} | {a['screens']} | {a['theme']} | {','.join(a['types'])} | {a['note']} |")
-o.append("\n## 2. 필수 퀘스트 단계 (113개)\n\n단서(clue) 단계는 순서와 무관하게 해결할 수 있고 화면 출구를 잠그지 않는다. 장 마지막 출구와 체육관 문은 해당 장의 모든 단서가 있어야 열린다.\n")
+o.append("\n## 2. 필수 퀘스트 단계 (" + str(sum(len(v) for v in Q.values())) + "개)\n\n단서(clue) 단계는 순서와 무관하게 해결할 수 있고 화면 출구를 잠그지 않는다. 장 마지막 출구와 체육관 문은 해당 장의 모든 단서가 있어야 열린다.\n")
 for ch,steps in Q.items():
     o.append(f"\n### 장 {ch} ({len(steps)}단계)\n\n| 플래그 | 종류 | 위치 | 제목 |\n|---|---|---|---|")
     for s in steps: o.append(f"| `{s[0]}` | {s[1]} | {s[2]}#{s[3]+1} | {s[4]} |")

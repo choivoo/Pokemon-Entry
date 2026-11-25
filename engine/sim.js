@@ -98,15 +98,23 @@ function run(opt){
     for(let g=0;g<60;g++){ if(!nearGrass(area)) return false; clk.move+=5; const w=E.rollWild(s); if(!w) return false; const c=E.newCatch(s,w.sp,w.lv,w.beh); clk.catchIntro++; let t=0;
       while(!c.over&&t++<12){ const ball=['great-ball','monster-ball','ultra-ball'].find(k=>s.bag[k]>0); if(!ball){ shop(); if(!nearGrass(area)) return false; continue } E.throwBall(s,c,ball,'great',false); clk.throw++ }
       if(c.result==="caught"){ E.catchHook(s,area); return true } log("enc",g,c.result,JSON.stringify(s.bag),s.map,s.x,s.y) } return false }
+  function solvePuzzle(sid){
+    const hints=Object.keys(E.NPC).filter(k=>k===`n_${sid}_hint`||k===`n_${sid}_hint2`).sort(); let txt='';
+    for(const h of hints){ if(!goAdj(h)) throw new Error('unreachable '+h); txt+=E.interact(s,h,io).join(' ')+' '; clk.line+=2 }
+    let names; let m;
+    if((m=txt.match(/기록된 순서: (.+?)\./))) names=m[1].split(' → ');
+    else if(txt.includes('앞 절반')){ const a=txt.match(/앞 절반: (.+?)\./)[1].split(' → '), b=txt.match(/뒤 절반: (.+?)\./)[1].split(' → '); names=[...a,...b] }
+    else if((m=txt.match(/A 경로: (.+?)\./))) names=m[1].split(' → ');
+    else throw new Error('no order in hints '+sid);
+    const hm=E.NPC[hints[0]].map;
+    for(const nm of names){ const sw=WORLD.maps[hm].npcs.filter(n=>n.kind==='switch'&&n.id.startsWith(`n_${sid}_s`)&&n.label.startsWith(nm)); if(!sw[0]) throw new Error('switch '+nm+' '+sid); if(!goAdj(sw[0].id)) throw new Error('unreachable switch '+sid); E.interact(s,sw[0].id,io); clk.line++ }
+    if(!s.flags[sid]) throw new Error('puzzle unsolved '+sid) }
   function doStep(st){
     const flag=st.id; if(s.flags[flag]) return;
     const nid='n_'+st.id; log('step',st.id,st.type,'party',s.party.map(m=>m.sp+':'+m.lv).join(','),'w',s.stats.wipes);
     if(st.type==='catch'){ if(!goAdj(nid)) throw new Error('unreachable '+nid); E.interact(s,nid,io); clk.line+=2; if(!catchSomeWild(st.area)) throw new Error('catch fail '+st.id);
       if(!s.flags[st.id]) throw new Error('catch flag not set '+st.id); return }
-    if(st.type==='puzzle'){ const hint=nid+'_hint'; if(!goAdj(hint)) throw new Error('unreachable '+hint); const lines=E.interact(s,hint,io); clk.line+=2;
-      const m=lines.join(' ').match(/순서: (.+?)\./)||lines.join(' ').match(/기록된 순서: (.+?)\./); if(!m) throw new Error('no order in hint '+st.id);
-      const names=m[1].split(' → '); for(const nm of names){ const sw=WORLD.maps[E.NPC[hint].map].npcs.filter(n=>n.kind==='switch'&&n.id.startsWith(nid+'_s')&&n.label.startsWith(nm)); if(!sw[0]) throw new Error('switch '+nm); if(!goAdj(sw[0].id)) throw new Error('unreachable switch'); E.interact(s,sw[0].id,io); clk.line++ }
-      if(!s.flags[st.id]) throw new Error('puzzle unsolved '+st.id); return }
+    if(st.type==='puzzle'){ solvePuzzle(st.id); return }
     const out=battleNpc(nid); clk.line+=out.length; if(!s.flags[st.id]) throw new Error('step not completed '+st.id+' '+out.join('/'));
     }
   function gymPrep(g){ // traverse gym: practice, trainer, puzzle
@@ -114,15 +122,10 @@ function run(opt){
     // practice
     const gd=`n_gym${n}_guide`; goAdj(gd); E.interact(s,gd,io); clk.line+=2; const pr=`n_gym${n}_prac`; goAdj(pr); E.interact(s,pr,io);
     const tr=`n_g${n}_t0`; battleNpc(tr); if(!s.flags[`g${n}_t0`]) throw new Error('gym trainer');
-    // go to puzzle screen
-    const sid=`gym${n}_puz`; const hint=`n_${sid}_hint`; if(!goAdj(hint)) throw new Error('gym hint unreachable'); const lines=E.interact(s,hint,io); clk.line+=2;
-    const m=lines.join(' ').match(/기록된 순서: (.+?)\./); const names=m[1].split(' → ');
-    // wrong-order recovery test once (reset must not undo other flags)
-    for(const nm of names){ const sw=WORLD.maps[E.NPC[hint].map].npcs.filter(x=>x.kind==='switch'&&x.id.startsWith(`n_${sid}_s`)&&x.label.startsWith(nm)); goAdj(sw[0].id); E.interact(s,sw[0].id,io); clk.line++ }
-    if(!s.flags[sid]) throw new Error('gym puzzle unsolved '+n) }
+    solvePuzzle(`gym${n}_puz`) }
   // ---- main ----
   const orderOf=(arr)=>opt.shuffleClues?[...arr.filter(x=>x.type!=='clue'),...arr.filter(x=>x.type==='clue').reverse()]:arr;
-  for(let ch=1;ch<=12;ch++){ curCh=ch; chStart={...clk}; const g0=grindSecs; let steps=CH[ch];
+  for(let ch=1;ch<=12;ch++){ curCh=ch; chStart={...clk}; const g0=grindSecs; let steps=CH[ch]; var deferred=[];
     // clue steps are order-free: do them early in shuffled mode, otherwise in listed order
     const clues=steps.filter(x=>x.type==='clue'), rest=steps.filter(x=>x.type!=='clue');
     const key=G.chstep_key[ch]; const tail=rest.filter(x=>x.type==='gym'||x.id===key); const seq=opt.shuffleClues?[...rest.filter(x=>!tail.includes(x)),...clues.slice().reverse(),...tail]:steps;
@@ -130,9 +133,11 @@ function run(opt){
       if(st.type==='gym'){ // need all non-gym steps; do gym prep then leader
         // ensure all clues/main flags in chapter exist
         const g=WORLD.areas.find(a=>a.id===st.area); gymPrep(g); }
-      doStep(st);
-      if(opt.mode==='normal'&&st.type!=='gym'&&Math.random()<0){}
+      try{ doStep(st) }catch(e){ if(/^(unreachable|step not completed)/.test(e.message)&&!st.gym){ (deferred=deferred||[]).push(st) } else throw e }
+      if(deferred&&deferred.length){ const q=deferred; deferred=[]; for(const d of q){ try{ doStep(d) }catch(e){ if(/^(unreachable|step not completed)/.test(e.message)) deferred.push(d); else throw e } } }
     }
+    for(let g=0;deferred&&deferred.length&&g<5;g++){ const q=deferred; deferred=[]; for(const d of q){ try{ doStep(d) }catch(e){ if(/^(unreachable|step not completed)/.test(e.message)) deferred.push(d); else throw e } } }
+    if(deferred&&deferred.length) throw new Error('deferred steps stuck: '+deferred.map(x=>x.id).join(','))
     // optional content in normal mode: gifts available now
     if(opt.mode==='normal'){ for(const nid of Object.keys(E.NPC).filter(k=>k.startsWith('n_gift_'))){ const r=E.RULES_BY[nid][0]; if(s.flags[r.req]&&!s.flags[r.set]){ if(goAdj(nid)){ E.interact(s,nid,io); clk.line+=2 } } } if(s.flags['c'+ch+'_x']){} }
     perChapter[ch]={grind:grindSecs-g0,clk:Object.fromEntries(Object.keys(clk).map(k=>[k,clk[k]-chStart[k]])),lvTop:Math.max(...s.party.map(m=>m.lv)),party:s.party.length};

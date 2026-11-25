@@ -230,3 +230,57 @@ Q[12]=[
  ("c12_champ","league","D14",3,"챔피언 바라","바라: 모든 여정을 보여줘!"),
  ("c12_end","scene","H12",1,"후일담과 엔딩","엔딩: 돌여울은 낙반 방지 공사를 마쳤고, 물안개의 수문은 순서표를 붙였다. 항구와 연락망, 보호구역은 평화를 되찾았다."),
 ]
+
+# ---------------------------------------------------------------------------
+# Expansion: longer areas + extra required steps (delivery chains, gauntlets, new puzzle kinds, skirmishes)
+for _a in A:
+    if _a["kind"]=="road" and _a["screens"]==3: _a["screens"]=4
+    if _a["kind"]=="dungeon" and _a["screens"]==4 and _a["id"]!="D14": _a["screens"]=5
+_SHORT={"R22","R23","R24"}
+def _main_areas(ch): return [a for a in A if a["ch"]==ch and a["kind"]!="gym" and a["id"] not in _SHORT]
+_LINE=[]  # (areaId,screen) in main-line order across the whole game
+for _a in A:
+    pass
+_GIVE=[("potion:3","상처약 3개"),("great-ball:4","슈퍼볼 4개"),("antidote:4","해독제 4개"),("super-potion:3","좋은상처약 3개"),("parlyz-heal:3","마비치료제 3개"),("hyper-potion:2","고급상처약 2개"),("bait:5","먹이 5개"),("ultra-ball:3","하이퍼볼 3개")]
+_GAUNT=["{n}: 이 길을 지나는 사람은 모두 실력을 확인한다!","{n}: 소문 듣고 왔어? 그럼 한 판 해 보자.","{n}: 여기서부터가 진짜 {p}야. 준비는 됐어?","{n}: 피카츄가 마음에 들었어. 그 피카츄, 얼마나 강한지 보자!"]
+_PROPS=["의뢰장","수첩","낡은 열쇠꾸러미","빛바랜 지도","조사 일지","약속 증표","정비 도구함","봉인된 편지"]
+_KIND_TXT={"hub":"마을","road":"길","dungeon":"지하"}
+def _extras():
+    for ch in range(1,13):
+        AR=_main_areas(ch); S=[(a["id"],s) for a in AR for s in range(a["screens"])]
+        if not S: continue
+        steps=Q[ch]; key=steps[-1] if steps[-1][1]!="gym" else steps[-1]
+        def pick(f): return S[min(len(S)-1,int(f*(len(S)-1)))]
+        def lin(aid,s): return S.index((aid,s))
+        new=[]
+        p=_PROPS[ch%len(_PROPS)]; g1=_GIVE[ch%len(_GIVE)]; g2=_GIVE[(ch+3)%len(_GIVE)]
+        a1=pick(0.0); a2=pick(0.8); a3=a1
+        an1=next(x for x in A if x["id"]==a1[0])["name"]; an2=next(x for x in A if x["id"]==a2[0])["name"]
+        new.append((f"e{ch}_d1","talk",a1[0],a1[1],f"{an1}의 부탁",f"의뢰인: {an2}에 {p}을(를) 두고 왔어요. 가져다주시겠어요? 사례는 꼭 할게요.",{}))
+        new.append((f"e{ch}_d2","item",a2[0],a2[1],f"{p} 찾기",f"{an2} 구석에서 {p}을(를) 찾았다. 의뢰인에게 돌려주자. 안에 {g1[1]}이 들어 있다.",{"req":f"e{ch}_d1","give":g1[0]}))
+        new.append((f"e{ch}_d3","talk",a3[0],a3[1],f"{p} 전달",f"의뢰인: 정말 고마워요! 이건 사례예요. ({g2[1]})",{"req":f"e{ch}_d2","give":g2[0],"back":True}))
+        # gauntlet: two trainers
+        for k,f in enumerate((0.3,0.6)):
+            aid,s=pick(f); ar=next(x for x in A if x["id"]==aid)
+            if not ar["types"] and ar["kind"]=="hub": 
+                aid,s=pick(0.5 if k==0 else 0.7); ar=next(x for x in A if x["id"]==aid)
+            new.append((f"e{ch}_t{k+1}","trainer",aid,s,f"길목의 트레이너 {k+1}",_GAUNT[(ch+k)%4].format(n="트레이너",p=ar["name"]),{}))
+        # puzzles
+        aid,s=pick(0.4); new.append((f"e{ch}_p1","puzzle",aid,s,"연쇄 장치","장치 위에 낡은 안내문이 있다.",{"v":"seq4"}))
+        aid,s=pick(0.7); new.append((f"e{ch}_p2","puzzle",aid,s,"암호 장치","두 장의 안내문을 합쳐 읽어야 한다.",{"v":"code4"}))
+        if ch>=4:
+            aid,s=pick(0.55); new.append((f"e{ch}_r","rocket" if ch%2==0 else "rival",aid,s,"매복","수상한 그림자가 길을 막는다.",{}))
+        # merge: insert by main-line position; 'back' steps go just before the chapter's gym/key step
+        tailidx=len(steps)-1
+        body=steps[:tailidx]; tail=steps[tailidx:]
+        def linof(st):
+            try: return lin(st[2],st[3])
+            except ValueError: return -1
+        for st in [x for x in new if not (len(x)>6 and x[6].get("back"))]:
+            pos=len(body)
+            for i,b in enumerate(body):
+                if b[1]!="clue" and linof(b)>linof(st): pos=i; break
+            body.insert(pos,st)
+        for st in [x for x in new if len(x)>6 and x[6].get("back")]: body.append(st)
+        Q[ch]=body+tail
+_extras()

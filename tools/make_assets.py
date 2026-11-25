@@ -79,6 +79,7 @@ for k,c in cols.items():
     if k==6: dr.rectangle([10,14,13,21],fill=(255,255,255,255)); dr.rectangle([8,16,15,19],fill=(255,255,255,255))
     if k==8: dr.text((9,8),"!",fill=(255,255,255,255))
     save(im,f"{OUT}/ui/npc{k}.png")
+im=Image.new("RGBA",(24,24),(0,0,0,0)); dr=ImageDraw.Draw(im); dr.ellipse([4,6,19,21],fill=(255,120,160,255),outline=(40,40,40,255)); dr.polygon([(6,8),(5,1),(10,6)],fill=(255,120,160,255),outline=(40,40,40,255)); dr.polygon([(18,8),(19,1),(14,6)],fill=(255,120,160,255),outline=(40,40,40,255)); dr.point((9,12),fill=(20,20,20,255)); dr.point((15,12),fill=(20,20,20,255)); save(im,f"{OUT}/ui/npc9.png")
 # player dirs 1 down 2 left 3 right 4 up
 for d in range(4):
     im=Image.new("RGBA",(24,24),(0,0,0,0)); dr=ImageDraw.Draw(im)

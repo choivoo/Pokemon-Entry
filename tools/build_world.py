@@ -179,6 +179,7 @@ json.dump({"T":T,"chart":chart},open("data/typechart.json","w"))
 slots={}
 def free_slot(m):
     t=m["tiles"]; used={(n["x"],n["y"]) for n in m["npcs"]}
+    if m["kind"]=="hub" and m["screen"]==0: used|={(3,3),(16,3),(3,4),(16,4),(3,5),(2,3),(4,3),(15,3),(17,3)}
     cand=[(x,y) for y in range(2,H-2) for x in range(3,W-3) if t[y][x]=="." and (x,y) not in used and all((x+dx,y+dy) not in used for dx,dy in((1,0),(-1,0),(0,1),(0,-1)))]
     # keep corridor: don't put on y==5 band centre
     rr=random.Random(hash(m["id"]+str(len(m["npcs"]))))
@@ -210,6 +211,44 @@ def party(types,lvl,n,seed,jitter=1,extra=0):
     r=random.Random(seed); ids=pick_species(types,lvl,r,n,None,extra)
     return [dict(sp=i,lv=max(2,lvl+r.randint(-jitter,jitter))) for i in ids]
 TR_NAMES=["곤충 소년","채집 소녀","낚시꾼","광부","선원","약초꾼","수영 선수","전기 기사","산악인","등산가","여행자","연구 조교","단원","사육사","탐험가","안전원"]
+
+PUZ_COL=["빨강","파랑","노랑","초록","보라","주황"]; PUZ_NUM=["하나","둘","셋","넷","다섯","여섯"]
+def make_puzzle(sid,variant,line,hint_maps,sw_map,names,tag="스위치"):
+    r=random.Random(sid)
+    nsw={"seq3":3,"seq4":4,"code4":4,"decoy5":6,"branch":6,"seq5":5}[variant]
+    idx=list(range(nsw)); r.shuffle(idx)
+    if variant in("seq3","seq4","code4","seq5"): chains=[idx[:nsw]]
+    elif variant=="decoy5": chains=[idx[:4]]
+    else: chains=[idx[:3],idx[3:6]]
+    sw=[addnpc(sw_map,f"n_{sid}_s{k}","switch",f"{names[k]} {tag}") for k in range(nsw)]
+    def pf(c,p): return f"{sid}_p{p}" if len(chains)==1 else f"{sid}_{'ab'[c]}{p}"
+    allp=[pf(c,p) for c in range(len(chains)) for p in range(1,len(chains[c]))]
+    flags.update(allp); flags.add(sid)
+    for j in range(nsw):
+        nid=sw[j]["id"]
+        if len(chains)>1:
+            for c in range(2):
+                if chains[c][0]==j:
+                    R(nid,"reset","다른 경로가 진행 중이다. 장치가 원래대로 돌아갔다.",req=pf(1-c,1),nreq=sid,clr=",".join(allp))
+        for c,ch_ in enumerate(chains):
+            for p,x in enumerate(ch_):
+                if x!=j: continue
+                L_=len(ch_); last=p==L_-1
+                clr=",".join(f for f in allp if f!=(pf(c,p+1) if not last else "") and f!=(pf(c,p) if p>0 else ""))[:0] if False else ""
+                R(nid,"say","딸깍. 장치가 열렸다!" if last else "딸깍.",req=pf(c,p) if p>0 else "",nreq=sid,set_=sid if last else pf(c,p+1))
+        R(nid,"say","이미 풀었다.",req=sid)
+        R(nid,"reset","순서가 틀렸다. 장치가 원래대로 돌아갔다. (이미 푼 다른 방은 그대로입니다)",clr=",".join(allp[:4]))
+    if variant=="code4":
+        a,b=chains[0][:2],chains[0][2:]
+        h1=addnpc(hint_maps[0],f"n_{sid}_hint","npc","단서판 1"); R(h1["id"],"say",f"{line} 앞 절반: "+" → ".join(names[x] for x in a)+".")
+        h2=addnpc(hint_maps[1],f"n_{sid}_hint2","npc","단서판 2"); R(h2["id"],"say",f"{line} 뒤 절반: "+" → ".join(names[x] for x in b)+".")
+    elif variant=="branch":
+        h=addnpc(hint_maps[0],f"n_{sid}_hint","npc","단서판")
+        R(h["id"],"say",f"{line} A 경로: "+" → ".join(names[x] for x in chains[0])+". B 경로: "+" → ".join(names[x] for x in chains[1])+". 첫 장치가 경로를 정한다.")
+    else:
+        h=addnpc(hint_maps[0],f"n_{sid}_hint","npc","단서판")
+        extra=" 함정 장치가 섞여 있다." if variant=="decoy5" else ""
+        R(h["id"],"say",f"{line} 기록된 순서: "+" → ".join(names[x] for x in chains[0])+"."+extra)
 # step placement
 chstep_key={}
 for ch,steps in Q.items():
@@ -218,7 +257,8 @@ for ch,steps in Q.items():
 puz={}
 for ch,steps in Q.items():
     L=Lc(ch)
-    for (sid,typ,aid,scr,title,line) in steps:
+    for stt in steps:
+        sid,typ,aid,scr,title,line=stt[:6]; opts=stt[6] if len(stt)>6 else {}
         a=areas[aid]; mapid=mid(a,scr)
         flags.add(sid)
         if typ in("talk","scene","item","clue","catch"):
@@ -232,26 +272,19 @@ for ch,steps in Q.items():
             if sid in("c1_box","c3_valve","c2_stone","c3_fossil","c4_log","c5_herb","c7_source","c8_data","c6_tower1","c2_gearshop","c5_compare"):
                 act="give"; arg={"c1_box":"monster-ball:5","c3_valve":"super-potion:3","c2_stone":"potion:3","c3_fossil":"fossil:1","c4_log":"great-ball:5","c5_herb":"hyper-potion:3","c7_source":"antidote:5","c8_data":"ultra-ball:5","c6_tower1":"parlyz-heal:3","c2_gearshop":"potion:2","c5_compare":"great-ball:3"}[sid]
             if typ=="scene" and sid=="c1_lab": act="say"
-            R(n["id"],act,line,nreq=sid,arg=arg,set_=sid)
-            R(n["id"],"say","もう調べた。".replace("もう調べた。","이미 처리했다. 다음 목적지로 가자."),req=sid)
+            if opts.get("give"): act="give"; arg=opts["give"]
+            if opts.get("req"):
+                R(n["id"],act,line,req=opts["req"],nreq=sid,arg=arg,set_=sid)
+                R(n["id"],"say","이미 처리했다. 다음 목적지로 가자.",req=sid)
+                R(n["id"],"say","지금은 아직 이 일이 무슨 뜻인지 모르겠다. 먼저 이 지역 사람들의 이야기를 들어 보자.")
+            else:
+                R(n["id"],act,line,nreq=sid,arg=arg,set_=sid)
+                R(n["id"],"say","이미 처리했다. 다음 목적지로 가자.",req=sid)
             if typ=="scene" and sid=="c1_lab": R(n["id"],"say","피카츄가 다가와 어깨에 올라탔다.",req=sid)
         elif typ=="puzzle":
-            r=random.Random(sid); perm=[0,1,2]; r.shuffle(perm); names=["빨강","파랑","노랑"]
-            order_txt=" → ".join(names[p] for p in perm)
-            n0=addnpc(mapid,"n_"+sid+"_hint","npc","단서판")
-            R(n0["id"],"say",f"{line} 기록된 순서: {order_txt}.")
-            sw=[addnpc(mapid,f"n_{sid}_s{k}","switch",names[k]+" 스위치") for k in range(3)]
-            p1,p2=sid+"_p1",sid+"_p2"; flags|={p1,p2}
-            first,second,third=perm
-            R(sw[first]["id"],"say","딸깍. 첫 단계가 켜졌다.",nreq=sid,set_=p1,clr=p2)
-            R(sw[second]["id"],"say","딸깍. 두 번째가 켜졌다.",req=p1,nreq=sid,set_=p2)
-            R(sw[third]["id"],"say","딸깍. 장치가 열렸다!",req=p2,nreq=sid,set_=sid,arg="",clr=p1)
-            for k in range(3):
-                R(sw[k]["id"],"say","이미 풀었다.",req=sid) if False else None
-            for k in range(3):
-                rules.insert(len(rules)-0,dict(npc=sw[k]["id"],req=sid,nreq="",act="say",arg="",set="",clr="",text="이미 열려 있다."))
-            for k in range(3):
-                R(sw[k]["id"],"reset","순서가 틀렸다. 장치가 원래대로 돌아갔다.",clr=p1+","+p2)
+            var=opts.get("v","seq3"); hm=[mapid]
+            if var=="code4": hm=[mapid, mid(a,scr-1) if scr>0 else mapid]
+            make_puzzle(sid,var,line,hm,mapid,PUZ_COL,"스위치")
         elif typ in("trainer","rival","rocket"):
             nm={"trainer":TR_NAMES[hash(sid)%len(TR_NAMES)],"rival":"하루","rocket":"로켓단"}[typ]
             n=addnpc(mapid,"n_"+sid,"trainer",nm)
@@ -276,7 +309,7 @@ for ch,steps in Q.items():
             R(n["id"],"battle",line,nreq=sid,arg="t_"+sid,set_=sid)
             R(n["id"],"say",f"{g['leader']}: 배지는 이미 건넸다. 다음 도시에서 만나자.",req=sid)
         elif typ=="league":
-            i=len([1 for s_ in steps if s_[1]=="league" and steps.index(s_)<steps.index((sid,typ,aid,scr,title,line))])
+            i=len([1 for s_ in steps if s_[1]=="league" and [q[0] for q in steps].index(s_[0])<[q[0] for q in steps].index(sid)])
             if sid=="c12_champ": nm,ty,lv=CHAMP[0]+" 챔피언",None,CHAMP[1]
             else: ty,nm,lv=[(e[0],e[1],e[2]) for e in ELITE][i][0],ELITE[i][1],ELITE[i][2]
             n=addnpc(mapid,"n_"+sid,"leader",nm+(" (사천왕)" if ty else ""))
@@ -298,20 +331,9 @@ for g in GYMS:
     trainers[f"t_g{g['n']}_t0"]=dict(id=f"t_g{g['n']}_t0",name="체육관 수련생",party=party([g["type"]],L+1,2,g["n"]*13),reward=L*40,kind="trainer")
     R(tn["id"],"battle","수련생: 관장님께 가려면 나를 이겨라!",nreq=f"g{g['n']}_t0",arg=f"t_g{g['n']}_t0",set_=f"g{g['n']}_t0")
     R(tn["id"],"say","수련생: 퍼즐 방은 안쪽이에요.",req=f"g{g['n']}_t0")
-    # screen1: puzzle
-    sid=f"gym{g['n']}_puz"; flags.add(sid)
-    r=random.Random(sid); perm=list(range(3)); r.shuffle(perm); names=["하나","둘","셋"]
-    hint=addnpc(mid(a,1),f"n_{sid}_hint","npc","규칙판")
-    R(hint["id"],"say",f"{g['rule']} 기록된 순서: "+" → ".join(names[p] for p in perm)+".")
-    sw=[addnpc(mid(a,1),f"n_{sid}_s{k}","switch",f"{names[k]} 장치") for k in range(3)]
-    p1,p2=sid+"_p1",sid+"_p2"; flags|={p1,p2}
-    R(sw[perm[0]]["id"],"say","딸깍.",nreq=sid,set_=p1,clr=p2)
-    R(sw[perm[1]]["id"],"say","딸깍.",req=p1,nreq=sid,set_=p2)
-    R(sw[perm[2]]["id"],"say","퍼즐이 풀렸다!",req=p2,nreq=sid,set_=sid,clr=p1)
-    for k in range(3):
-        R(sw[k]["id"],"say","이미 풀었다.",req=sid)
-    for k in range(3):
-        R(sw[k]["id"],"reset","순서가 틀렸다. 장치가 원래대로 돌아갔다. (진행한 방은 그대로 유지됩니다)",clr=p1+","+p2)
+    # screen1: puzzle (a different mechanic per gym)
+    sid=f"gym{g['n']}_puz"; var=["seq3","code4","seq4","code4","decoy5","branch","seq5","decoy5"][g["n"]-1]
+    make_puzzle(sid,var,g["rule"],[mid(a,1),mid(a,0)],mid(a,1),PUZ_NUM,"장치")
 # ambient: pokecenter/shop/save & flavor NPCs & optional trainers & gifts
 SHOP={"H01":["monster-ball","potion"],"H02":["monster-ball","potion","antidote"],"H03":["monster-ball","great-ball","potion","super-potion","awakening"],
  "H04":["great-ball","super-potion","parlyz-heal","burn-heal"],"H05":["great-ball","super-potion","antidote","bait"],"H06":["great-ball","super-potion","parlyz-heal"],
@@ -388,7 +410,7 @@ for m in maps.values():
             g=set(e["req"])
             for ch,steps in Q.items():
                 for p_,st in enumerate(steps):
-                    if st[1]=="clue" or mid(areas[st[2]],st[3])!=m["id"]: continue
+                    if st[1]=="clue" or (len(st)>6 and st[6].get("back")) or mid(areas[st[2]],st[3])!=m["id"]: continue
                     if any(LIN.get(mid(areas[q[2]],q[3]),10**6)>LIN[m["id"]] for q in steps[p_+1:]): g.add(st[0])
             e["req"]=sorted(g)
 # fix R22-R24 chain: shortcut exits use sc flags only

@@ -75,6 +75,15 @@ def idempotence(it):
         it.setv("mp",GD.MIDX[mid]); it.setv("cur_npc",idx); b=snap(); it.call("run_rules"); it.call("run_rules")
         if snap()!=b: bad.append(n["id"])
     ok(not bad,"re-interaction changed state: %s"%bad[:5])
+def wild_test():
+    p,it=fresh(); it.stubs["place_actors"]=lambda i:None; it.setv("mp",GD.MIDX["R01_0"]); it.setv("px",2); it.setv("py",5); it.setv("enc_on",1)
+    it.call("spawn_wild"); ok(it.var["vw1x"]>0 and it.var["vw1sp"]>0,"visible wild spawned on grass"); ok(it.stamps>0,"wild glyph stamped")
+    x,y=it.var["vw1x"],it.var["vw1y"]; assert GD.WORLD["maps"]["R01_0"]["tiles"][y][x]=="g"
+    seen=[]; it.stubs["wild_prompt"]=lambda i:seen.append((i.var["w_sp"],i.var["w_lv"])); it.stubs["draw_map"]=lambda i:None
+    it.setv("px",x); it.setv("py",y); it.call("check_visible_wild"); ok(len(seen)==1 and it.var["vw1x"]==-1,"stepping on a visible wild starts an encounter once")
+    it.setv("mp",GD.MIDX["H01_0"]); it.call("spawn_wild"); ok(it.var["vw1x"]==-1,"no wild spawn in towns")
+    it.var["bar_hp"]=5; it.var["bar_mx"]=10; it.call("bar"); ok(it.var["bar_out"]=="■■■■■□□□□□","hp bar render %s"%it.var["bar_out"])
+    it.var["bar_hp"]=1; it.var["bar_mx"]=100; it.call("bar"); ok(it.var["bar_out"].startswith("■□"),"hp bar shows at least one segment")
 def gate_test():
     p,it=fresh(); it.setv("enc_on",0); it.stubs["place_actors"]=lambda i:None; it.stubs["draw_map"]=lambda i:None
     # H01_1 right door at (19,5): needs c1_lab,c1_lost
@@ -99,6 +108,6 @@ if __name__=="__main__":
         ok(it.var["mp"]==GD.MIDX["H01_0"] and it.var["pn"]==1,"new game state")
         t1=time.time(); replay(path,it); print(path,"replayed in %.0fs"%(time.time()-t1),"steps",it.steps)
         ok("ENDING" in it.out,"ending scene triggered"); idempotence(it)
-    gate_test()
+    gate_test(); wild_test()
     print("pass",passes,"fail",len(fails)); [print(" ",f) for f in fails[:10]]
     sys.exit(1 if fails else 0)

@@ -2,245 +2,340 @@
 
 모든 표는 `tools/world_def.py`(사람이 쓴 설계)와 `tools/build_world.py`(생성기)에서 자동 생성된 `data/*.json`을 기준으로 한다. 수정 순서: `world_def.py` → `python3 tools/build_world.py` → `python3 tools/assemble.py`.
 
-## 1. 지역 (58곳, 176화면)
+## 1. 지역
+
+지역 58곳은 도로·던전 화면을 늘려 총 화면 수가 늘었다.
 
 | ID | 이름 | 종류 | 장 | 화면 | 테마 | 야생 타입 | 비고 |
 |---|---|---|---|---|---|---|---|
 | H01 | 초록골 | hub | 1 | 2 | town |  | 출발 마을. 연구소와 집 |
-| R01 | 풀빛길 | road | 1 | 3 | meadow | normal,flying,bug | 첫 포획 |
-| R02 | 샛바람 평야 | road | 1 | 3 | meadow | normal,flying,poison | 짧은 샛길 |
-| R03 | 이끼숲길 | road | 2 | 3 | forest | bug,grass,normal | 수풀 움직임 |
-| D01 | 오래된 숲 | dungeon | 2 | 4 | forest | bug,grass,poison | 그늘 길, 방향 지름길 |
+| R01 | 풀빛길 | road | 1 | 4 | meadow | normal,flying,bug | 첫 포획 |
+| R02 | 샛바람 평야 | road | 1 | 4 | meadow | normal,flying,poison | 짧은 샛길 |
+| R03 | 이끼숲길 | road | 2 | 4 | forest | bug,grass,normal | 수풀 움직임 |
+| D01 | 오래된 숲 | dungeon | 2 | 5 | forest | bug,grass,poison | 그늘 길, 방향 지름길 |
 | H02 | 돌여울 | hub | 2 | 2 | quarry |  | 채석 도시 |
 | G01 | 바위 체육관 | gym | 2 | 3 | gym_rock |  |  |
-| R04 | 동굴 입구길 | road | 3 | 3 | cave | rock,ground,normal |  |
-| D02 | 메아리 동굴 | dungeon | 3 | 4 | cave | rock,ground,normal,fighting | 시야 제한, 화석 조사 |
-| R05 | 지하수로길 | road | 3 | 3 | canal | water,normal,bug |  |
+| R04 | 동굴 입구길 | road | 3 | 4 | cave | rock,ground,normal |  |
+| D02 | 메아리 동굴 | dungeon | 3 | 5 | cave | rock,ground,normal,fighting | 시야 제한, 화석 조사 |
+| R05 | 지하수로길 | road | 3 | 4 | canal | water,normal,bug |  |
 | H03 | 물안개 | hub | 3 | 2 | canal |  | 수로 도시 |
 | G02 | 물 체육관 | gym | 3 | 3 | gym_water |  |  |
-| R06 | 항구길 | road | 4 | 3 | coast | water,normal,flying |  |
+| R06 | 항구길 | road | 4 | 4 | coast | water,normal,flying |  |
 | H04 | 푸른닻 | hub | 4 | 2 | harbor |  | 항구 |
-| D03 | 창고가 | dungeon | 4 | 4 | harbor | normal,electric,poison | 부두와 창고 |
-| D04 | 침몰선 | dungeon | 4 | 4 | ship | water,ghost,poison | 선박 조사 |
+| D03 | 창고가 | dungeon | 4 | 5 | harbor | normal,electric,poison | 부두와 창고 |
+| D04 | 침몰선 | dungeon | 4 | 5 | ship | water,ghost,poison | 선박 조사 |
 | G03 | 전기 체육관 | gym | 4 | 3 | gym_electric |  |  |
-| R07 | 삼림길 | road | 5 | 3 | forest | grass,bug,normal |  |
-| R08 | 시장길 | road | 5 | 3 | market | normal,grass,fairy |  |
+| R07 | 삼림길 | road | 5 | 4 | forest | grass,bug,normal |  |
+| R08 | 시장길 | road | 5 | 4 | market | normal,grass,fairy |  |
 | H05 | 잎새장터 | hub | 5 | 2 | market |  | 삼림 시장 |
-| D05 | 시장 지하창고 | dungeon | 5 | 4 | cellar | poison,bug,normal |  |
+| D05 | 시장 지하창고 | dungeon | 5 | 5 | cellar | poison,bug,normal |  |
 | G04 | 풀 체육관 | gym | 5 | 3 | gym_grass |  |  |
-| R09 | 연락선로 | road | 6 | 3 | rail | electric,normal,flying |  |
-| R10 | 중계탑길 | road | 6 | 3 | hill | electric,flying,rock |  |
+| R09 | 연락선로 | road | 6 | 4 | rail | electric,normal,flying |  |
+| R10 | 중계탑길 | road | 6 | 4 | hill | electric,flying,rock |  |
 | H06 | 고리나루 | hub | 6 | 2 | rail |  | 연락망 허브 |
-| D06 | 중계소 | dungeon | 6 | 4 | lab | electric,normal,steel | 중반 로켓단 사건 |
-| R11 | 늪길 | road | 7 | 3 | swamp | poison,water,grass |  |
-| R12 | 보호구역 외곽 | road | 7 | 3 | swamp | grass,poison,normal |  |
+| D06 | 중계소 | dungeon | 6 | 5 | lab | electric,normal,steel | 중반 로켓단 사건 |
+| R11 | 늪길 | road | 7 | 4 | swamp | poison,water,grass |  |
+| R12 | 보호구역 외곽 | road | 7 | 4 | swamp | grass,poison,normal |  |
 | H07 | 늪숲마을 | hub | 7 | 2 | swamp |  | 보호구역 거점 |
-| D07 | 서식지 심부 | dungeon | 7 | 4 | swamp | poison,grass,psychic,bug | 조용히 접근 |
+| D07 | 서식지 심부 | dungeon | 7 | 5 | swamp | poison,grass,psychic,bug | 조용히 접근 |
 | G05 | 독 체육관 | gym | 7 | 3 | gym_poison |  |  |
-| R13 | 대도시 진입로 | road | 8 | 3 | city | normal,electric,psychic |  |
+| R13 | 대도시 진입로 | road | 8 | 4 | city | normal,electric,psychic |  |
 | H08 | 중앙시 | hub | 8 | 2 | city |  | 대도시 |
-| D08 | 연구 시설 | dungeon | 8 | 4 | lab | psychic,electric,normal |  |
-| D09 | 지하 통로 | dungeon | 8 | 4 | cellar | poison,normal,fighting |  |
+| D08 | 연구 시설 | dungeon | 8 | 5 | lab | psychic,electric,normal |  |
+| D09 | 지하 통로 | dungeon | 8 | 5 | cellar | poison,normal,fighting |  |
 | G06 | 에스퍼 체육관 | gym | 8 | 3 | gym_psychic |  |  |
-| R14 | 해안 항로 | road | 9 | 3 | coast | water,flying,normal |  |
-| R15 | 조수길 | road | 9 | 3 | tide | water,rock,ground |  |
+| R14 | 해안 항로 | road | 9 | 4 | coast | water,flying,normal |  |
+| R15 | 조수길 | road | 9 | 4 | tide | water,rock,ground |  |
 | H09 | 불뫼섬 | hub | 9 | 2 | volcano |  | 외해의 섬 |
-| D10 | 화산 동굴 | dungeon | 9 | 4 | volcano | fire,rock,ground |  |
-| D11 | 관측소 | dungeon | 9 | 4 | lab | fire,normal,psychic |  |
+| D10 | 화산 동굴 | dungeon | 9 | 5 | volcano | fire,rock,ground |  |
+| D11 | 관측소 | dungeon | 9 | 5 | lab | fire,normal,psychic |  |
 | G07 | 불꽃 체육관 | gym | 9 | 3 | gym_fire |  |  |
-| R16 | 사막길 | road | 10 | 3 | desert | ground,rock,normal |  |
-| R17 | 황토길 | road | 10 | 3 | desert | ground,fighting,normal |  |
+| R16 | 사막길 | road | 10 | 4 | desert | ground,rock,normal |  |
+| R17 | 황토길 | road | 10 | 4 | desert | ground,fighting,normal |  |
 | H10 | 황토읍 | hub | 10 | 2 | desert |  | 운송 도시 |
-| D12 | 로켓단 본부 | dungeon | 10 | 4 | hq | poison,normal,electric | 본부 작전 |
+| D12 | 로켓단 본부 | dungeon | 10 | 5 | hq | poison,normal,electric | 본부 작전 |
 | G08 | 땅 체육관 | gym | 10 | 3 | gym_ground |  |  |
-| R18 | 북부 산길 | road | 11 | 3 | mountain | rock,ice,flying |  |
+| R18 | 북부 산길 | road | 11 | 4 | mountain | rock,ice,flying |  |
 | H11 | 산채 | hub | 11 | 2 | mountain |  | 준비 거점, 초반과 지름길 연결 |
-| R19 | 챔피언로드 1 | road | 11 | 3 | road | rock,fighting,ground,dragon |  |
-| R20 | 챔피언로드 2 | road | 11 | 3 | road | rock,fighting,ice,ghost |  |
-| D13 | 로드 동굴 | dungeon | 11 | 4 | cave | rock,ground,dragon,fighting |  |
-| R21 | 리그 진입길 | road | 11 | 3 | road | normal,flying,fighting |  |
+| R19 | 챔피언로드 1 | road | 11 | 4 | road | rock,fighting,ground,dragon |  |
+| R20 | 챔피언로드 2 | road | 11 | 4 | road | rock,fighting,ice,ghost |  |
+| D13 | 로드 동굴 | dungeon | 11 | 5 | cave | rock,ground,dragon,fighting |  |
+| R21 | 리그 진입길 | road | 11 | 4 | road | normal,flying,fighting |  |
 | H12 | 리그마을 | hub | 12 | 2 | league |  | 휴식과 리그 진입 |
 | D14 | 리그 본관 | dungeon | 12 | 4 | league |  |  |
-| R22 | 북부 지름길 | road | 11 | 3 | mountain | rock,ice | 돌여울↔산채 (배지 3 이후) |
-| R23 | 해상 지름길 | road | 9 | 3 | tide | water,flying | 물안개↔불뫼섬 (배지 6 이후) |
-| R24 | 옛 철도길 | road | 8 | 3 | rail | electric,steel,normal | 고리나루↔중앙시 (연락망 복구 후) |
+| R22 | 북부 지름길 | road | 11 | 4 | mountain | rock,ice | 돌여울↔산채 (배지 3 이후) |
+| R23 | 해상 지름길 | road | 9 | 4 | tide | water,flying | 물안개↔불뫼섬 (배지 6 이후) |
+| R24 | 옛 철도길 | road | 8 | 4 | rail | electric,steel,normal | 고리나루↔중앙시 (연락망 복구 후) |
 
-## 2. 필수 퀘스트 단계 (113개)
+## 2. 필수 퀘스트 단계 (206개)
 
 단서(clue) 단계는 순서와 무관하게 해결할 수 있고 화면 출구를 잠그지 않는다. 장 마지막 출구와 체육관 문은 해당 장의 모든 단서가 있어야 열린다.
 
 
-### 장 1 (10단계)
+### 장 1 (17단계)
 
 | 플래그 | 종류 | 위치 | 제목 |
 |---|---|---|---|
 | `c1_wake` | talk | H01#1 | 출발 아침 |
+| `e1_d1` | talk | H01#1 | 초록골의 부탁 |
 | `c1_lab` | scene | H01#2 | 피카츄를 만나다 |
 | `c1_lost` | talk | H01#2 | 잃어버린 상자 |
 | `c1_catch` | catch | R01#1 | 첫 포획 |
 | `c1_clue1` | clue | R01#2 | 부러진 상자 조각 |
+| `e1_t1` | trainer | R01#1 | 길목의 트레이너 1 |
+| `e1_p1` | puzzle | R01#2 | 연쇄 장치 |
 | `c1_tr1` | trainer | R01#3 | 곤충 소년 |
 | `c1_clue2` | clue | R02#1 | 짧은 샛길 |
+| `e1_t2` | trainer | R01#4 | 길목의 트레이너 2 |
+| `e1_p2` | puzzle | R02#1 | 암호 장치 |
 | `c1_box` | item | R02#2 | 보급 상자 회수 |
+| `e1_d2` | item | R02#2 | 수첩 찾기 |
 | `c1_rival` | rival | R02#3 | 라이벌 첫전 |
+| `e1_d3` | talk | H01#1 | 수첩 전달 |
 | `c1_report` | talk | H01#2 | 박사에게 보고 |
 
-### 장 2 (10단계)
+### 장 2 (17단계)
 
 | 플래그 | 종류 | 위치 | 제목 |
 |---|---|---|---|
 | `c2_gate` | talk | R03#1 | 숲의 안내인 |
 | `c2_clue1` | clue | R03#2 | 흔들리는 수풀 |
+| `e2_d1` | talk | R03#1 | 이끼숲길의 부탁 |
 | `c2_tr` | trainer | R03#3 | 채집 소녀 |
+| `e2_t1` | trainer | R03#4 | 길목의 트레이너 1 |
+| `e2_p1` | puzzle | D01#1 | 연쇄 장치 |
 | `c2_wood1` | puzzle | D01#2 | 방향 갈림길 |
 | `c2_clue2` | clue | D01#3 | 숨은 표식 |
+| `e2_t2` | trainer | D01#3 | 길목의 트레이너 2 |
 | `c2_tr2` | trainer | D01#4 | 벌레잡이 |
 | `c2_stone` | item | D01#4 | 채석 허가증 |
+| `e2_p2` | puzzle | D01#4 | 암호 장치 |
+| `e2_d2` | item | D01#5 | 낡은 열쇠꾸러미 찾기 |
 | `c2_hub` | talk | H02#1 | 돌여울 입구 |
 | `c2_gearshop` | item | H02#2 | 등산 장화 |
+| `e2_d3` | talk | R03#1 | 낡은 열쇠꾸러미 전달 |
 | `c2_gym` | gym | G01#3 | 바위 체육관 |
 
-### 장 3 (10단계)
+### 장 3 (17단계)
 
 | 플래그 | 종류 | 위치 | 제목 |
 |---|---|---|---|
+| `e3_d1` | talk | R04#1 | 동굴 입구길의 부탁 |
 | `c3_rival` | rival | R04#2 | 라이벌 재회 |
 | `c3_cave1` | puzzle | D02#1 | 소리 표식 |
+| `e3_t1` | trainer | D02#1 | 길목의 트레이너 1 |
 | `c3_fossil` | item | D02#2 | 화석 조사 |
+| `e3_p1` | puzzle | D02#2 | 연쇄 장치 |
 | `c3_tr` | trainer | D02#3 | 광부 |
 | `c3_clue` | clue | D02#4 | 끊긴 수로 지도 |
+| `e3_t2` | trainer | D02#5 | 길목의 트레이너 2 |
+| `e3_p2` | puzzle | R05#1 | 암호 장치 |
 | `c3_canal` | puzzle | R05#2 | 수문 우회 |
 | `c3_tr2` | trainer | R05#3 | 낚시꾼 |
+| `e3_d2` | item | R05#3 | 빛바랜 지도 찾기 |
 | `c3_hub` | talk | H03#1 | 물안개 시장 |
 | `c3_valve` | item | H03#2 | 수문 열쇠 |
+| `e3_d3` | talk | R04#1 | 빛바랜 지도 전달 |
 | `c3_gym` | gym | G02#3 | 물 체육관 |
 
-### 장 4 (10단계)
+### 장 4 (18단계)
 
 | 플래그 | 종류 | 위치 | 제목 |
 |---|---|---|---|
 | `c4_block` | talk | R06#1 | 항구 봉쇄 |
+| `e4_d1` | talk | R06#1 | 항구길의 부탁 |
 | `c4_tr` | trainer | R06#3 | 선원 |
 | `c4_hub` | talk | H04#1 | 푸른닻 부두 |
+| `e4_p1` | puzzle | D03#1 | 연쇄 장치 |
 | `c4_ware` | puzzle | D03#2 | 창고 배전함 |
 | `c4_clue` | clue | D03#3 | 짐 목록 |
+| `e4_t1` | trainer | D03#2 | 길목의 트레이너 1 |
+| `e4_r` | rocket | D03#3 | 매복 |
+| `e4_t2` | trainer | D03#4 | 길목의 트레이너 2 |
+| `e4_p2` | puzzle | D03#5 | 암호 장치 |
 | `c4_ship1` | puzzle | D04#1 | 침몰선 진입 |
+| `e4_d2` | item | D04#2 | 조사 일지 찾기 |
 | `c4_tr2` | trainer | D04#3 | 유령 괴담꾼 |
 | `c4_log` | item | D04#4 | 선박 항해일지 |
 | `c4_rocket1` | rocket | H04#2 | 로켓단 하수인 |
+| `e4_d3` | talk | R06#1 | 조사 일지 전달 |
 | `c4_gym` | gym | G03#3 | 전기 체육관 |
 
-### 장 5 (10단계)
+### 장 5 (18단계)
 
 | 플래그 | 종류 | 위치 | 제목 |
 |---|---|---|---|
+| `e5_d1` | talk | R07#1 | 삼림길의 부탁 |
 | `c5_rival` | rival | R07#2 | 라이벌 삼전 |
 | `c5_tr` | trainer | R07#3 | 약초꾼 |
+| `e5_t1` | trainer | R08#1 | 길목의 트레이너 1 |
 | `c5_compare` | item | R08#2 | 장비 비교 |
+| `e5_p1` | puzzle | R08#2 | 연쇄 장치 |
+| `e5_r` | rival | R08#4 | 매복 |
 | `c5_hub` | talk | H05#1 | 장터 소문 |
+| `e5_t2` | trainer | H05#2 | 길목의 트레이너 2 |
+| `e5_p2` | puzzle | H05#2 | 암호 장치 |
 | `c5_cell1` | puzzle | D05#2 | 지하창고 환기 |
 | `c5_clue` | clue | D05#3 | 약초 장부 |
+| `e5_d2` | item | D05#2 | 약속 증표 찾기 |
 | `c5_tr2` | trainer | D05#4 | 도둑 무리 |
 | `c5_herb` | item | D05#4 | 약초 상자 |
 | `c5_return` | talk | H05#2 | 조합장에게 |
+| `e5_d3` | talk | R07#1 | 약속 증표 전달 |
 | `c5_gym` | gym | G04#3 | 풀 체육관 |
 
-### 장 6 (9단계)
+### 장 6 (17단계)
 
 | 플래그 | 종류 | 위치 | 제목 |
 |---|---|---|---|
+| `e6_d1` | talk | R09#1 | 연락선로의 부탁 |
+| `e6_t1` | trainer | R10#1 | 길목의 트레이너 1 |
+| `e6_p1` | puzzle | R10#2 | 연쇄 장치 |
+| `e6_r` | rocket | R10#4 | 매복 |
 | `c6_net` | talk | H06#1 | 끊긴 연락망 |
 | `c6_rail` | puzzle | R09#2 | 선로 점검 |
 | `c6_tr` | trainer | R09#3 | 전기 기사 |
 | `c6_tower1` | item | R10#2 | 중계탑 부품 |
 | `c6_tr2` | trainer | R10#3 | 등산가 |
+| `e6_t2` | trainer | H06#2 | 길목의 트레이너 2 |
+| `e6_p2` | puzzle | H06#2 | 암호 장치 |
 | `c6_relay` | puzzle | D06#2 | 중계소 입구 |
+| `e6_d2` | item | D06#2 | 정비 도구함 찾기 |
 | `c6_rocket2` | rocket | D06#3 | 중계소 로켓단 |
 | `c6_rival` | rival | D06#4 | 라이벌 사전 |
+| `e6_d3` | talk | R09#1 | 정비 도구함 전달 |
 | `c6_restore` | scene | H06#2 | 연락망 복구 |
 
-### 장 7 (10단계)
+### 장 7 (18단계)
 
 | 플래그 | 종류 | 위치 | 제목 |
 |---|---|---|---|
 | `c7_gate` | talk | R11#1 | 보호구역 안내 |
+| `e7_d1` | talk | R11#1 | 늪길의 부탁 |
 | `c7_tr` | trainer | R11#3 | 늪 탐험가 |
+| `e7_t1` | trainer | R12#1 | 길목의 트레이너 1 |
 | `c7_quiet` | puzzle | R12#2 | 조용히 접근 |
+| `e7_p1` | puzzle | R12#2 | 연쇄 장치 |
+| `e7_r` | rival | R12#4 | 매복 |
 | `c7_hub` | talk | H07#1 | 늪숲마을 |
+| `e7_t2` | trainer | H07#2 | 길목의 트레이너 2 |
+| `e7_p2` | puzzle | H07#2 | 암호 장치 |
 | `c7_hide` | puzzle | D07#2 | 숨은 통로 |
 | `c7_clue` | clue | D07#3 | 오염 표본 |
+| `e7_d2` | item | D07#2 | 봉인된 편지 찾기 |
 | `c7_rare` | catch | D07#4 | 희귀종 관찰 |
 | `c7_tr2` | trainer | D07#4 | 독 사냥꾼 |
 | `c7_source` | item | D07#4 | 오염 장치 회수 |
+| `e7_d3` | talk | R11#1 | 봉인된 편지 전달 |
 | `c7_gym` | gym | G05#3 | 독 체육관 |
 
-### 장 8 (10단계)
+### 장 8 (18단계)
 
 | 플래그 | 종류 | 위치 | 제목 |
 |---|---|---|---|
 | `c8_gate` | talk | R13#1 | 대도시 진입로 |
+| `e8_d1` | talk | R13#1 | 대도시 진입로의 부탁 |
 | `c8_rival` | rival | R13#3 | 라이벌 오전 |
 | `c8_hub` | talk | H08#1 | 중앙시 광장 |
+| `e8_p1` | puzzle | D08#1 | 연쇄 장치 |
 | `c8_lab1` | puzzle | D08#2 | 연구소 보안문 |
+| `e8_t1` | trainer | D08#2 | 길목의 트레이너 1 |
+| `e8_r` | rocket | D08#3 | 매복 |
+| `e8_t2` | trainer | D08#4 | 길목의 트레이너 2 |
+| `e8_p2` | puzzle | D08#5 | 암호 장치 |
 | `c8_sub` | puzzle | D09#2 | 지하통로 분기 |
 | `c8_clue` | clue | D09#3 | 카드키 조각 |
+| `e8_d2` | item | D09#2 | 의뢰장 찾기 |
 | `c8_tr` | trainer | D09#4 | 연구 조교 |
 | `c8_data` | item | D08#4 | 실험 기록 |
 | `c8_rocket3` | rocket | D08#4 | 연구소 로켓단 |
+| `e8_d3` | talk | R13#1 | 의뢰장 전달 |
 | `c8_gym` | gym | G06#3 | 에스퍼 체육관 |
 
-### 장 9 (9단계)
+### 장 9 (17단계)
 
 | 플래그 | 종류 | 위치 | 제목 |
 |---|---|---|---|
 | `c9_ship` | talk | R14#1 | 항로 안내 |
+| `e9_d1` | talk | R14#1 | 해안 항로의 부탁 |
 | `c9_tr` | trainer | R14#3 | 수영 선수 |
 | `c9_tide` | puzzle | R15#2 | 조수로 드러나는 길 |
+| `e9_t1` | trainer | R15#2 | 길목의 트레이너 1 |
+| `e9_p1` | puzzle | R15#4 | 연쇄 장치 |
 | `c9_hub` | talk | H09#1 | 불뫼섬 선착장 |
+| `e9_r` | rival | D10#1 | 매복 |
 | `c9_vol` | puzzle | D10#2 | 열 밸브 점검 |
+| `e9_t2` | trainer | D10#2 | 길목의 트레이너 2 |
 | `c9_tr2` | trainer | D10#3 | 화산 안전원 |
 | `c9_clue` | clue | D11#2 | 관측소 문서 |
+| `e9_p2` | puzzle | D10#4 | 암호 장치 |
+| `e9_d2` | item | D11#1 | 수첩 찾기 |
 | `c9_rocket` | rocket | D11#4 | 관측소 로켓단 |
+| `e9_d3` | talk | R14#1 | 수첩 전달 |
 | `c9_gym` | gym | G07#3 | 불꽃 체육관 |
 
-### 장 10 (10단계)
+### 장 10 (18단계)
 
 | 플래그 | 종류 | 위치 | 제목 |
 |---|---|---|---|
 | `c10_gate` | talk | R16#1 | 사막 안내 |
+| `e10_d1` | talk | R16#1 | 사막길의 부탁 |
 | `c10_tr` | trainer | R16#3 | 사막 여행자 |
+| `e10_t1` | trainer | R17#1 | 길목의 트레이너 1 |
+| `e10_p1` | puzzle | R17#2 | 연쇄 장치 |
 | `c10_rival` | rival | R17#3 | 라이벌 육전 |
+| `e10_r` | rocket | R17#4 | 매복 |
 | `c10_hub` | talk | H10#1 | 황토읍 운송조합 |
+| `e10_t2` | trainer | H10#2 | 길목의 트레이너 2 |
+| `e10_p2` | puzzle | H10#2 | 암호 장치 |
 | `c10_hq1` | puzzle | D12#1 | 본부 입구 |
 | `c10_tr1` | trainer | D12#2 | 본부 단원 |
 | `c10_clue` | clue | D12#3 | 작전 계획서 |
+| `e10_d2` | item | D12#2 | 낡은 열쇠꾸러미 찾기 |
 | `c10_cap` | rocket | D12#4 | 간부 격파 |
 | `c10_save` | scene | D12#4 | 작전 저지 |
+| `e10_d3` | talk | R16#1 | 낡은 열쇠꾸러미 전달 |
 | `c10_gym` | gym | G08#3 | 땅 체육관 |
 
-### 장 11 (8단계)
+### 장 11 (16단계)
 
 | 플래그 | 종류 | 위치 | 제목 |
 |---|---|---|---|
 | `c11_gate` | talk | R18#1 | 북부 산길 |
+| `e11_d1` | talk | R18#1 | 북부 산길의 부탁 |
 | `c11_hub` | talk | H11#1 | 산채 휴식 |
+| `e11_t1` | trainer | R19#1 | 길목의 트레이너 1 |
 | `c11_road1` | trainer | R19#3 | 산길 수련자 |
+| `e11_p1` | puzzle | R19#3 | 연쇄 장치 |
 | `c11_road2` | puzzle | R20#2 | 낙석 구간 |
+| `e11_r` | rival | R20#3 | 매복 |
+| `e11_t2` | trainer | R20#4 | 길목의 트레이너 2 |
+| `e11_p2` | puzzle | D13#2 | 암호 장치 |
 | `c11_cave` | puzzle | D13#3 | 로드 동굴 |
 | `c11_tr` | trainer | D13#4 | 용 사육사 |
+| `e11_d2` | item | D13#4 | 빛바랜 지도 찾기 |
 | `c11_inspect` | scene | R21#2 | 리그 진입 심사 |
+| `e11_d3` | talk | R18#1 | 빛바랜 지도 전달 |
 | `c11_rival` | rival | R21#3 | 라이벌 결전 |
 
-### 장 12 (7단계)
+### 장 12 (15단계)
 
 | 플래그 | 종류 | 위치 | 제목 |
 |---|---|---|---|
 | `c12_hub` | talk | H12#1 | 리그마을 대기 |
+| `e12_d1` | talk | H12#1 | 리그마을의 부탁 |
 | `c12_e1` | league | D14#1 | 사천왕 한빙 |
+| `e12_t1` | trainer | D14#1 | 길목의 트레이너 1 |
+| `e12_p1` | puzzle | D14#1 | 연쇄 장치 |
+| `e12_r` | rocket | D14#1 | 매복 |
 | `c12_e2` | league | D14#2 | 사천왕 철권 |
+| `e12_t2` | trainer | D14#2 | 길목의 트레이너 2 |
+| `e12_p2` | puzzle | D14#2 | 암호 장치 |
 | `c12_e3` | league | D14#3 | 사천왕 그림자 |
+| `e12_d2` | item | D14#3 | 조사 일지 찾기 |
 | `c12_e4` | league | D14#4 | 사천왕 용담 |
 | `c12_champ` | league | D14#4 | 챔피언 바라 |
+| `e12_d3` | talk | H12#1 | 조사 일지 전달 |
 | `c12_end` | scene | H12#2 | 후일담과 엔딩 |
 
 ## 3. 체육관과 리그
@@ -263,7 +358,7 @@
 
 ## 4. 트레이너
 
-총 127명. 레벨·파티는 `data/trainers.json`.
+총 173명. 레벨·파티는 `data/trainers.json`.
 
 ## 5. 야생 출현표
 
@@ -351,7 +446,7 @@
 
 ## 8. 세이브 코드 형식 `EK1`
 
-`EK1|맵번호|x|y|돈|배지비트|클리어|마지막센터맵|플래그문자열(273자,0/1)|도감문자열(151자,0/1/2)|가방(점구분 19개)|파티(~구분)|보관함(~구분)|검사값`
+`EK1|맵번호|x|y|돈|배지비트|클리어|마지막센터맵|플래그문자열(460자,0/1)|도감문자열(151자,0/1/2)|가방(점구분 19개)|파티(~구분)|보관함(~구분)|검사값`
 
 개체 = `종:레벨:경험치:HP:상태:기술1~4:PP1~4`. 검사값은 문자 코드 가중 합산(mod 1000003). 읽을 때 전체를 검증한 뒤에만 적용하며 실패하면 현재 진행을 건드리지 않는다.
 

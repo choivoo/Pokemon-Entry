@@ -136,7 +136,9 @@ def logic():
             with While(bover==0):
                 v("bturns").inc(); v("stat_turns").inc(); call("refresh_views")
                 with If(v("bturns")>600): bover.set(1); bres.set(0)
-                hud(join(l("S_name")[l("PS_sp")[pa]]," Lv",l("PS_lv")[pa]," HP ",l("PS_hp")[pa]," / 상대 ",l("S_name")[l("FO_sp")[fi]]," Lv",l("FO_lv")[fi]," HP ",l("FO_hp")[fi]))
+                v("st_sp").set(l("PS_sp")[pa]); v("st_lv").set(l("PS_lv")[pa]); call("max_hp"); v("bar_hp").set(l("PS_hp")[pa]); v("bar_mx").set(v("st_out")); call("bar"); v("own_bar").set(v("bar_out"))
+                v("st_sp").set(l("FO_sp")[fi]); v("st_lv").set(l("FO_lv")[fi]); call("max_hp"); v("bar_hp").set(l("FO_hp")[fi]); v("bar_mx").set(v("st_out")); call("bar")
+                hud(join(l("S_name")[l("PS_sp")[pa]]," Lv",l("PS_lv")[pa]," ",v("own_bar")," ",l("PS_hp")[pa]," | ",l("S_name")[l("FO_sp")[fi]]," Lv",l("FO_lv")[fi]," ",v("bar_out")))
                 with IfElse(need_sw==1) as ie2:
                     ask("교체할 포켓몬 번호?"); v("bt_cmd").set(2); v("bt_i").set(answer())
                     ie2.other()
@@ -244,15 +246,43 @@ def logic():
                     r.inc(0-l("W_w")[i])
                     with If(r<=0): v("wdone").set(1); v("w_sp").set(l("W_sp")[i]); v("w_lv").set(l("W_lo")[i]+rnd(0,l("W_hi")[i]-l("W_lo")[i]))
                 i.inc()
+    with proc("wild_prompt"):  # in w_sp w_lv
+        with If(l("DEX")[v("w_sp")]<1): l("DEX").set(v("w_sp"),1)
+        say(join("야생 ",l("S_name")[v("w_sp")],"(Lv",v("w_lv"),")이(가) 나타났다!"))
+        ask("1 포획  2 전투  3 지나간다"); v("we_in").set(answer())
+        with If(v("we_in")==1): v("c_sp").set(v("w_sp")); v("c_lv").set(v("w_lv")); call("capture_screen")
+        with If(v("we_in")==2): call("wild_battle")
     with proc("maybe_encounter"):
         with If(rnd(1,100)<=v("enc_rate")):
             call("wild_roll")
-            with If(v("w_sp")>0):
-                with If(l("DEX")[v("w_sp")]<1): l("DEX").set(v("w_sp"),1)
-                say(join("야생 ",l("S_name")[v("w_sp")],"(Lv",v("w_lv"),")이(가) 나타났다!"))
-                ask("1 포획  2 전투  3 지나간다"); v("we_in").set(answer())
-                with If(v("we_in")==1): v("c_sp").set(v("w_sp")); v("c_lv").set(v("w_lv")); call("capture_screen")
-                with If(v("we_in")==2): call("wild_battle")
+            with If(v("w_sp")>0): call("wild_prompt")
+    with proc("spawn_wild"):
+        for k in (1,2): v(f"vw{k}x").set(-1)
+        with If((v("enc_on")==1)&(l("W_count")[l("M_area")[mp]]>0)):
+            for k in (1,2):
+                tries=v("sp_try"); tries.set(0)
+                with While((v(f"vw{k}x")==-1)&(tries<25)):
+                    tries.inc(); x=v("sp_x"); y=v("sp_y"); x.set(rnd(1,18)); y.set(rnd(1,9))
+                    with If((charat(l("T_rows")[(mp-1)*11+y+1],x+1)=="g")&~((x==px)&(y==py))&~((x==v("vw1x"))&(y==v("vw1y")))):
+                        v(f"vw{k}x").set(x); v(f"vw{k}y").set(y); call("wild_roll"); v(f"vw{k}sp").set(v("w_sp")); v(f"vw{k}lv").set(v("w_lv"))
+                        with If(v("w_sp")>0): v("dx_").set(-228+24*x); v("dy_").set(123-24*y); v("nk").set(9); call("stamp_npc")
+                        with If(v("w_sp")==0): v(f"vw{k}x").set(-1); tries.set(99)
+    with proc("check_visible_wild"):
+        v("vw_hit").set(0)
+        for k in (1,2):
+            with If((v("vw_hit")==0)&(v(f"vw{k}x")==px)&(v(f"vw{k}y")==py)&(v(f"vw{k}sp")>0)):
+                v("vw_hit").set(1); v("w_sp").set(v(f"vw{k}sp")); v("w_lv").set(v(f"vw{k}lv")); v(f"vw{k}x").set(-1)
+        with If(v("vw_hit")==1): call("wild_prompt"); call("draw_map")
+    with proc("bar"):  # in bar_hp bar_mx -> bar_out
+        v("bar_out").set(""); n=v("bar_n"); n.set(floor(10*v("bar_hp")/v("bar_mx")))
+        with If((v("bar_hp")>0)&(n<1)): n.set(1)
+        i=v("bar_i"); i.set(1)
+        with Repeat(10):
+            with IfElse(i<=n) as ie:
+                v("bar_out").set(join(v("bar_out"),"■")); ie.other(); v("bar_out").set(join(v("bar_out"),"□"))
+            i.inc()
+    with proc("area_greet"):
+        with If(l("VIS")[l("M_area")[mp]]==0): l("VIS").set(l("M_area")[mp],1); say(join("피카츄: ",l("A_pika")[l("M_area")[mp]]))
     with proc("static_battle"):  # in g_sp g_lv
         v("c_sp").set(v("g_sp")); v("c_lv").set(v("g_lv")); call("capture_screen")
         with IfElse(v("c_res")==1) as ie:
