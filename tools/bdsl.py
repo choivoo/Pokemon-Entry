@@ -297,4 +297,5 @@ class ProgFromEnt:
             if v["variableType"]=="variable": s.vars[v["name"]]=v["id"]; s.vinit[v["name"]]=co(v["value"])
             else: s.lists[v["name"]]=[v["id"],[co(x["data"]) for x in v["array"]]]
         for o in proj["objects"]:
-            for sc in json.loads(o["script"]): s.scripts.append((o["name"],sc))
+            import entry_real
+            for sc in json.loads(o["script"]): s.scripts.append((o["name"],[entry_real.denormalize(b) for b in sc]))

@@ -7,7 +7,7 @@ import bdsl, build_game, game_data as GD
 NAME="Pokemon_Pikachu_Kanto_Journey_1.0"
 files={}
 def add_file(kind,path):
-    data=open(path,"rb").read(); h=hashlib.md5(data).hexdigest(); fn=h[:16]; ext=os.path.splitext(path)[1][1:]
+    data=open(path,"rb").read(); h=hashlib.md5(data).hexdigest(); fn=h; ext=os.path.splitext(path)[1][1:]
     url=f"temp/{h[:2]}/{h[2:4]}/{kind}/{fn}.{ext}"; files[url]=data; return url,fn,ext
 class Obj:
     def __init__(s,name,pics,x=0,y=0,vis=True,size=None,typ="sprite",sounds=()):
@@ -27,8 +27,8 @@ def build(out="build/%s.ent"%NAME):
     for k in (1,2): objs.append(Obj(f"wild{k}",[(f"{i}_{v}",f"assets/gen/icons/{i:03d}_{v}.png",24) for i in range(1,152) for v in range(4)],vis=False,size=24))
     objs.append(Obj("fx_ball",[("1",U+"fx_ball.png",16)],x=-150,y=-30,vis=False,size=16)); objs.append(Obj("fx_flash",[("1",U+"fx_flash.png",270)],vis=False,size=270))
     objs.append(Obj("panel",[],x=0,y=10,typ="textBox",vis=False))
-    pos={"btn_left":(-215,-100),"btn_right":(-155,-100),"btn_up":(-185,-70),"btn_down":(-185,-130),"btn_ok":(205,-100),"btn_menu":(205,-60)}
-    for n,(x,y) in pos.items(): objs.append(Obj(n,[("1",f"{U}{n}.png",40)],x=x,y=y,size=40))
+    pos={"btn_left":(-214,-98),"btn_right":(-154,-98),"btn_up":(-184,-70),"btn_down":(-184,-126),"btn_ok":(205,-98),"btn_menu":(205,-40),"btn_pika":(145,-98)}
+    for n,(x,y) in pos.items(): objs.append(Obj(n,[("1",f"{U}{n}.png",56)],x=x,y=y,size=56))
     objs.append(Obj("bgm",[("1",U+"blank.png",2)],vis=False,size=2,sounds=[(str(k),f"assets/gen/bgm/bgm{k}.mp3") for k in range(1,9)]))
     objs.append(Obj("hud",[],x=0,y=-125,typ="textBox"))
     objs.append(Obj("main",[("1",U+"blank.png",2)],vis=False,size=2))
@@ -46,9 +46,8 @@ def build(out="build/%s.ent"%NAME):
             elif isinstance(pm,dict): fix(pm)
         for st in b["statements"]:
             for c in st: fix(c)
-    def reid(b):
-        n=dict(b); n["id"]=uid(); n["params"]=[reid(q) if isinstance(q,dict) else q for q in b["params"]]
-        n["statements"]=[[reid(c) for c in st] for st in b["statements"]]; return n
+    import entry_real
+    def reid(b): return entry_real.normalize(b,uid)
     by_obj={}
     for on,sc in prog.scripts:
         for b in sc: fix(b)
@@ -60,7 +59,7 @@ def build(out="build/%s.ent"%NAME):
         sc=by_obj.get(o.name,[])
         d={"id":uid(),"name":o.name,"script":json.dumps(sc,ensure_ascii=False),"objectType":"textBox" if o.typ=="textBox" else "sprite","rotateMethod":"free","scene":"scn1","lock":False}
         if o.typ=="textBox":
-            d["text"]=""; d["entity"]={"x":o.x,"y":o.y,"regX":200,"regY":15 if o.name=="hud" else 100,"scaleX":1,"scaleY":1,"rotation":0,"direction":90,"width":400,"height":30 if o.name=="hud" else 200,"text":"","font":"16px Nanum Gothic","colour":"#ffffff","bgColor":"#000000a0","underLine":False,"strike":False,"fontSize":16,"textAlign":0 if o.name=="panel" else 1,"lineBreak":o.name=="panel","visible":o.vis}
+            d["text"]=""; d["sprite"]={"pictures":[],"sounds":[]}; d["selectedPictureId"]=""; d["entity"]={"x":o.x,"y":o.y,"regX":200,"regY":15 if o.name=="hud" else 100,"scaleX":1,"scaleY":1,"rotation":0,"direction":90,"width":400,"height":30 if o.name=="hud" else 200,"text":"","font":"16px Nanum Gothic","colour":"#ffffff","bgColor":"#000000a0","underLine":False,"strike":False,"fontSize":16,"textAlign":0 if o.name=="panel" else 1,"lineBreak":o.name=="panel","visible":o.vis}
         else:
             pics=[]
             for key,path,sz in o.pics:
@@ -76,7 +75,7 @@ def build(out="build/%s.ent"%NAME):
     for n,i in prog.vars.items(): variables.append({"name":n,"id":i,"visible":False,"value":str(prog.vinit[n]),"variableType":"variable","isCloud":False,"isRealTime":False,"cloudDate":False,"object":None,"x":0,"y":0})
     for n,(i,items) in prog.lists.items(): variables.append({"name":n,"id":i,"visible":False,"value":"","variableType":"list","isCloud":False,"isRealTime":False,"cloudDate":False,"object":None,"x":0,"y":0,"width":100,"height":120,"array":[{"data":str(x)} for x in items]})
     proj={"name":NAME,"objects":oj,"scenes":[{"id":"scn1","name":"장면 1"}],"variables":variables,"messages":[{"id":i,"name":n} for n,i in prog.msgs.items()],"functions":[],"tables":[],"speed":60,
-      "interface":{"canvasWidth":480,"menus":{}},"expansionBlocks":[],"aiUtilizeBlocks":[],"hardwareLiteBlocks":[],"externalModules":[],"externalModulesLite":[],"cloudVariable":"[]","learning":"{}","isPracticalCourse":False,"category":"etc"}
+      "interface":{"canvasWidth":480,"menuWidth":280,"object":oj[0]["id"]},"expansionBlocks":[],"aiUtilizeBlocks":[],"hardwareLiteBlocks":[],"externalModules":[],"externalModulesLite":[],"cloudVariable":"[]","learning":"{}","isPracticalCourse":False,"category":"etc"}
     os.makedirs("build",exist_ok=True)
     raw=json.dumps(proj,ensure_ascii=False)
     with tarfile.open(out,"w:gz") as t:
@@ -100,8 +99,8 @@ def validate(proj):
         if t in("remove_value_from_list","insert_value_to_list") and p[1] not in lids: errs.append((o,t,p[1]))
         if t in("message_cast","message_cast_wait") and p[0] not in mids: errs.append((o,t,p[0]))
         if t=="when_message_cast" and p[1] not in mids: errs.append((o,t,p[1]))
-        if t=="change_to_some_shape" and p[0] not in pics: errs.append((o,t,p[0]))
-        if t=="sound_something_wait_with_block" and p[0] not in snds: errs.append((o,t,p[0]))
+        if t=="change_to_some_shape" and p[0]["params"][0] not in pics: errs.append((o,t,p[0]))
+        if t=="sound_something_wait_with_block" and p[0]["params"][0] not in snds: errs.append((o,t,p[0]))
         for q in p:
             if isinstance(q,dict): walk(q,o)
         for st in b["statements"]:
@@ -111,6 +110,10 @@ def validate(proj):
     for o in proj["objects"]:
         for sc in json.loads(o["script"]):
             for b in sc: walk(b,o["name"])
+    import entry_real
+    for o in proj['objects']:
+        for sc in json.loads(o['script']):
+            for b in sc: entry_real.check(b,errs)
     clash=set(seen)&set(allids)
     if clash: errs.append(('block/entity id clash',sorted(clash)[:3]))
     return errs,counts["blocks"]

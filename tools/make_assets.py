@@ -111,10 +111,11 @@ def btn(name,shape):
     if shape=="left": dr.polygon([(8,20),(28,9),(28,31)],fill=(255,255,255,230))
     if shape=="right": dr.polygon([(32,20),(12,9),(12,31)],fill=(255,255,255,230))
     if shape=="ok": dr.ellipse([9,9,31,31],outline=(255,255,255,230),width=3)
+    if shape=="pika": dr.ellipse([8,8,32,32],fill=(250,220,40,230)); dr.point((15,18),fill=(20,20,20,255)); dr.point((25,18),fill=(20,20,20,255)); dr.ellipse([11,22,15,26],fill=(230,60,50,255)); dr.ellipse([25,22,29,26],fill=(230,60,50,255))
     if shape=="menu":
         for y in (12,19,26): dr.line([(10,y),(30,y)],fill=(255,255,255,230),width=3)
-    save(im,f"{OUT}/ui/{name}.png")
-for n,s in (("btn_up","up"),("btn_down","down"),("btn_left","left"),("btn_right","right"),("btn_ok","ok"),("btn_menu","menu")): btn(n,s)
+    save(im.resize((56,56),Image.LANCZOS),f"{OUT}/ui/{name}.png")
+for n,s in (("btn_up","up"),("btn_down","down"),("btn_left","left"),("btn_right","right"),("btn_ok","ok"),("btn_menu","menu"),("btn_pika","pika")): btn(n,s)
 Image.new("RGBA",(2,2),(0,0,0,0)).save(f"{OUT}/ui/blank.png")
 # ---------- original BGM (square-wave chiptune), 8 moods ----------
 SR=22050

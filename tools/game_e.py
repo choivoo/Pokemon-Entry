@@ -68,6 +68,10 @@ def logic():
             call("pika_open_hidden"); call("pika_sniff"); ie.other(); call("hint")
     with on_click("pika"):
         say("피카츄: 피카!"); v("aff").inc(); call("pika_sniff")
+    with on_click("btn_pika"):
+        v("aff").inc(); say("피카츄: 피카피카! (귀를 쫑긋 세운다)")
+        with IfElse(v("aff")>=10) as ie:
+            call("pika_open_hidden"); call("pika_sniff"); ie.other(); call("hint")
     # touch buttons
     for name,code in (("btn_up",4),("btn_down",1),("btn_left",2),("btn_right",3),("btn_ok",5),("btn_menu",7)):
         with on_click(name):
