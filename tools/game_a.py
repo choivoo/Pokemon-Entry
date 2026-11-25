@@ -141,7 +141,7 @@ def field_logic():
             with If((l("X_map")[ei]==mp)&(l("X_x")[ei]==px)&(l("X_y")[ei]==py)&(v("exfound")==0)):
                 v("exfound").set(1); gi.set(l("X_gate")[ei]); call("gate_check")
                 with IfElse(ok_==1) as ie:
-                    mp.set(l("X_to")[ei]); px.set(l("X_tx")[ei]); py.set(l("X_ty")[ei]); call("draw_map"); v("moved_map").set(1)
+                    sfx("door"); mp.set(l("X_to")[ei]); px.set(l("X_tx")[ei]); py.set(l("X_ty")[ei]); call("draw_map"); v("moved_map").set(1)
                     ie.other()
                     say(join("길이 열리지 않았다. 아직 필요한 일: ",l("F_title")[gmiss],"")); 
                     # step back (undo move)
@@ -166,6 +166,7 @@ def field_logic():
                 with If((v("moved_map")==0)&(enc_on==1)&(tch!="D")): call("wild_step"); call("check_visible_wild")
                 with If((v("moved_map")==0)&(M_dark_here())): call("redraw_dark")
                 with If((steps%25==0)&(v("aff")<100)): v("aff").inc()
+                with If(steps%150==0): call("fx_tint_update")
                 with If((tch=="g")&(v("moved_map")==0)&(enc_on==1)): call("maybe_encounter")
     with proc("check_sight"):  # trainers see 3 tiles along row/column when no wall is between; fires once per trainer
         v("sg_hit").set(0); i=v("sg_i"); i.set(l("M_nstart")[mp])

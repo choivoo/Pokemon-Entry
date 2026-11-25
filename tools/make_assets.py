@@ -165,3 +165,54 @@ for i in range(1,152):
         if var%2==1:
             c=Image.new("RGBA",(24,24),(0,0,0,0)); c.paste(im,(0,1)); im=c
         im.save(f"{OUT}/icons/{i:03d}_{var}.png")
+
+# ---------- direction-effect art ----------
+Image.new("RGBA",(480,270),(0,0,0,255)).save(f"{OUT}/ui/fx_fade.png")
+Image.new("RGBA",(480,45),(0,0,0,255)).save(f"{OUT}/ui/fx_bar.png")
+TINTS={"night":(15,25,90),"rain":(50,70,110),"sun":(255,190,90),"sand":(200,160,90),"hail":(210,230,255),"dark":(0,0,15)}
+for k,c in TINTS.items(): Image.new("RGBA",(480,270),c+(255,)).save(f"{OUT}/ui/tint_{k}.png")
+import random as _r
+def particles(kind,frame):
+    im=Image.new("RGBA",(480,270),(0,0,0,0)); dr=ImageDraw.Draw(im); r=_r.Random(__import__('zlib').crc32((kind+str(frame)).encode()))
+    for _ in range(90):
+        x,y=r.randint(0,479),r.randint(0,269)
+        if kind=="rain": dr.line([(x,y),(x-4,y+14)],fill=(190,210,255,200),width=1)
+        elif kind=="snow": dr.ellipse([x,y,x+3,y+3],fill=(255,255,255,230))
+        else: dr.line([(x,y),(x+16,y+2)],fill=(220,180,110,170),width=1)
+    return im
+for kd in ("rain","snow","sand"):
+    for f in (1,2): particles(kd,f).save(f"{OUT}/ui/part_{kd}{f}.png")
+# title art: gradient sky, mountains, star glints, big ring
+ti=Image.new("RGBA",(480,270),(0,0,0,255)); td=ImageDraw.Draw(ti)
+for y in range(270):
+    t=y/270; td.line([(0,y),(479,y)],fill=(int(20+120*t),int(30+90*t),int(80+60*(1-t)),255))
+rr=_r.Random(5)
+for _ in range(60): x,y=rr.randint(0,479),rr.randint(0,150); td.ellipse([x,y,x+2,y+2],fill=(255,255,255,230))
+td.ellipse([150,20,330,200],outline=(255,235,150,255),width=4); td.ellipse([168,38,312,182],outline=(255,235,150,160),width=2)
+td.polygon([(0,270),(0,190),(90,140),(170,200),(260,120),(360,205),(430,150),(480,190),(480,270)],fill=(20,25,45,255))
+td.polygon([(0,270),(0,225),(120,190),(250,235),(380,195),(480,230),(480,270)],fill=(10,14,28,255))
+ti.save(f"{OUT}/ui/title_art.png")
+# ---------- SFX (original synth) ----------
+import math as _m
+SR2=22050
+def sfx_wave(path,parts):
+    smp=[]
+    for kind,f0,f1,dur,vol in parts:
+        n=int(SR2*dur)
+        for i in range(n):
+            t=i/n; f=f0+(f1-f0)*t; ph=(i*f/SR2)%1
+            if kind=="sq": v=1 if ph<0.5 else -1
+            elif kind=="noise": v=_r.random()*2-1
+            else: v=_m.sin(2*_m.pi*ph)
+            smp.append(v*vol*(1-t)**0.6)
+    with wave.open(path,"wb") as w:
+        w.setnchannels(1); w.setsampwidth(1); w.setframerate(SR2); w.writeframes(bytes(int(128+110*max(-1,min(1,a))) for a in smp))
+SF={"hit":[("noise",0,0,0.09,0.8),("sq",220,90,0.08,0.4)],"crit":[("sq",600,900,0.07,0.6),("noise",0,0,0.1,0.8),("sq",300,100,0.12,0.5)],
+ "faint":[("sq",400,60,0.5,0.6)],"catch":[("sq",523,523,0.08,0.5),("sq",659,659,0.08,0.5),("sq",784,784,0.08,0.5),("sq",1046,1046,0.25,0.6)],
+ "shake":[("sq",180,120,0.05,0.6),("noise",0,0,0.03,0.4)],"level":[("sq",523,523,0.08,0.5),("sq",659,659,0.08,0.5),("sq",784,784,0.08,0.5),("sq",1046,1046,0.08,0.5),("sq",1318,1318,0.2,0.6)],
+ "evolve":[("sin",200,1200,0.9,0.7),("sq",1200,1200,0.2,0.4)],"sting":[("sq",110,110,0.25,0.7),("sq",146,146,0.25,0.7),("sq",220,196,0.5,0.7)],
+ "select":[("sq",880,1100,0.05,0.5)],"door":[("sin",120,60,0.12,0.9),("noise",0,0,0.04,0.3)],"flee":[("sq",500,200,0.25,0.5)]}
+os.makedirs(OUT+"/sfx",exist_ok=True)
+for k,pp in SF.items():
+    wp=f"{OUT}/sfx/{k}.wav"; sfx_wave(wp,pp); subprocess.run(["ffmpeg","-y","-loglevel","error","-i",wp,"-ac","1","-b:a","48k",f"{OUT}/sfx/{k}.mp3"],check=True); os.remove(wp)
+print("fx assets ok")

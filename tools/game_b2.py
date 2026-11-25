@@ -176,7 +176,7 @@ def logic():
             with If(v("weather")==2): say("햇볕이 강하다! (불꽃 기술 강화, 물 약화)")
             with If(v("weather")==3): say("모래바람이 분다! (바위·땅·강철 외 지속 피해)")
             with If(v("weather")==4): say("싸라기눈이 내린다! (얼음 외 지속 피해)")
-            call("enter_p"); call("enter_f")
+            call("enter_p"); call("enter_f"); call("fx_flash_once")
             with If(v("is_trainer")==1):
                 with If(l("TR_kind")[v("tr_idx")]==3): v("bgm_mood").set(5)
                 with If(l("TR_kind")[v("tr_idx")]==2): v("bgm_mood").set(6)
@@ -184,6 +184,7 @@ def logic():
             with If(l("DEX")[l("FO_sp")[1]]<1): l("DEX").set(l("FO_sp")[1],1)
             with While(bover==0):
                 v("bturns").inc(); v("stat_turns").inc(); call("refresh_views")
+                with If(v("bturns")==1): call("slide_in")
                 with If(v("bturns")>600): bover.set(1); bres.set(0)
                 v("st_sp").set(l("PS_sp")[pa]); v("st_lv").set(l("PS_lv")[pa]); call("max_hp"); v("bar_hp").set(l("PS_hp")[pa]); v("bar_mx").set(v("st_out")); call("bar"); v("own_bar").set(v("bar_out"))
                 v("st_sp").set(l("FO_sp")[fi]); v("st_lv").set(l("FO_lv")[fi]); call("max_hp"); v("bar_hp").set(l("FO_hp")[fi]); v("bar_mx").set(v("st_out")); call("bar")
@@ -207,7 +208,9 @@ def logic():
     with proc("trainer_battle"):  # in tr_idx
         v("is_trainer").set(1); v("ai_pot").set(0)
         with If(l("TR_kind")[v("tr_idx")]>=2): v("ai_pot").set(2)
-        call("foe_setup_trainer"); say(join(l("TR_name")[v("tr_idx")],"이(가) 승부를 걸어왔다!")); call("battle_run")
+        call("foe_setup_trainer"); say(join(l("TR_name")[v("tr_idx")],"이(가) 승부를 걸어왔다!"))
+        with If(l("TR_kind")[v("tr_idx")]==3): v("cut_sp").set(l("FO_sp")[fn]); v("cut_title").set(join(l("TR_name")[v("tr_idx")]," 등장!")); call("cutscene_boss")
+        call("battle_run")
         with If(bres==2): call("whiteout")
     with proc("wild_battle"):  # in w_sp w_lv
         v("is_trainer").set(0); v("ai_pot").set(0); call("foe_setup_single"); call("battle_run")
@@ -219,7 +222,7 @@ def logic():
     with proc("throw_ball"):  # in tb_ball (item idx), tb_grade (0 miss,1 nice,2 great,3 excellent), c_sp,c_lv,c_bait ; -> c_over, c_res (1 caught 2 fled 0 broke free)
         l("BAG").set(v("tb_ball"),l("BAG")[v("tb_ball")]-1); v("stat_throws").inc(); P.emit(blk("message_cast",P.msg("anim_throw")))
         with IfElse(v("tb_grade")==0) as ie:
-            say("볼이 빗나갔다!")
+            say("볼이 빗나갔다!"); call("ball_hide")
             with If(rnd(1,100)<=15): v("c_over").set(1); v("c_res").set(2); say("포켓몬이 도망쳤다!")
             ie.other()
             v("st_sp").set(v("c_sp")); v("st_lv").set(v("c_lv")); call("max_hp"); mh=v("c_mh"); mh.set(v("st_out")); hp=v("c_hp")
@@ -238,12 +241,13 @@ def logic():
                 with If(stop==0):
                     with IfElse(rnd(0,65535)<b) as ie2:
                         sh.inc(); ie2.other(); stop.set(1)
+            with Repeat(sh): call("ball_wobble"); sfx("shake")
             with IfElse(sh==4) as ie2:
-                v("c_over").set(1); v("c_res").set(1); v("g_sp").set(v("c_sp")); v("g_lv").set(v("c_lv")); call("add_mon"); say("잡았다!"); call("catch_hook")
+                sfx("catch"); call("capture_burst"); call("fx_flash_once"); v("c_over").set(1); v("c_res").set(1); v("g_sp").set(v("c_sp")); v("g_lv").set(v("c_lv")); call("add_mon"); say("잡았다!"); call("catch_hook")
                 with If(v("where")==2): say("파티가 가득 차서 보관함으로 보냈다.")
                 with If(v("where")==3): say("보관함도 가득 차서 놓아주었다. (보관함을 정리하자)")
                 ie2.other()
-                say(join("볼이 ",sh,"번 흔들렸다..."))
+                say(join("볼이 ",sh,"번 흔들렸다...")); sfx("flee"); call("ball_hide")
                 with If(rnd(1,100)<=18): v("c_over").set(1); v("c_res").set(2); say("포켓몬이 도망쳤다!")
     with proc("capture_screen"):  # in c_sp c_lv
         v("c_over").set(0); v("c_res").set(0); v("c_bait").set(0); v("c_hp").set(0); v("view_foe").set(v("c_sp")); call("show_foe"); v("bgm_mood").set(3); call("play_bgm")

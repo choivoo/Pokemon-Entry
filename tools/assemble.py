@@ -25,12 +25,20 @@ def build(out="build/%s.ent"%NAME):
     objs.append(Obj("mon_view",[(str(i),f"assets/sprites/{i:03d}.png",96) for i in range(1,152)],x=150,y=35,vis=False,size=96))
     objs.append(Obj("mon_own",[(str(i),f"assets/sprites/{i:03d}.png",96) for i in range(1,152)],x=-150,y=-30,vis=False,size=96))
     for k in (1,2): objs.append(Obj(f"wild{k}",[(f"{i}_{v}",f"assets/gen/icons/{i:03d}_{v}.png",24) for i in range(1,152) for v in range(4)],vis=False,size=24))
-    objs.append(Obj("fx_ball",[("1",U+"fx_ball.png",16)],x=-150,y=-30,vis=False,size=16)); objs.append(Obj("fx_flash",[("1",U+"fx_flash.png",270)],vis=False,size=270))
+    objs.append(Obj("fx_ball",[("1",U+"fx_ball.png",16)],x=-150,y=-30,vis=False,size=16))
+    objs.append(Obj("fx_tint",[(k,f"{U}tint_{k}.png",(480,270)) for k in ("night","rain","sun","sand","hail","dark")],vis=False,size=(480,270)))
+    objs.append(Obj("fx_part",[(f"{k}{f}",f"{U}part_{k}{f}.png",(480,270)) for k in ("rain","snow","sand") for f in (1,2)],vis=False,size=(480,270)))
     objs.append(Obj("panel",[],x=0,y=10,typ="textBox",vis=False))
     pos={"btn_left":(-214,-98),"btn_right":(-154,-98),"btn_up":(-184,-70),"btn_down":(-184,-126),"btn_ok":(205,-98),"btn_menu":(205,-40),"btn_pika":(145,-98)}
     for n,(x,y) in pos.items(): objs.append(Obj(n,[("1",f"{U}{n}.png",56)],x=x,y=y,size=56))
     objs.append(Obj("bgm",[("1",U+"blank.png",2)],vis=False,size=2,sounds=[(str(k),f"assets/gen/bgm/bgm{k}.mp3") for k in range(1,9)]))
     objs.append(Obj("hud",[],x=0,y=-125,typ="textBox"))
+    objs.append(Obj("fx_flash",[("1",U+"fx_flash.png",(480,270))],vis=False,size=(480,270)))
+    objs.append(Obj("fx_fade",[("1",U+"fx_fade.png",(480,270))],vis=False,size=(480,270)))
+    objs.append(Obj("fx_top",[("1",U+"fx_bar.png",(480,45))],y=160,vis=False,size=(480,45))); objs.append(Obj("fx_bot",[("1",U+"fx_bar.png",(480,45))],y=-160,vis=False,size=(480,45)))
+    objs.append(Obj("title_art",[("1",U+"title_art.png",(480,270))],vis=False,size=(480,270)))
+    objs.append(Obj("title_text",[],x=0,y=40,typ="textBox",vis=False))
+    objs.append(Obj("sfx",[("1",U+"blank.png",2)],vis=False,size=2,sounds=[(k,f"assets/gen/sfx/{k}.mp3") for k in ("hit","crit","faint","catch","shake","level","evolve","sting","select","door","flee")]))
     objs.append(Obj("main",[("1",U+"blank.png",2)],vis=True,size=2))
     # ids
     sounds_ids={}
@@ -59,17 +67,17 @@ def build(out="build/%s.ent"%NAME):
         sc=by_obj.get(o.name,[])
         d={"id":uid(),"name":o.name,"script":json.dumps(sc,ensure_ascii=False),"objectType":"textBox" if o.typ=="textBox" else "sprite","rotateMethod":"free","scene":"scn1","lock":False}
         if o.typ=="textBox":
-            d["text"]=""; d["sprite"]={"pictures":[],"sounds":[]}; d["selectedPictureId"]=""; d["entity"]={"x":o.x,"y":o.y,"regX":200,"regY":15 if o.name=="hud" else 100,"scaleX":1,"scaleY":1,"rotation":0,"direction":90,"width":400,"height":30 if o.name=="hud" else 200,"text":"","font":"16px Nanum Gothic","colour":"#ffffff","bgColor":"#000000a0","underLine":False,"strike":False,"fontSize":16,"textAlign":0 if o.name=="panel" else 1,"lineBreak":o.name=="panel","visible":o.vis}
+            d["text"]=""; d["sprite"]={"pictures":[],"sounds":[]}; d["selectedPictureId"]=""; d["entity"]={"x":o.x,"y":o.y,"regX":200,"regY":15 if o.name=="hud" else (30 if o.name=="title_text" else 100),"scaleX":1,"scaleY":1,"rotation":0,"direction":90,"width":400,"height":30 if o.name=="hud" else (60 if o.name=="title_text" else 200),"text":"","font":"16px Nanum Gothic","colour":"#ffffff","bgColor":"#000000a0","underLine":False,"strike":False,"fontSize":28 if o.name=="title_text" else 16,"textAlign":0 if o.name=="panel" else 1,"lineBreak":o.name=="panel","visible":o.vis}
         else:
             pics=[]
             for key,path,sz in o.pics:
-                url,fn,ext=add_file("image",path); pics.append({"id":o.picid[key],"name":f"{o.name}_{key}","fileurl":url,"filename":fn,"imageType":"png","dimension":{"width":sz,"height":sz},"scale":100})
+                url,fn,ext=add_file("image",path); pics.append({"id":o.picid[key],"name":f"{o.name}_{key}","fileurl":url,"filename":fn,"imageType":"png","dimension":{"width":(sz if isinstance(sz,int) else sz[0]),"height":(sz if isinstance(sz,int) else sz[1])},"scale":100})
             snd=[]
             for key,path in o.sounds:
                 url,fn,ext=add_file("sound",path); snd.append({"id":sounds_ids[key],"name":f"bgm{key}","filename":fn,"fileurl":url,"ext":".mp3","duration":12})
             d["sprite"]={"pictures":pics,"sounds":snd}; d["selectedPictureId"]=pics[0]["id"] if pics else None
-            sz=o.size or 24
-            d["entity"]={"x":o.x,"y":o.y,"regX":sz/2,"regY":sz/2,"scaleX":1,"scaleY":1,"rotation":0,"direction":90,"width":sz,"height":sz,"font":"undefinedpx ","visible":o.vis}
+            sz=o.size or 24; sw,sh=(sz,sz) if isinstance(sz,int) else sz
+            d["entity"]={"x":o.x,"y":o.y,"regX":sw/2,"regY":sh/2,"scaleX":1,"scaleY":1,"rotation":0,"direction":90,"width":sw,"height":sh,"font":"undefinedpx ","visible":o.vis}
         oj.append(d)
     variables=[]
     for n,i in prog.vars.items(): variables.append({"name":n,"id":i,"visible":False,"value":str(prog.vinit[n]),"variableType":"variable","isCloud":False,"isRealTime":False,"cloudDate":False,"object":None,"x":0,"y":0})

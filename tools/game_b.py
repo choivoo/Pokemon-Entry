@@ -142,7 +142,9 @@ def logic():
                                 ie2.other()
                                 v("ex_dealt").set(ds_dmg)
                                 with If(v("ex_dealt")>D.g("hp")): v("ex_dealt").set(D.g("hp"))
-                                D.s_("hp",D.g("hp")-v("ex_dealt")); call("blink_foe" if asideP else "blink_own")
+                                D.s_("hp",D.g("hp")-v("ex_dealt")); call("blink_foe" if asideP else "blink_own"); sfx("hit")
+                                with If((ds_e>1)|(ds_crit==1)): call("shake_foe" if asideP else "shake_own")
+                                with If(ds_crit==1): sfx("crit"); call("fx_flash_once")
                                 with If((l("MV_rech")[mvv]==1)&(D.g("hp")>0)): l(A.pre+"_rech").set(A.idx,1)
 
                                 with If((l("MV_cls")[mvv]==1)&(dab>=1)&(dab<=3)&(A.g("st")==0)&(A.g("hp")>0)&(rnd(1,100)<=30)):
@@ -233,13 +235,13 @@ def logic():
                 v("xp_go").set(1); st_sp.set(l("PS_sp")[xp_i]); st_lv.set(l("PS_lv")[xp_i]); call("max_hp"); v("xp_old").set(st_out)
                 l("PS_lv").set(xp_i,l("PS_lv")[xp_i]+1); st_lv.set(l("PS_lv")[xp_i]); call("max_hp")
                 with If(l("PS_hp")[xp_i]>0): l("PS_hp").set(xp_i,l("PS_hp")[xp_i]+st_out-v("xp_old"))
-                say(join(l("S_name")[l("PS_sp")[xp_i]],"의 레벨이 ",l("PS_lv")[xp_i],"로 올랐다!"))
+                sfx("level"); call("fx_flash_once"); say(join(l("S_name")[l("PS_sp")[xp_i]],"의 레벨이 ",l("PS_lv")[xp_i],"로 올랐다!"))
                 v("lc_sp").set(l("PS_sp")[xp_i]); v("lc_lv").set(l("PS_lv")[xp_i]); v("lc_i").set(xp_i); call("learn_check")
                 with If((l("S_evto")[l("PS_sp")[xp_i]]>0)&(l("PS_lv")[xp_i]>=l("S_evlv")[l("PS_sp")[xp_i]])):
                     v("ev_i").set(xp_i); v("ev_to").set(l("S_evto")[l("PS_sp")[xp_i]]); call("evolve")
     with proc("evolve"):  # in ev_i, ev_to
         st_sp.set(l("PS_sp")[v("ev_i")]); st_lv.set(l("PS_lv")[v("ev_i")]); call("max_hp"); v("ev_old").set(st_out)
-        P.emit(blk("message_cast",P.msg("anim_evolve")))
+        sfx("evolve"); P.emit(blk("message_cast",P.msg("anim_evolve")))
         say(join(l("S_name")[l("PS_sp")[v("ev_i")]],"의 모습이... ",l("S_name")[v("ev_to")],"(으)로 진화했다!"))
         l("PS_sp").set(v("ev_i"),v("ev_to")); st_sp.set(v("ev_to")); call("max_hp")
         l("PS_hp").set(v("ev_i"),l("PS_hp")[v("ev_i")]+st_out-v("ev_old")); 
@@ -355,7 +357,7 @@ def logic():
     need_sw=v("need_sw",0)
     with proc("handle_faints"):
         with If((l("FO_hp")[fi]<=0)&(bover==0)):
-            say(join("상대 ",l("S_name")[l("FO_sp")[fi]],"은(는) 쓰러졌다!"))
+            sfx("faint"); call("faint_foe"); say(join("상대 ",l("S_name")[l("FO_sp")[fi]],"은(는) 쓰러졌다!"))
             v("xp_base").set(floor(l("S_exp")[l("FO_sp")[fi]]*l("FO_lv")[fi]/7*(1+0.5*v("is_trainer"))))
             v("sh_n").set(0); i=v("hf_i"); i.set(1)
             with Repeat(pn):
@@ -381,7 +383,7 @@ def logic():
                 bover.set(1); bres.set(1)
                 with If(v("is_trainer")==1): money.inc(l("TR_reward")[v("tr_idx")]); say(join(l("TR_reward")[v("tr_idx")],"원을 얻었다!"))
         with If((l("PS_hp")[pa]<=0)&(bover==0)):
-            say(join(l("S_name")[l("PS_sp")[pa]],"은(는) 쓰러졌다!"))
+            sfx("faint"); call("faint_own"); say(join(l("S_name")[l("PS_sp")[pa]],"은(는) 쓰러졌다!"))
             v("nx").set(0); i=v("hf2_i"); i.set(1)
             with Repeat(pn):
                 with If((l("PS_hp")[i]>0)&(v("nx")==0)): v("nx").set(i)

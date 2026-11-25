@@ -66,7 +66,7 @@ def logic():
             i.inc()
     with proc("redraw_dark"): call("draw_tiles"); P.emit(blk("message_cast",P.msg("wild_view")))
     with proc("draw_map"):
-        call("draw_tiles"); call("spawn_wild"); v("moved_map").set(1); call("place_actors"); call("bgm_set_for_map"); call("area_greet")
+        call("fx_fade_out"); call("draw_tiles"); call("spawn_wild"); v("moved_map").set(1); call("place_actors"); call("bgm_set_for_map"); call("fx_tint_update"); call("fx_fade_in"); call("area_greet")
         with IfElse(((v("steps")//300)%2)==1) as ie:
             hud("밤: 어둠 속에서 ghost·독·에스퍼 포켓몬이 더 자주 나타난다"); ie.other(); hud(join(l("M_name")[mp]," (낮)"))
     with proc("place_actors"):
@@ -104,7 +104,7 @@ def logic():
         pn.set(0); bn.set(0); money.set(3000); badges.set(0); cleared.set(0); mp.set(MIDX["H01_0"]); px.set(3); py.set(5); pf.set(0); v("lastcenter").set(MIDX["H01_0"])
         v("g_sp").set(25); v("g_lv").set(5); call("add_mon"); l("DEX").set(25,2)
     with proc("title"):
-        v("started").set(0)
+        v("started").set(0); call("title_show"); P.emit(blk("message_cast",P.msg("title_text_show"))); sfx("sting")
         with While(v("started")==0):
             ask("포켓몬: 피카츄와 관동의 길  1 새 게임  2 이어하기"); v("t_in").set(answer())
             with If(v("t_in")==1): call("new_game"); v("started").set(1)
@@ -113,7 +113,7 @@ def logic():
                 with IfElse(v("ld_err")=="") as ie:
                     v("started").set(1); say("불러오기 성공!"); ie.other(); say(join("불러오기 실패: ",v("ld_err"),"  (현재 진행은 그대로입니다)"))
     with proc("start_game"):
-        call("title"); v("moved_map").set(1); call("draw_map"); say("피카츄와 관동의 여행이 시작된다! (방향키/WASD 이동, 스페이스/Z 확인, M 메뉴)")
+        call("title"); P.emit(blk("message_cast",P.msg("title_art_hide"))); P.emit(blk("message_cast",P.msg("title_text_hide"))); v("moved_map").set(1); call("draw_map"); say("피카츄와 관동의 여행이 시작된다! (방향키/WASD 이동, 스페이스/Z 확인, M 메뉴)")
     # ---------- menus ----------
     def status_text(i): return ST_TXT
     with proc("party_view"):
@@ -214,7 +214,7 @@ def logic():
                 bn.inc(); call("party_remove"); say("보관함에 맡겼다.")
                 ie.other(); say("마지막 한 마리는 맡길 수 없다.")
     with proc("settings"):
-        ask("설정 1 우연 조우 끄기/켜기  2 조우율  3 글자 속도  4 음량(0~10)  5 효과 깜빡임  6 닫기"); v("se_in").set(answer())
+        ask("설정 1 우연 조우 끄기/켜기  2 조우율  3 글자 속도  4 음량(0~10)  5 연출 효과(페이드·깜빡임·틴트) 켜기/끄기  6 닫기"); v("se_in").set(answer())
         with If(v("se_in")==1):
             with IfElse(v("enc_on")==1) as ie:
                 v("enc_on").set(0); say("필드 야생 포켓몬과 우연 조우를 껐다."); ie.other(); v("enc_on").set(1); say("필드 야생 포켓몬과 우연 조우를 켰다.")
@@ -235,7 +235,7 @@ def logic():
             with IfElse(v("fx_blink")==1) as ie:
                 v("fx_blink").set(0); say("피격 깜빡임 효과를 껐다."); ie.other(); v("fx_blink").set(1); say("피격 깜빡임 효과를 켰다.")
     with proc("main_menu"):
-        ask("메뉴 1 파티  2 가방  3 도감  4 보관함  5 세이브  6 설정  7 닫기  8 힌트"); v("mm_in").set(answer())
+        sfx("select"); ask("메뉴 1 파티  2 가방  3 도감  4 보관함  5 세이브  6 설정  7 닫기  8 힌트"); v("mm_in").set(answer())
         with If(v("mm_in")==1): call("party_view")
         with If(v("mm_in")==2): call("bag_view")
         with If(v("mm_in")==3): call("dex_view")

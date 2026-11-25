@@ -99,6 +99,16 @@ def call(name): P.emit(blk("message_cast_wait",P.msg(name)))
 def hud(t):
     # text_write only works inside a textBox object -> route through a message to the hud object
     P.emit(blk("set_variable",P.vars["hud_text"],C(t).b)); P.emit(blk("message_cast",P.msg("hud_set")))
+def effect_set(kind,val): P.emit(blk("change_effect_amount",kind,C(val).b))
+def effect_add(kind,val): P.emit(blk("add_effect_amount",kind,C(val).b))
+def scale(pct): P.emit(blk("set_scale_size",C(pct).b))
+def rot(deg): P.emit(blk("rotate_absolute",C(deg).b))
+def mx(d): P.emit(blk("move_x",C(d).b))
+def my(d): P.emit(blk("move_y",C(d).b))
+def loc_y(y): P.emit(blk("locate_y",C(y).b))
+def loc_x(x): P.emit(blk("locate_x",C(x).b))
+def sfx(name): P.emit(blk("message_cast",P.msg("sfx_"+name)))
+def play_sfx(key): P.emit(blk("sound_something_with_block",f"SND:{key}"))
 def stamp(): P.emit(blk("stamp"))
 def locate(x,y): P.emit(blk("locate_xy",C(x).b,C(y).b))
 def shape(pid): P.emit(blk("change_to_some_shape",pid))
@@ -269,7 +279,7 @@ class Interp:
         if t=="stamp": s.stamps+=1; return
         if t=="sound_something_wait_with_block":
             s.__dict__.setdefault("sounds",[]).append(p[0]); raise Break()
-        if t in("sound_volume_set",):
+        if t in("sound_volume_set","change_effect_amount","add_effect_amount","set_scale_size","rotate_absolute","move_x","move_y","locate_y","locate_x","sound_something_with_block","erase_all_effects"):
             return
         if t=="wait_second":
             if getattr(s,"on_wait",None): s.on_wait(s)

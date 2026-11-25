@@ -103,7 +103,6 @@ def logic():
             show(); i=v("an_i"); i.set(0)
             with Repeat(8):
                 locate(-150+i*38,-30+i*(8-i)*4+i*6); wait(0.03); i.inc()
-            hide()
     with proc("anim_evolve",obj="fx_flash"):
         with If(v("fx_blink")==1):
             with Repeat(3): show(); wait(0.1); hide(); wait(0.1)
