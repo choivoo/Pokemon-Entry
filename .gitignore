@@ -3,3 +3,4 @@ node_modules/
 build/trace_*.json
 build/run_all.log
 build/M0_project.json
+arceus/build/trace_*.json
