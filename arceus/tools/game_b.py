@@ -357,7 +357,7 @@ def logic():
     need_sw=v("need_sw",0)
     with proc("handle_faints"):
         with If((l("FO_hp")[fi]<=0)&(bover==0)):
-            sfx("faint"); call("faint_foe"); say(join("상대 ",l("S_name")[l("FO_sp")[fi]],"은(는) 쓰러졌다!"))
+            v("ra_sp").set(l("FO_sp")[fi]); v("ra_pts").set(1); call("research_add"); sfx("faint"); call("faint_foe"); say(join("상대 ",l("S_name")[l("FO_sp")[fi]],"은(는) 쓰러졌다!"))
             v("xp_base").set(floor(l("S_exp")[l("FO_sp")[fi]]*l("FO_lv")[fi]/7*(1+0.5*v("is_trainer"))))
             v("sh_n").set(0); i=v("hf_i"); i.set(1)
             with Repeat(pn):

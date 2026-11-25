@@ -91,7 +91,14 @@ def logic():
         with Repeat(NSP): l("DEX").set(i,0); i.inc()
         i.set(1)
         with Repeat(NI): l("BAG").set(i,0); i.inc()
-        l("BAG").set(IIDX["monster-ball"],5); l("BAG").set(IIDX["potion"],5)
+        l("BAG").set(IIDX["monster-ball"],5); l("BAG").set(IIDX["potion"],5); l("BAG").set(IIDX["calm-orb"],5)
+        i.set(1)
+        with Repeat(NSP): l("R_pts").set(i,0); i.inc()
+        i.set(1)
+        with Repeat(len(MISSIONS)): l("MS_prog").set(i,0); l("MS_done").set(i,0); i.inc()
+        i.set(1)
+        with Repeat(5): l("RS_done").set(i,0); i.inc()
+        v("res_total").set(0); v("mount").set(0)
         with While(l("BX_sp").length()>0):
             for k in ("sp","lv","exp","hp","st"): l("BX_"+k).remove(1)
         with While(l("BX_mv").length()>0): l("BX_mv").remove(1); l("BX_pp").remove(1)
@@ -182,6 +189,7 @@ def logic():
             with IfElse(l("DEX")[v("dx_q")]==0) as ie:
                 say("???  아직 만나지 못했다."); ie.other()
                 say(join("No.",v("dx_q")," ",l("S_name")[v("dx_q")]," [",l("TYPE_name")[l("S_t1")[v("dx_q")]],"] ",txt("")+"")) 
+                say(join("조사 점수 ",l("R_pts")[v("dx_q")]," (조사 단계 ",floor(l("R_pts")[v("dx_q")]/3)," / 10)"))
                 with If(l("DEX")[v("dx_q")]==2): say(l("S_desc")[v("dx_q")])
     with proc("party_remove"):  # in pr_i
         j=v("pr_j"); j.set(v("pr_i"))
@@ -240,7 +248,7 @@ def logic():
             with IfElse(v("fx_blink")==1) as ie:
                 v("fx_blink").set(0); say("피격 깜빡임 효과를 껐다."); ie.other(); v("fx_blink").set(1); say("피격 깜빡임 효과를 켰다.")
     with proc("main_menu"):
-        sfx("select"); ask("메뉴 1 파티  2 가방  3 도감  4 보관함  5 세이브  6 설정  7 닫기  8 힌트"); v("mm_in").set(answer())
+        sfx("select"); ask("메뉴 1 파티  2 가방  3 도감  4 보관함  5 세이브  6 설정  7 닫기  8 힌트  9 탈것  10 조사 현황"); v("mm_in").set(answer())
         with If(v("mm_in")==1): call("party_view")
         with If(v("mm_in")==2): call("bag_view")
         with If(v("mm_in")==3): call("dex_view")
@@ -248,6 +256,8 @@ def logic():
         with If(v("mm_in")==5): call("save_encode"); say("세이브 코드 (복사해 두세요):"); say(v("save_code")); hud(v("save_code"))
         with If(v("mm_in")==6): call("settings")
         with If(v("mm_in")==8): call("hint")
+        with If(v("mm_in")==9): call("mount_menu")
+        with If(v("mm_in")==10): call("research_view")
     with proc("hint"):  # step-by-step hint: first unfinished main step in order
         i=v("ht_i"); i.set(1); v("ht_done").set(0)
         with Repeat(l("F_name").length()):
@@ -286,7 +296,9 @@ def logic():
     with proc("handle_cmd"):
         with If(busy==0):
             busy.set(1)
-            with If((cmd>=1)&(cmd<=4)): call("try_move")
+            with If((cmd>=1)&(cmd<=4)):
+                call("try_move")
+                with If((v("mount")==1)&(v("moved_map")==0)&(v("last_moved")==1)&(v("bover")==0)): call("try_move")
             with If(cmd==5): call("talk")
             with If(cmd==7): call("main_menu")
             cmd.set(0); busy.set(0)

@@ -208,12 +208,17 @@ def logic():
     with proc("trainer_battle"):  # in tr_idx
         v("is_trainer").set(1); v("ai_pot").set(0)
         with If(l("TR_kind")[v("tr_idx")]>=2): v("ai_pot").set(2)
-        call("foe_setup_trainer"); say(join(l("TR_name")[v("tr_idx")],"이(가) 승부를 걸어왔다!"))
+        call("foe_setup_trainer"); say(join(l("TR_name")[v("tr_idx")],"이(가) 승부를 걸어왔다!")); v("nz_calm").set(0)
         with If(l("TR_kind")[v("tr_idx")]==3): v("cut_sp").set(l("FO_sp")[fn]); v("cut_title").set(join(l("TR_name")[v("tr_idx")]," 등장!")); call("cutscene_boss")
+        with If((l("TR_badge")[v("tr_idx")]>=1)&(l("TR_badge")[v("tr_idx")]<=5)):
+            call("noble_throw")
+            with If(v("nz_calm")==1): l("FO_hp").set(1,floor(l("FO_hp")[1]*0.6))
         call("battle_run")
+        with If(bres==1): v("me_type").set(3); call("mission_event")
         with If(bres==2): call("whiteout")
     with proc("wild_battle"):  # in w_sp w_lv
         v("is_trainer").set(0); v("ai_pot").set(0); call("foe_setup_single"); call("battle_run")
+        with If(bres==1): v("me_type").set(3); call("mission_event")
         with If(bres==2): call("whiteout")
     # ---------- capture ----------
     with proc("catch_hook"):
@@ -245,7 +250,7 @@ def logic():
                         sh.inc(); ie2.other(); stop.set(1)
             with Repeat(sh): call("ball_wobble"); sfx("shake")
             with IfElse(sh==4) as ie2:
-                sfx("catch"); call("capture_burst"); call("fx_flash_once"); v("c_over").set(1); v("c_res").set(1); v("g_sp").set(v("c_sp")); v("g_lv").set(v("c_lv")); call("add_mon"); say("잡았다!"); call("catch_hook")
+                sfx("catch"); call("capture_burst"); call("fx_flash_once"); v("ra_sp").set(v("c_sp")); v("ra_pts").set(2+5*v("c_alpha")); call("research_add"); v("me_type").set(1); v("me_sp").set(v("c_sp")); call("mission_event"); v("c_over").set(1); v("c_res").set(1); v("g_sp").set(v("c_sp")); v("g_lv").set(v("c_lv")); call("add_mon"); say("잡았다!"); call("catch_hook")
                 with If(v("where")==2): say("파티가 가득 차서 보관함으로 보냈다.")
                 with If(v("where")==3): say("보관함도 가득 차서 놓아주었다. (보관함을 정리하자)")
                 ie2.other()

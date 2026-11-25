@@ -43,6 +43,7 @@ def data_lists():
         x=y=0
         if r["act"]=="give": k,q=r["arg"].split(":"); x,y=IIDX[k],int(q)
         elif r["act"] in("gift","static"): x,y=map(int,r["arg"].split(":"))
+        elif r["act"]=="mission": x=AIDX[r["arg"]]
         elif r["act"]=="battle": x=TRIDX[r["arg"]]; y=FIDX[r["lose"]] if r.get("lose") else 0
         elif r["act"]=="shop": shops.append([IIDX[k] for k in r["arg"].split(",")]); x=len(shops)
         a1.append(x); a2.append(y)
@@ -52,7 +53,7 @@ def data_lists():
     for sh in shops: s.append(len(it)+1); c.append(len(sh)); it+=sh
     P.lists["SH_start"][1]=s; P.lists["SH_count"][1]=c; P.lists["SH_item"][1]=it
     # items
-    kind={"ball":1,"bait":2,"heal":3,"revive":5,"stone":6,"key":7}
+    kind={"ball":1,"bait":2,"heal":3,"revive":5,"stone":6,"key":7,"balm":8}
     def ik(i):
         if i["kind"].startswith("cure:"): return 4
         return kind[i["kind"]]
@@ -153,12 +154,12 @@ def field_logic():
         with If(cmd==2): dx.set(-1); pf.set(1)
         with If(cmd==3): dx.set(1); pf.set(2)
         with If(cmd==4): dy.set(-1); pf.set(3)
-        tx.set(px+dx); ty.set(py+dy); call("tile_at"); v("pk_mood").set(1)
-        with If((tch=="D")|(tch==".")|(tch=="g")):
+        v("last_moved").set(0); tx.set(px+dx); ty.set(py+dy); call("tile_at"); v("pk_mood").set(1)
+        with If((tch=="D")|(tch==".")|(tch=="g")|((tch=="~")&(v("mount")==2))):
             call("npc_at")
             with If(hit==0):
                 v("ox").set(px); v("oy").set(py); v("moved_map").set(0)
-                px.set(tx); py.set(ty); steps.inc()
+                px.set(tx); py.set(ty); steps.inc(); v("last_moved").set(1)
                 with IfElse(tch=="D") as ie:
                     call("check_exit"); ie.other()
                     call("place_actors")
@@ -221,6 +222,7 @@ def field_logic():
                     with If(act==4):  # heal
                         call("heal_all"); call("center_menu")
                     with If(act==5): call("shop_menu"); v("do_set").set(0)
+                    with If(act==9): call("mission_menu"); v("do_set").set(0)
                     with If(act==6):
                         v("g_sp").set(v("ra1")); v("g_lv").set(v("ra2")); call("give_mon")
                         with If(v("where")==3): v("do_set").set(0)

@@ -17,8 +17,9 @@ AREAS=[a["id"] for a in WORLD["areas"]]; AIDX={a:i+1 for i,a in enumerate(AREAS)
 THEMES=sorted({a["theme"] for a in WORLD["areas"]}); THIDX={t:i+1 for i,t in enumerate(THEMES)}
 TYPES=TC["T"]; TYIDX={t:i+1 for i,t in enumerate(TYPES)}
 TRIDS=list(TR.keys()); TRIDX={t:i+1 for i,t in enumerate(TRIDS)}
+MISSIONS=G.get("missions",[])
 KIND={"npc":1,"obj":2,"switch":3,"trainer":4,"leader":5,"center":6,"shop":7,"static":8}
-ACT={"say":1,"reset":2,"give":3,"heal":4,"shop":5,"gift":6,"static":7,"battle":8}
+ACT={"say":1,"reset":2,"give":3,"heal":4,"shop":5,"gift":6,"static":7,"battle":8,"mission":9}
 CLS={"physical":1,"special":2,"status":3}; AIL={"none":0,"sleep":1,"poison":2,"paralysis":3,"burn":4}
 # NPCs sorted by map
 NPCS=[]; 

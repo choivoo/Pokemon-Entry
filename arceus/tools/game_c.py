@@ -3,6 +3,7 @@
 from bdsl import *
 from game_data import *
 NF=len(FLAGS); NI=len(ITEMS)
+NM=len(MISSIONS)
 def logic():
     mp=v("mp"); px=v("px"); py=v("py"); money=v("money"); badges=v("badges"); cleared=v("cleared"); pn=v("pn"); bn=v("bn")
     # ---- string helpers ----
@@ -76,7 +77,17 @@ def logic():
             with IfElse(i==1) as ie:
                 bx.set(m); ie.other(); bx.set(join(bx,"~",m))
             i.inc()
-        v("sv_body").set(join("EK1|",mp,"|",px,"|",py,"|",money,"|",badges,"|",cleared,"|",v("lastcenter"),"|",fl,"|",dx,"|",bg,"|",pt,"|",bx))
+        rs=v("sv_r"); rs.set(""); i.set(1)
+        with Repeat(NSP):
+            v("sv_rv").set(l("R_pts")[i])
+            with If(v("sv_rv")>9): v("sv_rv").set(9)
+            rs.set(join(rs,v("sv_rv"))); i.inc()
+        mp_=v("sv_mp"); mp_.set(""); md=v("sv_md"); md.set(""); i.set(1)
+        with Repeat(NM):
+            with IfElse(i==1) as ie:
+                mp_.set(l("MS_prog")[i]); ie.other(); mp_.set(join(mp_,".",l("MS_prog")[i]))
+            md.set(join(md,l("MS_done")[i])); i.inc()
+        v("sv_body").set(join("EK2|",mp,"|",px,"|",py,"|",money,"|",badges,"|",cleared,"|",v("lastcenter"),"|",fl,"|",dx,"|",bg,"|",pt,"|",bx,"|",rs,"|",mp_,"|",md,"|",v("res_total"),".",v("mount")))
         v("ck_str").set(v("sv_body")); call("checksum")
         v("save_code").set(join(v("sv_body"),"|",v("ck_out")))
     # ---- decode (validate fully, then apply) ----
@@ -134,14 +145,14 @@ def logic():
             with If((v("pi_ok")==0)|(v("pi_val")!=v("ck_out"))): err.set("검사값 불일치")
         with If(err==""):
             v("sp_str").set(v("ld_body")); v("sp_sep").set("|"); call("split")
-            with IfElse(SPL.length()!=13) as ie:
+            with IfElse(SPL.length()!=17) as ie:
                 err.set("필드 수 오류"); ie.other()
-                with If(SPL[1]!="EK1"): err.set("버전 불일치")
+                with If(SPL[1]!="EK2"): err.set("버전 불일치")
         with If(err==""):
             l("LD_f",[]); 
             with While(l("LD_f").length()>0): l("LD_f").remove(1)
             j=v("ld_j"); j.set(1)
-            with Repeat(13): l("LD_f").append(SPL[j]); j.inc()
+            with Repeat(17): l("LD_f").append(SPL[j]); j.inc()
             LF=l("LD_f")
             need_int(LF[2],v("ld_mp"),1,len(MAPS),"알 수 없는 맵"); need_int(LF[3],v("ld_x"),0,19,"좌표 오류"); need_int(LF[4],v("ld_y"),0,10,"좌표 오류")
             need_int(LF[5],v("ld_money"),0,99999999,"돈 오류"); need_int(LF[6],v("ld_badges"),0,255,"배지 오류"); need_int(LF[7],v("ld_clear"),0,1,"클리어 오류"); need_int(LF[8],v("ld_lc"),1,len(MAPS),"센터 오류")
@@ -180,6 +191,33 @@ def logic():
                 v("ld_pn").set(v("pm_n"))
             with If(err==""):
                 v("pm_str").set(LF[13]); v("pm_max").set(200); call("parse_mons"); v("ld_bn").set(v("pm_n"))
+            with If((err=="")&(strlen(LF[14])!=NSP)): err.set("조사 길이 오류")
+            i.set(1)
+            with Repeat(NSP):
+                with If(err==""):
+                    v("ld_c").set(0); j2=v("ld_j2"); j2.set(1)
+                    with Repeat(10):
+                        with If(charat(LF[14],i)==DIG[j2]): v("ld_c").set(1)
+                        j2.inc()
+                    with If(v("ld_c")==0): err.set("조사 값 오류")
+                i.inc()
+            with If((err=="")&(strlen(LF[16])!=NM)): err.set("임무 길이 오류")
+            i.set(1)
+            with Repeat(NM):
+                with If((err=="")&(charat(LF[16],i)!="0")&(charat(LF[16],i)!="1")): err.set("임무 값 오류")
+                i.inc()
+            with If(err==""):
+                v("sp_str").set(LF[15]); v("sp_sep").set("."); call("split")
+                with IfElse(SPL.length()!=NM) as ie:
+                    err.set("임무 진행 형식 오류"); ie.other()
+                    l("LD_mp",[0]*NM); i.set(1)
+                    with Repeat(NM):
+                        need_int(SPL[i],v("ld_q"),0,9999,"임무 진행 오류"); l("LD_mp").set(i,v("ld_q")); i.inc()
+            with If(err==""):
+                v("sp_str").set(LF[17]); v("sp_sep").set("."); call("split")
+                with IfElse(SPL.length()!=2) as ie:
+                    err.set("조사 합계 형식 오류"); ie.other()
+                    need_int(SPL[1],v("ld_rt"),0,99999999,"조사 합계 오류"); need_int(SPL[2],v("ld_mount"),0,2,"탈것 오류")
         # apply
         with If(err==""):
             call("apply_loaded")
@@ -200,6 +238,17 @@ def logic():
         with While(l("BX_sp").length()>0):
             for k in ("sp","lv","exp","hp","st"): l("BX_"+k).remove(1)
         with While(l("BX_mv").length()>0): l("BX_mv").remove(1); l("BX_pp").remove(1)
+        i.set(1)
+        with Repeat(NSP): l("R_pts").set(i,charat(l("LD_f")[14],i)+0); i.inc()
+        i.set(1)
+        with Repeat(NM): l("MS_prog").set(i,l("LD_mp")[i]); l("MS_done").set(i,charat(l("LD_f")[16],i)+0); i.inc()
+        v("res_total").set(v("ld_rt")); v("mount").set(v("ld_mount"))
+        i.set(1)
+        with Repeat(5): l("RS_done").set(i,(v("res_total")>=l("RS_ms")[i])+0 if False else 0); i.inc()
+        i.set(1)
+        with Repeat(5):
+            with If(v("res_total")>=l("RS_ms")[i]): l("RS_done").set(i,1)
+            i.inc()
         bn.set(v("ld_bn")); i.set(1)
         with Repeat(bn):
             for k in ("sp","lv","exp","hp","st"): l("BX_"+k).append(TM[k][i])

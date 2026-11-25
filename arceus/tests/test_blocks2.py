@@ -151,7 +151,7 @@ def ck(body):
 parts=code.split("|"); body="|".join(parts[:-1])
 def rebuild(fields): b="|".join(fields); return b+"|"+str(ck(b))
 f=parts[:-1]
-bad={"checksum":code[:-1]+("1" if code[-1]!="1" else "2"),"version":rebuild(["EK2"]+f[1:]),"unknown map":rebuild([f[0],"9999"]+f[2:]),"neg money":rebuild(f[:4]+["-5"]+f[5:]),"wall pos":rebuild([f[0],f[1],"0","0"]+f[4:]),
+bad={"checksum":code[:-1]+("1" if code[-1]!="1" else "2"),"version":rebuild(["EK9"]+f[1:]),"unknown map":rebuild([f[0],"9999"]+f[2:]),"neg money":rebuild(f[:4]+["-5"]+f[5:]),"wall pos":rebuild([f[0],f[1],"0","0"]+f[4:]),
  "neg qty":rebuild(f[:10]+[f[10].replace(f[10].split(".")[0],"-3",1)]+f[11:]),"bad species":rebuild(f[:11]+[f[11].replace(f[11].split(":")[0],"999",1)]+f[12:]),"garbage":"hello","empty":"","trunc":code[:50],"flag len":rebuild(f[:8]+[f[8]+"1"]+f[9:]),
  "hp over":rebuild(f[:11]+[":".join([f[11].split(":")[0],f[11].split(":")[1],f[11].split(":")[2],"99999"]+f[11].split("~")[0].split(":")[4:])+("~"+"~".join(f[11].split("~")[1:]) if "~" in f[11] else "")]+f[12:])}
 for name,c in bad.items():
@@ -289,5 +289,38 @@ it.inputs=["4","99"]; it.call("settings"); ok(it.var["vol"]==3,"volume out of ra
 # epilogue NPC only speaks after the ending
 p,it=fresh2(); it.setv("mp",GD.MIDX["H02_1"]); it.setv("cur_npc",GD.NIDX["n_H02_epi"]); it.call("run_rules"); ok(any("평범한 이야기" in o for o in it.out),"epilogue NPC quiet before ending")
 it.lst["FS"][GD.FIDX["c12_end"]-1]=1; it.out.clear(); it.call("run_rules"); ok(any("클리버가" in o for o in it.out),"epilogue NPC speaks after ending")
+
+# ---- Hisui systems: research, missions, noble throw, mounts, save v2 ----
+p,it=fresh2(); it.setv("ra_sp",GD.STARTERS[0]); it.setv("ra_pts",30); b0=it.lst["BAG"][GD.IIDX["great-ball"]-1]; it.call("research_add")
+ok(it.var["res_total"]==30 and it.lst["BAG"][GD.IIDX["great-ball"]-1]==b0+3,"research milestone 25 pays once"); it.setv("ra_pts",1); it.call("research_add"); ok(it.lst["BAG"][GD.IIDX["great-ball"]-1]==b0+3,"milestone not repaid")
+p,it=fresh2(); a1=GD.AIDX["H01"]; idxs=[i+1 for i,m in enumerate(GD.MISSIONS) if m["area"]=="H01"]; ok(len(idxs)==3,"3 missions per hub")
+m1=idxs[0]; need=GD.MISSIONS[m1-1]["n"]
+for _ in range(need): it.setv("me_type",1); it.setv("me_sp",GD.STARTERS[0]); it.call("mission_event")
+ok(it.lst["MS_prog"][m1-1]==need,"capture missions progress"); it.setv("ra1",a1); it.inputs=[str(m1)]; money0=it.var["money"]; it.call("mission_menu")
+ok(it.lst["MS_done"][m1-1]==1 and it.var["money"]==money0+GD.MISSIONS[m1-1]["money"],"mission reward paid"); it.inputs=[str(m1)]; money1=it.var["money"]; it.call("mission_menu"); ok(it.var["money"]==money1,"mission reward not repeated")
+# battle-win missions
+m3=idxs[2]; it.setv("me_type",3); it.call("mission_event"); ok(it.lst["MS_prog"][m3-1]==1,"win missions progress")
+# noble throw: perfect play calms; no orbs fails
+p,it=fresh2(); it.stubs["anim_throw"]=lambda i:None; orb=GD.IIDX["calm-orb"]-1
+def ans(i,pr):
+    if "피할 방향" in pr: return str(i.var["nz_dir"])
+    return "1"
+it.input_fn=ans; it.on_wait=lambda i:(i.setv("cmd",5) if i.var["mk"]>=48 else None); it.lst["BAG"][orb]=6; it.call("noble_throw"); ok(it.var["nz_calm"]==1,"perfect throws calm the noble (f=%s)"%it.var["nz_f"]); ok(it.lst["BAG"][orb]<6,"orbs are consumed")
+p,it=fresh2(); it.lst["BAG"][orb]=0; it.call("noble_throw"); ok(it.var["nz_calm"]==0,"no orbs -> not calmed")
+p,it=fresh2(); it.input_fn=lambda i,pr:("3" if "피할 방향" in pr and i.var["nz_dir"]!=3 else "1"); it.lst["BAG"][orb]=6; it.call("noble_throw"); ok(it.var["nz_hp"]<=0 and it.var["nz_calm"]==0,"failing to dodge ends the throw phase")
+# mounts
+p,it=fresh2(); it.stubs["place_actors"]=lambda i:None; it.setv("enc_on",0); it.stubs["check_sight"]=lambda i:None
+it.inputs=["1"]; it.call("mount_menu"); ok(it.var["mount"]==0,"mount locked before the noble is calmed")
+it.lst["FS"][GD.FIDX["c2_gym"]-1]=1; it.inputs=["1"]; it.call("mount_menu"); ok(it.var["mount"]==1,"mount unlocked")
+it.setv("mp",GD.MIDX["H01_0"]); it.setv("px",5); it.setv("py",5); it.setv("cmd",3); it.call("handle_cmd"); ok(it.var["px"]==7,"wyrdeer mount moves two tiles (px=%s)"%it.var["px"])
+it.setv("mount",0); it.setv("px",5); it.setv("cmd",3); it.call("handle_cmd"); ok(it.var["px"]==6,"walking moves one tile")
+wm_map=next(k for k,m in GD.WORLD["maps"].items() if any("~" in r for r in m["tiles"])); tiles=GD.WORLD["maps"][wm_map]["tiles"]
+wy,wx=next((y,r.index("~")) for y,r in enumerate(tiles) if "~" in r and r.index("~")>1 and r[r.index("~")-1] in ".g")
+it.setv("mp",GD.MIDX[wm_map]); it.setv("px",wx-1); it.setv("py",wy); it.setv("mount",0); it.setv("cmd",3); it.call("try_move"); ok(it.var["px"]==wx-1,"cannot walk on water without the water mount")
+it.setv("mount",2); it.setv("cmd",3); it.call("try_move"); ok(it.var["px"]==wx,"water mount crosses water")
+# save v2 roundtrip with research, missions, mount
+p,it=fresh2(31); it.setv("ra_sp",GD.STARTERS[0]); it.setv("ra_pts",7); it.call("research_add"); it.lst["MS_prog"][2]=3; it.lst["MS_done"][1]=1; it.setv("mount",2); it.call("save_encode"); code=it.var["save_code"]
+p2,it2=fresh2(32); it2.setv("save_code",code); it2.call("save_decode"); ok(it2.var["ld_err"]=="","v2 save loads: %r"%it2.var["ld_err"]); ok(it2.var["mount"]==2 and it2.lst["MS_prog"][2]==3 and it2.lst["MS_done"][1]==1 and it2.var["res_total"]==7 and it2.lst["R_pts"][GD.STARTERS[0]-1]==7,"research/missions/mount restored")
+it2.call("save_encode"); ok(it2.var["save_code"]==code,"v2 encode(decode(x))==x")
 print("blocks2: pass",passes,"fail",len(fails)); [print(" ",f) for f in fails[:15]]
 sys.exit(1 if fails else 0)

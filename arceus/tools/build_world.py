@@ -375,6 +375,16 @@ EPI={'H01': '소리 박사: 도감이 이만큼 채워졌네. 쥬빌라이프 �
 for h,txt in EPI.items():
     ar=areas[h]; n=addnpc(mid(ar,ar["screens"]-1),f"n_{h}_epi","npc","후일담")
     R(n["id"],"say",txt,req="c12_end"); R(n["id"],"say","(지금은 평범한 이야기만 하고 있다.)")
+MISSIONS=[]
+for h in [a for a in A if a["kind"]=="hub"]:
+    ch=h["ch"]; L=Lc(ch)
+    road=next((x for x in A if x["ch"]>=ch and x["types"] and x["kind"] in("road","dungeon")),None); ty=(road["types"][0] if road else "normal")
+    n_=max(2,2+ch//2)
+    MISSIONS+=[dict(area=h["id"],type=1,arg="",n=n_+1,title=f"포켓몬 {n_+1}마리 포획",item="great-ball",qty=3,money=L*40),
+               dict(area=h["id"],type=2,arg=ty,n=n_,title=f"{ty} 타입 {n_}마리 포획",item="calm-orb",qty=4,money=L*50),
+               dict(area=h["id"],type=3,arg="",n=n_+2,title=f"트레이너·야생 배틀 {n_+2}회 승리",item="hyper-potion" if ch>=4 else "super-potion",qty=3,money=L*60)]
+    bn=addnpc(mid(h,0),f"n_{h['id']}_board","npc","요청 게시판",(10,2)) if ((10,2) not in [(x["x"],x["y"]) for x in maps[mid(h,0)]["npcs"]] and maps[mid(h,0)]["tiles"][2][10]=="." and maps[mid(h,0)]["tiles"][3][10]==".") else addnpc(mid(h,0),f"n_{h['id']}_board","npc","요청 게시판")
+    R(bn["id"],"mission","요청 게시판: 이 마을의 요청을 확인한다.",arg=h["id"])
 HID_ITEMS=["ultra-ball:3","hyper-potion:2","revive:1","full-heal:2","great-ball:5","super-potion:4","bait:6"]
 for k,mid_ in enumerate(HID):
     flags.update({f"open_{mid_}",f"hid_{mid_}"}); R(f"n_hid_{mid_}","give","파트너가 찾아낸 숨은 틈 속에 물건이 있었다!",nreq=f"hid_{mid_}",arg=HID_ITEMS[k%len(HID_ITEMS)],set_=f"hid_{mid_}")
@@ -384,6 +394,7 @@ SHOP={"H01":["monster-ball","potion"],"H02":["monster-ball","potion","antidote"]
  "H04":["great-ball","super-potion","parlyz-heal","burn-heal"],"H05":["great-ball","super-potion","antidote","bait"],"H06":["great-ball","super-potion","parlyz-heal"],
  "H07":["great-ball","super-potion","antidote","bait"],"H08":["ultra-ball","hyper-potion","revive","thunder-stone","water-stone","fire-stone","leaf-stone","moon-stone","bait"],
  "H09":["ultra-ball","hyper-potion","burn-heal","revive"],"H10":["ultra-ball","hyper-potion","revive","antidote"],"H11":["ultra-ball","hyper-potion","revive","full-heal"],"H12":["ultra-ball","hyper-potion","revive","full-heal"]}
+for _k in SHOP: SHOP[_k].append("calm-orb")
 for h in [a for a in A if a["kind"]=="hub"]:
     m0=mid(h,0)
     c=addnpc(m0,f"n_{h['id']}_center","center","야영지 휴식처",(3,3)); R(c["id"],"heal","대원: 파티를 회복했습니다! 세이브 코드도 발급할 수 있어요.",arg="save")
@@ -509,12 +520,12 @@ items=[
  ("antidote","해독제",100,"cure:poison",0),("parlyz-heal","마비치료제",200,"cure:paralysis",0),("burn-heal","화상치료제",250,"cure:burn",0),
  ("awakening","잠깨는약",250,"cure:sleep",0),("full-heal","만병통치약",600,"cure:all",0),("revive","기력의조각",1500,"revive",0),
  ("thunder-stone","천둥의돌",2100,"stone",0),("water-stone","물의돌",2100,"stone",0),("fire-stone","불꽃의돌",2100,"stone",0),("leaf-stone","리프의돌",2100,"stone",0),("moon-stone","달의돌",2100,"stone",0),
- ("fossil","화석 조각",0,"key",0)]
+ ("fossil","화석 조각",0,"key",0),("calm-orb","진정 구슬",300,"balm",0)]
 out=dict(W=W,H=H,maps=maps,areas=A,chapters={str(k):[dict(id=s[0],type=s[1],area=s[2],screen=s[3],title=s[4]) for s in v] for k,v in Q.items()})
 json.dump(out,open("data/world.json","w"),ensure_ascii=False)
 json.dump(rules,open("data/rules.json","w"),ensure_ascii=False)
 json.dump(trainers,open("data/trainers.json","w"),ensure_ascii=False)
 json.dump(wild,open("data/wild.json","w"),ensure_ascii=False)
-json.dump(dict(starters=[SID['rowlet'],SID['cyndaquil'],SID['oshawott']],species=species,moves=moves,items=[dict(key=k,name=n,price=p,kind=c,val=v) for k,n,p,c,v in items],gyms=GYMS,flags=sorted(flags),
+json.dump(dict(missions=MISSIONS,starters=[SID['rowlet'],SID['cyndaquil'],SID['oshawott']],species=species,moves=moves,items=[dict(key=k,name=n,price=p,kind=c,val=v) for k,n,p,c,v in items],gyms=GYMS,flags=sorted(flags),
   statics=[], chstep_key=chstep_key),open("data/game.json","w"),ensure_ascii=False)
 print("maps",len(maps),"npcs",sum(len(m["npcs"]) for m in maps.values()),"rules",len(rules),"trainers",len(trainers),"wild areas",len(wild),"added roots",len(adds),"species",len(species),"moves",len(moves))

@@ -24,7 +24,7 @@ function moveSetAt(sp,lv){const l=SPECIES[sp].learn.filter(x=>x[0]<=lv).map(x=>x
 let UID=1;
 function mkMon(sp,lv,where){return{stg:[0,0,0,0,0,0,0],uid:UID++,sp,nick:'',lv,exp:expFor(lv),hp:maxHp(sp,lv),st:'',moves:moveSetAt(sp,lv),where:where||''}}
 function newState(seed){
-  const s={ver:1,map:'H01_0',x:3,y:5,flags:{},money:3000,bag:{'monster-ball':5,'potion':5},party:[],box:[],dex:{},badges:0,pika:{aff:0,mood:'idle'},
+  const s={ver:1,map:'H01_0',x:3,y:5,flags:{},money:3000,bag:{'monster-ball':5,'potion':5,'calm-orb':5},party:[],box:[],dex:{},badges:0,pika:{aff:0,mood:'idle'},
     settings:{text:2,vol:5,shake:1},cleared:false,seed:seed||12345,rngn:0,stats:{steps:0,battles:0,turns:0,lines:0,throws:0,wipes:0,heals:0}};
   const st=G.starters[0]; const p=mkMon(st,5,'H01'); s.party.push(p); s.dex[st]=2; return s;
 }
