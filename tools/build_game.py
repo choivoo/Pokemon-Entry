@@ -1,0 +1,24 @@
+# -*- coding: utf-8 -*-
+import sys; sys.path.insert(0,"tools")
+import bdsl
+from bdsl import *
+import game_data as GD, game_a, game_b, game_b2, game_c, game_d
+def build_prog():
+    p=Prog(); use(p)
+    v("enc_rate",12); v("lastcenter",GD.MIDX["H01_0"]); v("enc_on",1); v("mp",GD.MIDX["H01_0"]); v("px",3); v("py",5); v("money",3000)
+    for n in ("stat_turns","stat_battles","stat_wipes","stat_throws","is_trainer","ai_pot","moved_map","ox","oy","pf","cmd","busy","bres","pn","bn"): v(n,0)
+    v("pn",0)
+    game_a.data_lists(); game_b.party_lists(); game_a.field_logic(); game_b.logic(); game_b2.logic(); game_c.logic(); game_d.logic()
+    return p
+if __name__=="__main__":
+    p=build_prog(); import collections
+    cnt=collections.Counter(); 
+    def walk(b): 
+        cnt["blocks"]+=1
+        for st in b["statements"]:
+            for c in st: walk(c)
+        for q in b["params"]:
+            if isinstance(q,dict): walk(q)
+    for o,sc in p.scripts:
+        for b in sc: walk(b)
+    print("scripts",len(p.scripts),"blocks",cnt["blocks"],"vars",len(p.vars),"lists",len(p.lists),"list items",sum(len(x[1]) for x in p.lists.values()))

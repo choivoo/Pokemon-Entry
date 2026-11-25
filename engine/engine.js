@@ -10,6 +10,7 @@ G.species.forEach(s=>SPECIES[s.id]=s); G.moves.forEach(m=>MOVES[m.key]=m); G.ite
 const TI={}; TC.T.forEach((t,i)=>TI[t]=i);
 const FLAGSET=new Set(G.flags);
 const RULES_BY={}; RULES.forEach(r=>(RULES_BY[r.npc]=RULES_BY[r.npc]||[]).push(r));
+const WORLD_IDX={}; Object.keys(WORLD.maps).forEach((k,i)=>WORLD_IDX[k]=i+1);
 const NPC={}; Object.values(WORLD.maps).forEach(m=>m.npcs.forEach(n=>NPC[n.id]={...n,map:m.id}));
 function rngMake(seed){let s=seed>>>0||1;return()=>{s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296;}}
 const eff=(mt,dts)=>dts.reduce((a,d)=>a*TC.chart[TI[mt]][TI[d]],1);
@@ -149,7 +150,9 @@ function throwBall(s,c,ball,grade,sneak){ // one input = one ball
 function tile(m,x,y){ const r=WORLD.maps[m].tiles[y]; return r?r[x]:'#' }
 function npcAt(s,x,y){ return WORLD.maps[s.map].npcs.find(n=>n.x===x&&n.y===y) }
 function exitAt(s,x,y){ return WORLD.maps[s.map].exits.find(e=>e.x===x&&e.y===y) }
-function move(s,dx,dy){
+const TRACE={on:null};
+function move(s,dx,dy){ const r=move0(s,dx,dy); if(TRACE.on&&r.ok) TRACE.on.push(['m',dx,dy,WORLD_IDX[s.map],s.x,s.y]); return r }
+function move0(s,dx,dy){
   const nx=s.x+dx, ny=s.y+dy; const t=tile(s.map,nx,ny); if(!'.gD'.includes(t)) return {ok:false};
   const n=npcAt(s,nx,ny); if(n) return {ok:false,npc:n};
   if(t==='D'){ const e=exitAt(s,nx,ny); const miss=e.req.filter(f=>!s.flags[f]); if(miss.length) return {ok:false,locked:miss};
@@ -158,7 +161,8 @@ function move(s,dx,dy){
 }
 function rollWild(s){ const a=s.map.split('_')[0]; const w=WILD[a]; if(!w) return null; const tot=w.entries.reduce((x,e)=>x+e.w,0); let r=rnd(s)*tot;
   for(const e of w.entries){ r-=e.w; if(r<=0) return {sp:e.sp,lv:e.lo+Math.floor(rnd(s)*(e.hi-e.lo+1)),beh:e.beh} } return null }
-function interact(s,nid,io){ // io: {battle(trainerId)->'win'|'lose', shop, say}
+function interact(s,nid,io0){ const io=io0; if(TRACE.on){ TRACE.on.push(['i',nid,0]); const idx=TRACE.on.length-1; const o=interact0(s,nid,{...io0,battle:t=>{const r=io0.battle(t);TRACE.on.push(['b',r]);return r},static:(a,b)=>{const r=io0.static(a,b);TRACE.on.push(['s',r]);return r}}); TRACE.on[idx][2]=Object.keys(s.flags).length; return o } return interact0(s,nid,io0) }
+function interact0(s,nid,io){
   const n=NPC[nid]; const out=[]; s.stats.lines++;
   for(const r of RULES_BY[nid]||[]){
     if(r.req&&!s.flags[r.req]) continue; if(r.nreq&&s.flags[r.nreq]) continue;
@@ -176,7 +180,7 @@ function interact(s,nid,io){ // io: {battle(trainerId)->'win'|'lose', shop, say}
     return out }
   return out }
 function checkHooks(s,f){ if(f==='c12_end') s.cleared=true }
-function catchHook(s,area){ // flag-setting captures
+function catchHook(s,area){ if(TRACE.on) TRACE.on.push(['h',area,s.map]); // flag-setting captures
   if(area==='R01'&&!s.flags.c1_catch) s.flags.c1_catch=1;
   if(area==='D07'&&!s.flags.c7_rare&&s.map==='D07_3') s.flags.c7_rare=1 }
 // ---- save code ----
@@ -205,5 +209,5 @@ function decode(code){
     s.party=p[13]?p[13].split('~').map(mon):[]; s.box=p[14]?p[14].split('~').map(mon):[];
     if(s.party.length<1||s.party.length>6) return {err:'파티 오류'}; return {s}
   }catch(e){ return {err:'복원 오류: '+e.message} } }
-module.exports={G,WORLD,RULES,TR,WILD,SPECIES,MOVES,ITEMS,NPC,RULES_BY,newState,mkMon,mkFoe,maxHp,newBattle,turn,active,foe,newCatch,throwBall,move,interact,rollWild,healAll,useItem,
+module.exports={stat,TRACE,WORLD_IDX,G,WORLD,RULES,TR,WILD,SPECIES,MOVES,ITEMS,NPC,RULES_BY,newState,mkMon,mkFoe,maxHp,newBattle,turn,active,foe,newCatch,throwBall,move,interact,rollWild,healAll,useItem,
   addItem,addMon,dexSee,giveExp,evolve,encode,decode,catchHook,tile,exitAt,npcAt,rnd,name,expFor,eff,FL};

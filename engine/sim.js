@@ -41,7 +41,7 @@ function run(opt){
       clk.turn++ }
     s.stats.battles++; return b.result }
   function evolveStones(){ for(const m of s.party.concat(s.box)){ for(const sp of Object.values(SPECIES)){ if(sp.evo&&sp.evo.from===m.sp&&sp.evo.item&&s.bag[sp.evo.item]>0){ E.addItem(s,sp.evo.item,-1); E.evolve(s,m,sp.id,null) } } } }
-  function whiteout(){ s.stats.wipes++; s.money=Math.floor(s.money/2); const hub=Object.values(WORLD.areas).filter(a=>a.kind==='hub'&&a.ch<=curCh).pop(); E.healAll(s); const mp=hub.id+'_0'; s.map=mp; s.x=3; s.y=4; if(!'.g'.includes(E.tile(mp,3,4))) {/* center at (3,3) so (3,4) free */} clk.menu++ }
+  function whiteout(){ s.stats.wipes++; setTimeout(()=>{},0); s.money=Math.floor(s.money/2); const hub=Object.values(WORLD.areas).filter(a=>a.kind==='hub'&&a.ch<=curCh).pop(); E.healAll(s); const mp=hub.id+'_0'; s.map=mp; s.x=3; s.y=4; if(!'.g'.includes(E.tile(mp,3,4))) {/* center at (3,3) so (3,4) free */} if(E.TRACE.on) E.TRACE.on.push(['w',E.WORLD_IDX[s.map],s.x,s.y]); clk.menu++ }
   function visitCenter(){ const hub=Object.values(WORLD.areas).filter(a=>a.kind==='hub'&&a.ch<=curCh).pop(); const nid=`n_${hub.id}_center`; if(!goAdj(nid)) return false; clk.line+=0; E.interact(s,nid,{}); clk.menu++; return true }
   function shop(){ const hub=Object.values(WORLD.areas).filter(a=>a.kind==='hub'&&a.ch<=curCh).pop(); const nid=`n_${hub.id}_shop`; if(!goAdj(nid)) return;
     const want=(k,n)=>{ const it=ITEMS[k]; if(!it||!E.RULES_BY[nid][0].arg.split(',').includes(k)) return; while((s.bag[k]||0)<n&&s.money>=it.price+300){ s.money-=it.price; E.addItem(s,k,1) } };
@@ -86,11 +86,13 @@ function run(opt){
       const tr=ranked.filter(m=>m.lv<need); if(tr.length) grind(need,tr); else grind(need,null)
     } }
   let grindSecs=0; const wsum=c=>Object.keys(c).reduce((a,k)=>a+c[k]*SEC[k],0);
-  const io={battle:(tid)=>{ const c0={...clk}; ensureStrength(tid); grindSecs+=wsum(clk)-wsum(c0); // may have moved
-      return fightTrainer(tid) },
+  const io={battle:(tid)=>{ const T=TR[tid]; return battle(T.party.map(p=>E.mkFoe(p.sp,p.lv)),T,false) },
     shop:()=>{}, static:(sp,lv)=>catchStatic(sp,lv)};
-  let curNPC=null;
-  function fightTrainer(tid){ const T=TR[tid]; let res; let tries=0; do{ const foes=T.party.map(p=>E.mkFoe(p.sp,p.lv)); res=battle(foes,T,false); tries++; if(res==='lose'){ log('LOST',tid,JSON.stringify(T.party),'vs',s.party.map(m=>m.sp+':'+m.lv+':'+m.hp).join(',')); whiteout(); ensureStrength(tid,tries*2); if(curNPC&&!goAdj(curNPC)) throw new Error('cannot return to '+curNPC); } }while(res!=='win'&&tries<6); return res }
+  function battleNpc(nid){ const rule=(E.RULES_BY[nid]||[]).find(r=>r.act==='battle'); let out;
+    if(!rule){ if(!goAdj(nid)) throw new Error('unreachable '+nid); return E.interact(s,nid,io) }
+    let tries=0; while(!s.flags[rule.set]&&tries<7){ const c0={...clk}; ensureStrength(rule.arg,tries*2); grindSecs+=wsum(clk)-wsum(c0);
+      if(!goAdj(nid)) throw new Error('unreachable '+nid); out=E.interact(s,nid,io); tries++; if(!s.flags[rule.set]){ log('LOST',rule.arg); whiteout() } }
+    return out }
   function catchStatic(sp,lv){ const c=E.newCatch(s,sp,lv,'flee'); let g=0; while(!c.over&&g++<30){ const ball=['ultra-ball','great-ball','monster-ball'].find(k=>s.bag[k]>0); if(!ball){shop();continue} E.throwBall(s,c,ball,'great'); clk.throw++ } return c.result }
   function catchSomeWild(area){ // capture one wild mon in the area (also sets quest hook)
     for(let g=0;g<60;g++){ if(!nearGrass(area)) return false; clk.move+=5; const w=E.rollWild(s); if(!w) return false; const c=E.newCatch(s,w.sp,w.lv,w.beh); clk.catchIntro++; let t=0;
@@ -105,14 +107,13 @@ function run(opt){
       const m=lines.join(' ').match(/순서: (.+?)\./)||lines.join(' ').match(/기록된 순서: (.+?)\./); if(!m) throw new Error('no order in hint '+st.id);
       const names=m[1].split(' → '); for(const nm of names){ const sw=WORLD.maps[E.NPC[hint].map].npcs.filter(n=>n.kind==='switch'&&n.id.startsWith(nid+'_s')&&n.label.startsWith(nm)); if(!sw[0]) throw new Error('switch '+nm); if(!goAdj(sw[0].id)) throw new Error('unreachable switch'); E.interact(s,sw[0].id,io); clk.line++ }
       if(!s.flags[st.id]) throw new Error('puzzle unsolved '+st.id); return }
-    if(!goAdj(nid)) throw new Error('unreachable '+nid+' from '+s.map); curNPC=nid;
-    const out=E.interact(s,nid,io); clk.line+=out.length; if(!s.flags[st.id]) throw new Error('step not completed '+st.id+' '+out.join('/'));
-    curNPC=null }
+    const out=battleNpc(nid); clk.line+=out.length; if(!s.flags[st.id]) throw new Error('step not completed '+st.id+' '+out.join('/'));
+    }
   function gymPrep(g){ // traverse gym: practice, trainer, puzzle
     const n=+g.id.slice(1); const a=WORLD.areas.find(x=>x.id===g.id);
     // practice
     const gd=`n_gym${n}_guide`; goAdj(gd); E.interact(s,gd,io); clk.line+=2; const pr=`n_gym${n}_prac`; goAdj(pr); E.interact(s,pr,io);
-    const tr=`n_g${n}_t0`; curNPC=tr; goAdj(tr); E.interact(s,tr,io); curNPC=null; if(!s.flags[`g${n}_t0`]) throw new Error('gym trainer');
+    const tr=`n_g${n}_t0`; battleNpc(tr); if(!s.flags[`g${n}_t0`]) throw new Error('gym trainer');
     // go to puzzle screen
     const sid=`gym${n}_puz`; const hint=`n_${sid}_hint`; if(!goAdj(hint)) throw new Error('gym hint unreachable'); const lines=E.interact(s,hint,io); clk.line+=2;
     const m=lines.join(' ').match(/기록된 순서: (.+?)\./); const names=m[1].split(' → ');
