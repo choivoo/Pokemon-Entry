@@ -13,9 +13,10 @@ def normalize(b,uid):
     """b: DSL block dict -> real layout (new dict)."""
     t=RENAME.get(b["type"],b["type"]); mine=[normalize(q,uid) if isinstance(q,dict) else q for q in b["params"]]
     if t=="calc_basic" and len(mine)>1 and mine[1]=="MULTIPLY": mine[1]="MULTI"
+    if t=="quotient_and_mod" and len(mine)==3: mine=[mine[0],mine[2],mine[1]]   # real order: left, right, operator
     if t=="repeat_inf": params=[None]
     elif t in("brush_stamp","brush_erase_all"): params=[None]
-    elif t in("change_to_some_shape","sound_something_wait_with_block"):
+    elif t in("change_to_some_shape","sound_something_wait_with_block","sound_something_with_block"):
         kind="get_pictures" if t=="change_to_some_shape" else "get_sounds"
         v=mine[0]; params=[_mk(kind,[v],uid()) if not isinstance(v,dict) else v,None]
     elif t in DEFS:
@@ -36,12 +37,13 @@ def normalize(b,uid):
     return n
 def denormalize(b):
     t=REVERSE.get(b["type"],b["type"]); ps=[denormalize(q) if isinstance(q,dict) else q for q in b["params"]]
-    if t in("change_to_some_shape","sound_something_wait_with_block"):
+    if t in("change_to_some_shape","sound_something_wait_with_block","sound_something_with_block"):
         v=ps[0]; ps=[v["params"][0] if isinstance(v,dict) else v]
     elif t=="repeat_inf" or t in("stamp","erase_all_stamps"): ps=[]
     elif t in DEFS and t not in REALLEN:
         real=DEFS[t][0]; ps=[x for x,r in zip(ps,real) if r not in PAD]
     if t=="calc_basic" and len(ps)>1 and ps[1]=="MULTI": ps[1]="MULTIPLY"
+    if t=="quotient_and_mod" and len(ps)==3: ps=[ps[0],ps[2],ps[1]]
     n=dict(b); n["type"]=t; n["params"]=ps; n["statements"]=[[denormalize(c) for c in st] for st in b["statements"]]; return n
 def check(b,errs,path=""):
     t=b["type"]
@@ -53,6 +55,10 @@ def check(b,errs,path=""):
         return
     real=DEFS[t][0]
     if len(b["params"])!=len(real): errs.append(("param count",t,len(b["params"]),len(real)))
+    for q,r in zip(b["params"],real):
+        if r=="Block" and not (q is None or isinstance(q,dict)): errs.append(("Block param is not a block",t,str(q)[:30]))
+        if r in("Text","Indicator","LineBreak") and q is not None and not isinstance(q,dict): errs.append(("placeholder not null",t,str(q)[:30]))
+        if r in("Dropdown","DropdownDynamic","Keyboard") and isinstance(q,dict): errs.append(("dropdown holds a block",t))
     for q in b["params"]:
         if isinstance(q,dict): check(q,errs)
     for st in b["statements"]:

@@ -108,7 +108,7 @@ def validate(proj):
         if t in("message_cast","message_cast_wait") and p[0] not in mids: errs.append((o,t,p[0]))
         if t=="when_message_cast" and p[1] not in mids: errs.append((o,t,p[1]))
         if t=="change_to_some_shape" and p[0]["params"][0] not in pics: errs.append((o,t,p[0]))
-        if t=="sound_something_wait_with_block" and p[0]["params"][0] not in snds: errs.append((o,t,p[0]))
+        if t in("sound_something_wait_with_block","sound_something_with_block") and p[0]["params"][0] not in snds: errs.append((o,t,p[0]))
         for q in p:
             if isinstance(q,dict): walk(q,o)
         for st in b["statements"]:
