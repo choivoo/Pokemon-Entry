@@ -13,12 +13,12 @@ def logic():
             locate(v("dx_"),v("dy_"))
             for t in range(1,NTH+1):
                 with If(v("th")==t): shape(f"PIC:tile_{name}:{t}")
-            stamp()
+            stamp(); locate(900,900)
     with proc("stamp_npc",obj="npc_glyph"):
         locate(v("dx_"),v("dy_"))
         for k in range(1,12):
             with If(v("nk")==k): shape(f"PIC:npc_glyph:{k}")
-        stamp()
+        stamp(); locate(900,900)
     with proc("draw_tiles"):
         P.emit(blk("erase_all_stamps"))
         v("th").set(l("M_theme")[mp]); y=v("dm_y"); y.set(0)
@@ -290,4 +290,4 @@ def logic():
                 cmd.set(c); call("handle_cmd"); ie.other()
                 with If(c==5): cmd.set(5)
     with on_start():
-        call("start_game")
+        hud("게임 시작 중... 입력창이 뜨면 1(새 게임) 또는 2(이어하기)를 입력하세요"); call("start_game")

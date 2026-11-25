@@ -96,7 +96,9 @@ def say(t):
 def ask(t): P.emit(blk("ask_and_wait",C(t).b))
 def wait(t): P.emit(blk("wait_second",C(t).b))
 def call(name): P.emit(blk("message_cast_wait",P.msg(name)))
-def hud(t): P.emit(blk("text_write",C(t).b))
+def hud(t):
+    # text_write only works inside a textBox object -> route through a message to the hud object
+    P.emit(blk("set_variable",P.vars["hud_text"],C(t).b)); P.emit(blk("message_cast",P.msg("hud_set")))
 def stamp(): P.emit(blk("stamp"))
 def locate(x,y): P.emit(blk("locate_xy",C(x).b,C(y).b))
 def shape(pid): P.emit(blk("change_to_some_shape",pid))

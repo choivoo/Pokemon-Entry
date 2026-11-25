@@ -18,8 +18,8 @@ def build(out="build/%s.ent"%NAME):
     T="assets/gen/tiles/"; U="assets/gen/ui/"
     objs=[]
     for k in ("floor","wall","grass","water","door"):
-        objs.append(Obj("tile_"+k,[(str(i+1),f"{T}{k}_{t}.png",24) for i,t in enumerate(GD.THEMES)],vis=False,size=24))
-    objs.append(Obj("npc_glyph",[(str(k),f"{U}npc{k}.png",24) for k in range(1,12)],vis=False,size=24))
+        objs.append(Obj("tile_"+k,[(str(i+1),f"{T}{k}_{t}.png",24) for i,t in enumerate(GD.THEMES)],x=900,y=900,vis=True,size=24))
+    objs.append(Obj("npc_glyph",[(str(k),f"{U}npc{k}.png",24) for k in range(1,12)],x=900,y=900,vis=True,size=24))
     objs.append(Obj("player",[(f"{d}_{f}",f"{U}player{d}_{f}.png",24) for d in range(1,5) for f in (1,2)],x=-204,y=3,size=24))
     objs.append(Obj("pika",[(f"{m}_{f}",f"{U}pika{m}_{f}.png",24) for m in (1,2,3) for f in (1,2)],x=-204,y=3,size=24))
     objs.append(Obj("mon_view",[(str(i),f"assets/sprites/{i:03d}.png",96) for i in range(1,152)],x=150,y=35,vis=False,size=96))
@@ -31,7 +31,7 @@ def build(out="build/%s.ent"%NAME):
     for n,(x,y) in pos.items(): objs.append(Obj(n,[("1",f"{U}{n}.png",56)],x=x,y=y,size=56))
     objs.append(Obj("bgm",[("1",U+"blank.png",2)],vis=False,size=2,sounds=[(str(k),f"assets/gen/bgm/bgm{k}.mp3") for k in range(1,9)]))
     objs.append(Obj("hud",[],x=0,y=-125,typ="textBox"))
-    objs.append(Obj("main",[("1",U+"blank.png",2)],vis=False,size=2))
+    objs.append(Obj("main",[("1",U+"blank.png",2)],vis=True,size=2))
     # ids
     sounds_ids={}
     for o in objs:

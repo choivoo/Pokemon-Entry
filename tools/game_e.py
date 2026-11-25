@@ -107,3 +107,4 @@ def logic():
     with proc("anim_evolve",obj="fx_flash"):
         with If(v("fx_blink")==1):
             with Repeat(3): show(); wait(0.1); hide(); wait(0.1)
+    with proc("hud_set",obj="hud"): P.emit(blk("text_write",v("hud_text").b))
