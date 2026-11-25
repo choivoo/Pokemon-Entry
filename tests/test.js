@@ -20,11 +20,13 @@ for(const m of maps){
   const start=m.exits.length?[...m.exits.map(e=>{const d=[e.x,e.y]; return d})][0]:null; if(!start) continue;
   const inw=(x,y)=>x===0?[1,y]:x===W-1?[W-2,y]:y===0?[x,1]:[x,H-2]; const st=inw(...start);
   const seen=new Set([st.join()]),q=[st];
-  while(q.length){ const [x,y]=q.pop(); for(const[dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const nx=x+dx,ny=y+dy; if(nx<0||ny<0||nx>=W||ny>=H) continue; const c=m.tiles[ny][nx]; if(!'.gD'.includes(c)||seen.has(nx+','+ny)) continue; if(m.npcs.some(n=>n.x===nx&&n.y===ny)) continue; seen.add(nx+','+ny); if(c!=='D') q.push([nx,ny]) } }
+  while(q.length){ const [x,y]=q.pop(); for(const[dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const nx=x+dx,ny=y+dy; if(nx<0||ny<0||nx>=W||ny>=H) continue; const c=m.tiles[ny][nx]; if(!'.gDh'.includes(c)||seen.has(nx+','+ny)) continue; if(m.npcs.some(n=>n.x===nx&&n.y===ny)) continue; seen.add(nx+','+ny); if(c!=='D') q.push([nx,ny]) } }
   for(const e of m.exits) ok(seen.has(e.x+','+e.y),'exit unreachable '+m.id);
   for(const n of m.npcs){ ok('.g'.includes(m.tiles[n.y][n.x]),'npc on blocked '+n.id); ok([[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>seen.has((n.x+dx)+','+(n.y+dy))),'npc unreachable '+n.id) }
 }
 for(const m of maps){ const seen=new Set(); for(const n of m.npcs){ const k=n.x+','+n.y; ok(!seen.has(k),'npc overlap '+m.id+' '+k); seen.add(k) } }
+for(const m of maps.filter(x=>x.hidden)){ const [hx,hy]=m.hidden; ok(m.tiles[hy][hx]==='h'&&m.tiles[hy-1][hx]==='.'&&'.g'.includes(m.tiles[hy+1][hx]),'hidden passage shape '+m.id); ok(m.npcs.some(n=>n.x===hx&&n.y===hy-1),'hidden cache in niche '+m.id);
+  const s=E.newState(1); s.map=m.id; s.x=hx; s.y=hy+1; ok(!E.move(s,0,-1).ok,'closed passage blocks'); ok(!E.openHidden(s,5),'no opening without affection'); ok(E.openHidden(s,10)&&E.move(s,0,-1).ok,'open passage walkable after sniff') }
 // 2 rules integrity
 const FS=new Set(G.flags);
 for(const r of RULES){ for(const f of [r.req,r.nreq,r.set,...(r.clr?r.clr.split(','):[])]) if(f) ok(FS.has(f),'unknown flag '+f+' in '+r.npc);
@@ -68,6 +70,18 @@ for(const s of Object.values(SPECIES)) ok(s.learn.length>0&&s.learn.every(([l,k]
   // accuracy stages: -6 accuracy nearly never hits
   let hits=0; for(let i=0;i<300;i++){ const s3=E.newState(500+i); const x=E.mkMon(25,30), y=E.mkMon(19,30); y.hp=99999; x.stg[5]=-6; x.moves=[{k:'tackle',pp:30}]; s3.party=[x]; const b3=E.newBattle(s3,[y],{wild:true}); x.stg[5]=-6; b3.part=new Set([0]); const h=y.hp; E.turn(b3,{t:'move',k:'tackle'}); if(y.hp<h) hits++ }
   ok(hits<300*0.6,'accuracy -6 stage reduces hit rate (hits '+hits+'/300)') }
+{ // abilities & weather
+  const mk=(a,b,map)=>{ const s=E.newState(61); s.map=map||'R01_0'; s.party=[a]; const bt=E.newBattle(s,[b],{wild:true}); bt.part=new Set([0]); return {s,bt} };
+  { const a=E.mkMon(7,30), d=E.mkMon(134,30); d.hp=Math.floor(E.maxHp(134,30)/2); a.moves=[{k:'bubble',pp:30}]; const {bt}=mk(a,d); const h=d.hp; E.turn(bt,{t:'move',k:'bubble'}); ok(d.hp>=h||bt.log.some(x=>x.includes('특성')),'water absorb: water move heals vaporeon instead of damaging'); }
+  { const a=E.mkMon(74,30), d=E.mkMon(92,30); a.moves=[{k:'tackle',pp:30}]; const gm=Object.values(E.MOVES).find(m=>m.type==='ground'&&m.power>0&&m.cls==='physical'); a.moves=[{k:gm.key,pp:30}]; const {bt}=mk(a,d); const h=d.hp; E.turn(bt,{t:'move',k:gm.key}); ok(d.hp===h||d.hp>h,'levitate: ground move cannot hit gastly'); }
+  { let para=0; for(let i=0;i<300;i++){ const a=E.mkMon(19,60), d=E.mkMon(25,5); d.hp=99999; a.moves=[{k:'tackle',pp:30}]; const s=E.newState(900+i); s.party=[a]; s.map='R01_0'; const bt=E.newBattle(s,[d],{wild:true}); bt.part=new Set([0]); E.turn(bt,{t:'move',k:'tackle'}); if(a.st==='paralysis') para++ } ok(para>20&&para<150,'static: contact moves sometimes paralyze the attacker ('+para+'/300)') }
+  { const a=E.mkMon(25,30), d=E.mkMon(130,30); const {bt}=mk(a,d); ok(a.stg[0]===-1,'intimidate lowers the opponent attack on entry'); }
+  { const w=E.weatherOfMap('H03_0'); ok(w===1,'canal town has rain'); ok(E.weatherOfMap('R16_0')===3&&E.weatherOfMap('H09_0')===2&&E.weatherOfMap('R18_0')===4&&E.weatherOfMap('R01_0')===0,'weather by theme');
+    const a=E.mkMon(7,30), d=E.mkMon(74,30); const wm=Object.values(E.MOVES).find(m=>m.type==='water'&&m.power>0); const rg=()=>0.999;
+    const r0=E.dmgCalc(a,d,wm.key,rg,false,0).d, r1=E.dmgCalc(a,d,wm.key,rg,false,1).d, r2=E.dmgCalc(a,d,wm.key,rg,false,2).d; ok(Math.abs(r1/r0-1.5)<0.05&&Math.abs(r2/r0-0.5)<0.05,'rain x1.5 / sun x0.5 for water moves ('+r0+','+r1+','+r2+')');
+    const g=E.mkMon(3,30), g2=E.mkMon(74,30); g.hp=5; const gm=Object.values(E.MOVES).find(m=>m.type==='grass'&&m.power>0); const full=E.mkMon(3,30);
+    ok(E.dmgCalc(g,g2,gm.key,rg,false,0).d>=E.dmgCalc(full,g2,gm.key,rg,false,0).d*1.4,'overgrow-type ability boosts low-HP same-type moves'); }
+}
 // 5 battle rules
 { ok(E.eff('water',['fire'])===2&&E.eff('electric',['ground'])===0&&E.eff('fire',['water','rock'])===0.25,'type chart');
   const s=E.newState(11); const a=E.mkMon(7,20), d=E.mkMon(4,20); s.party=[a]; const b=E.newBattle(s,[d],{wild:true}); b.part=new Set([0]);
@@ -88,6 +102,7 @@ for(const s of Object.values(SPECIES)) ok(s.learn.length>0&&s.learn.every(([l,k]
   const p3=code.split('|'); p3[13]=p3[13].replace(/^\d+/,'999'); const b3=p3.slice(0,-1).join('|'); const ck3=(()=>{let a=1,b=0;for(const ch of b3){a=(a+ch.charCodeAt(0))%65521;b=(b+a)%65521}return ((b*65536+a)>>>0).toString(36)})(); ok(!!E.decode(b3+'|'+ck3).err,'unknown species rejected');
   // idempotence of rewards after clear
   const snap=()=>JSON.stringify([s.money,s.bag,s.party.length,s.box.length,s.flags]);
+  { const io0={battle:()=>'lose',shop:()=>{},static:()=>'lose'}; for(const nid of Object.keys(E.NPC)){ const rs=E.RULES_BY[nid]||[]; if(rs.some(r=>r.act==='heal'||r.act==='shop')) continue; E.interact(s,nid,io0) } } // first pass: claim optional rewards
   const io={battle:()=>'lose',shop:()=>{},static:()=>'lose'}; let dup=0;
   for(const nid of Object.keys(E.NPC)){ const rs=E.RULES_BY[nid]||[]; if(rs.some(r=>r.act==='heal'||r.act==='shop')) continue; const before=snap(); E.interact(s,nid,io); E.interact(s,nid,io); if(snap()!==before){ dup++; fails.push('re-interact changed state: '+nid) } }
   ok(dup===0,'re-interaction changes state '+dup); }

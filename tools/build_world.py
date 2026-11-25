@@ -79,6 +79,10 @@ def depth(i):
     while byid[i]["evolves_from"]: i=int(byid[i]["evolves_from"]); d+=1
     return d
 def bst(s): return sum(s["base"].values())
+ABIL={}
+for code,ids in {1:[25,26,125,100,101],2:[29,30,31,32,33,34],3:[37,38,58,59,77,78,126,136],4:[134,72,73,86,87],5:[135,81,82],6:[92,93,94,109,110],7:[59,130,128,57,56],
+ 8:[1,2,3,43,44,45,69,70,71,102,103],9:[4,5,6,37],10:[7,8,9,60,61,62,54,55]}.items():
+    for i in ids: ABIL.setdefault(i,code)
 species=[]
 for s in SP:
     i=s["id"]; d=depth(i)
@@ -91,7 +95,7 @@ for s in SP:
     if i in (65,68,76,94): evo={"from":int(s["evolves_from"]),"level":40}
     if i in (134,135,136): evo={"from":133,"item":STONE[i]}
     species.append({"id":i,"name":s["name_ko"],"types":s["types"],"base":s["base"],"desc":s["desc_ko"],"capture":s["capture_rate"],
-      "exp":s["base_exp"],"evo":evo,"learn":learnset(s),"stage":d,"legend":i in LEGEND})
+      "exp":s["base_exp"],"abil":ABIL.get(i,0),"evo":evo,"learn":learnset(s),"stage":d,"legend":i in LEGEND})
 sbyid={s["id"]:s for s in species}
 def natural_level(i):
     e=sbyid[i]["evo"]
@@ -187,6 +191,14 @@ for m in maps.values():
         ix,iy=inward(x,y)
         if t[iy][ix]!="D": t[iy][ix]="."
     m["tiles"]=["".join(r) for r in t]
+HID=[]
+for m in maps.values():
+    if m["kind"]=="dungeon" and m["screen"]==2:
+        t=[list(r) for r in m["tiles"]]; r_=random.Random("hid"+m["id"]); xs=list(range(4,16)); r_.shuffle(xs)
+        for x in xs:
+            if t[4][x]=="." and t[3][x] in ".#" and t[2][x]=="#" and t[3][x-1]!="D" and t[3][x+1]!="D":
+                t[2][x]="."; t[3][x]="h"; m["tiles"]=["".join(r) for r in t]
+                m["npcs"].append(dict(id=f"n_hid_{m['id']}",x=x,y=2,kind="obj",label="숨겨진 물건")); m["hidden"]=[x,3]; HID.append(m["id"]); break
 json.dump({"T":T,"chart":chart},open("data/typechart.json","w"))
 # ---------- placement ----------
 slots={}
@@ -358,6 +370,10 @@ EPI={"H01":"엄마: 박사님이 전해 주셨단다. 네 피카츄 이야기가
 for h,txt in EPI.items():
     ar=areas[h]; n=addnpc(mid(ar,ar["screens"]-1),f"n_{h}_epi","npc","후일담")
     R(n["id"],"say",txt,req="c12_end"); R(n["id"],"say","(지금은 평범한 이야기만 하고 있다.)")
+HID_ITEMS=["ultra-ball:3","hyper-potion:2","revive:1","full-heal:2","great-ball:5","super-potion:4","bait:6"]
+for k,mid_ in enumerate(HID):
+    flags.update({f"open_{mid_}",f"hid_{mid_}"}); R(f"n_hid_{mid_}","give","피카츄가 찾아낸 숨은 틈 속에 물건이 있었다!",nreq=f"hid_{mid_}",arg=HID_ITEMS[k%len(HID_ITEMS)],set_=f"hid_{mid_}")
+    R(f"n_hid_{mid_}","say","빈 틈이다. 이미 가져갔다.",req=f"hid_{mid_}")
 # ambient: pokecenter/shop/save & flavor NPCs & optional trainers & gifts
 SHOP={"H01":["monster-ball","potion"],"H02":["monster-ball","potion","antidote"],"H03":["monster-ball","great-ball","potion","super-potion","awakening"],
  "H04":["great-ball","super-potion","parlyz-heal","burn-heal"],"H05":["great-ball","super-potion","antidote","bait"],"H06":["great-ball","super-potion","parlyz-heal"],

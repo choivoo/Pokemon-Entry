@@ -54,10 +54,18 @@ def logic():
                 ie2.other()
                 with IfElse(v("sn_dy")>0) as ie3:
                     say("피카츄: (아래쪽을 가리킨다)"); ie3.other(); say("피카츄: (위쪽을 가리킨다)")
+    with proc("pika_open_hidden"):  # affection >= 10: Pikachu scratches a wall gap that hides a cache
+        v("oh_done").set(0)
+        for dx,dy in ((1,0),(-1,0),(0,1),(0,-1)):
+            v("tx").set(v("px")+dx); v("ty").set(v("py")+dy)
+            with If((v("tx")>=0)&(v("tx")<=19)&(v("ty")>=0)&(v("ty")<=10)):
+                with If((charat(l("T_rows")[(v("mp")-1)*11+v("ty")+1],v("tx")+1)=="h")&(l("M_hflag")[v("mp")]>0)&(v("oh_done")==0)):
+                    with If(l("FS")[l("M_hflag")[v("mp")]]==0):
+                        l("FS").set(l("M_hflag")[v("mp")],1); v("oh_done").set(1); say("피카츄: 피카! (벽 틈을 긁자 숨은 통로가 열렸다!)"); call("draw_tiles")
     with on_key(80):
         v("aff").inc(); say("피카츄: 피카피카! (귀를 쫑긋 세운다)")
         with IfElse(v("aff")>=10) as ie:
-            call("pika_sniff"); ie.other(); call("hint")
+            call("pika_open_hidden"); call("pika_sniff"); ie.other(); call("hint")
     with on_click("pika"):
         say("피카츄: 피카!"); v("aff").inc(); call("pika_sniff")
     # touch buttons
@@ -70,8 +78,13 @@ def logic():
         with proc("wild_view",obj=f"wild{k}"):
             with IfElse(v(f"vw{k}x")>=0) as ie:
                 locate(-228+24*v(f"vw{k}x"),123-24*v(f"vw{k}y"))
+                with IfElse(v("steps")%2==0) as iev:
+                    v("wv").set(0); iev.other(); v("wv").set(1)
+                with If(v(f"vw{k}dir")==2): v("wv").inc(2)
                 for sp in range(1,152):
-                    with If(v(f"vw{k}sp")==sp): shape(f"PIC:wild{k}:{sp}")
+                    with If(v(f"vw{k}sp")==sp):
+                        for var in range(4):
+                            with If(v("wv")==var): shape(f"PIC:wild{k}:{sp}_{var}")
                 show(); ie.other(); hide()
     with proc("panel_set",obj="panel"): hud(v("panel_text")); show()
     with proc("panel_hide",obj="panel"): hide()
@@ -80,3 +93,13 @@ def logic():
         with proc("blink_"+who,obj=obj):
             with If(v("fx_blink")==1):
                 with Repeat(2): hide(); wait(0.06); show(); wait(0.06)
+    # animations
+    with proc("anim_throw",obj="fx_ball"):
+        with If(v("fx_blink")==1):
+            show(); i=v("an_i"); i.set(0)
+            with Repeat(8):
+                locate(-150+i*38,-30+i*(8-i)*4+i*6); wait(0.03); i.inc()
+            hide()
+    with proc("anim_evolve",obj="fx_flash"):
+        with If(v("fx_blink")==1):
+            with Repeat(3): show(); wait(0.1); hide(); wait(0.1)

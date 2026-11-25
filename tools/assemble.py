@@ -19,12 +19,13 @@ def build(out="build/%s.ent"%NAME):
     objs=[]
     for k in ("floor","wall","grass","water","door"):
         objs.append(Obj("tile_"+k,[(str(i+1),f"{T}{k}_{t}.png",24) for i,t in enumerate(GD.THEMES)],vis=False,size=24))
-    objs.append(Obj("npc_glyph",[(str(k),f"{U}npc{k}.png",24) for k in range(1,10)],vis=False,size=24))
+    objs.append(Obj("npc_glyph",[(str(k),f"{U}npc{k}.png",24) for k in range(1,12)],vis=False,size=24))
     objs.append(Obj("player",[(f"{d}_{f}",f"{U}player{d}_{f}.png",24) for d in range(1,5) for f in (1,2)],x=-204,y=3,size=24))
     objs.append(Obj("pika",[(f"{m}_{f}",f"{U}pika{m}_{f}.png",24) for m in (1,2,3) for f in (1,2)],x=-204,y=3,size=24))
     objs.append(Obj("mon_view",[(str(i),f"assets/sprites/{i:03d}.png",96) for i in range(1,152)],x=150,y=35,vis=False,size=96))
     objs.append(Obj("mon_own",[(str(i),f"assets/sprites/{i:03d}.png",96) for i in range(1,152)],x=-150,y=-30,vis=False,size=96))
-    for k in (1,2): objs.append(Obj(f"wild{k}",[(str(i),f"assets/gen/icons/{i:03d}.png",24) for i in range(1,152)],vis=False,size=24))
+    for k in (1,2): objs.append(Obj(f"wild{k}",[(f"{i}_{v}",f"assets/gen/icons/{i:03d}_{v}.png",24) for i in range(1,152) for v in range(4)],vis=False,size=24))
+    objs.append(Obj("fx_ball",[("1",U+"fx_ball.png",16)],x=-150,y=-30,vis=False,size=16)); objs.append(Obj("fx_flash",[("1",U+"fx_flash.png",270)],vis=False,size=270))
     objs.append(Obj("panel",[],x=0,y=10,typ="textBox",vis=False))
     pos={"btn_left":(-215,-100),"btn_right":(-155,-100),"btn_up":(-185,-70),"btn_down":(-185,-130),"btn_ok":(205,-100),"btn_menu":(205,-60)}
     for n,(x,y) in pos.items(): objs.append(Obj(n,[("1",f"{U}{n}.png",40)],x=x,y=y,size=40))

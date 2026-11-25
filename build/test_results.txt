@@ -1,30 +1,30 @@
-maps 213 npcs 592 rules 1369 trainers 173 wild areas 37 added roots 27 species 151 moves 117
+maps 213 npcs 603 rules 1391 trainers 173 wild areas 37 added roots 27 species 151 moves 117
 --- engine invariants (node tests/test.js)
-pass 10253 fail 0
+pass 10415 fail 0
 --- trace dump
-build/trace_fast7.json 90625 events true
-build/trace_normal9.json 47740 events true
+build/trace_fast7.json 65487 events true
+build/trace_normal9.json 63303 events true
 --- blocks replay vs engine
-build/trace_fast7.json replayed in 16s steps 9260038
-build/trace_normal9.json replayed in 9s steps 5053898
+build/trace_fast7.json replayed in 14s steps 9354622
+build/trace_normal9.json replayed in 14s steps 9109601
 pass 26 fail 0
 --- packaged .ent (serialized JSON) replay
-build/trace_fast7.json replayed in 17s steps 9260038
-build/trace_normal9.json replayed in 9s steps 5053898
+build/trace_fast7.json replayed in 15s steps 9354622
+build/trace_normal9.json replayed in 15s steps 9109601
 pass 26 fail 0
 --- blocks unit tests
-blocks2: pass 458 fail 0
+blocks2: pass 473 fail 0
 --- multi seed full playthroughs
 runs 48 failed 0
-fast n 24 total h 12.71 grind h 9.72 wipes 28.67 steps 68977.83 battles 2047.96
-normal n 24 total h 9.80 grind h 3.75 wipes 19.58 steps 52100.58 battles 1459.13
+fast n 24 total h 14.51 grind h 8.80 wipes 49.13 steps 88775.33 battles 1886.00
+normal n 24 total h 11.20 grind h 7.56 wipes 22.88 steps 64023.13 battles 1715.96
 --- chapter report
-fast: total 13.4h grind 10.1h required 3.31h
-normal: total 8.2h grind 1.0h required 7.15h
-normal_shuffled_clues: total 9.9h grind 7.3h required 2.65h
+fast: total 10.9h grind 7.9h required 3.00h
+normal: total 8.9h grind 2.0h required 6.92h
+normal_shuffled_clues: total 14.1h grind 1.0h required 13.07h
 --- assemble
-assets ok 597 KB
-wrote build/Pokemon_Pikachu_Kanto_Journey_1.0.ent 0.9 MB objects 22 blocks 15580 files 491 errors 0
+assets ok 1581 KB
+wrote build/Pokemon_Pikachu_Kanto_Journey_1.0.ent 1.8 MB objects 24 blocks 22748 files 948 errors 0
 []
 docs written
 qa written

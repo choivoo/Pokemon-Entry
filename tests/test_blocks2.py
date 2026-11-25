@@ -190,6 +190,35 @@ it.rndfn=lambda a,b:a   # rolls minimum: 1 -> always hits; with -6 accuracy need
 it.lst["PS_stg"][5]=-6; it.setv("ex_mvidx",GD.MVIDX["tackle"]); it.lst["FO_hp"][0]=99999; it.rndfn=lambda a,b:(40 if (a,b)==(1,100) else a)
 it.call("exec_p"); ok(it.lst["FO_hp"][0]==99999,"blocks: -6 accuracy makes a 40-roll miss (tackle acc 100 -> 33)")
 it.rndfn=None
+# abilities & weather in blocks
+def duel(asp,alv,dsp,dlv,mv,rf=lambda a,b:a):
+    p,it=fresh2(5); it.rndfn=rf; it.setv("pn",0); it.setv("g_sp",asp); it.setv("g_lv",alv); it.call("add_mon"); it.setv("w_sp",dsp); it.setv("w_lv",dlv); it.call("foe_setup_single")
+    it.setv("pa",1); it.setv("fi",1); it.setv("ex_mvidx",mv); return it
+it=duel(7,30,134,30,GD.MVIDX["bubble"]); it.lst["FO_hp"][0]=20; it.call("exec_p"); ok(it.lst["FO_hp"][0]>20,"blocks: water absorb heals vaporeon (%s)"%it.lst["FO_hp"][0])
+gm=next(m for m in GD.MOVES if m["type"]=="ground" and m["power"]>0 and m["cls"]=="physical"); it=duel(74,30,92,30,GD.MVIDX[gm["key"]]); h=it.lst["FO_hp"][0]; it.call("exec_p"); ok(it.lst["FO_hp"][0]==h,"blocks: levitate blocks ground moves")
+it=duel(19,60,25,5,GD.MVIDX["tackle"]); it.lst["FO_hp"][0]=99999; it.call("exec_p"); ok(it.lst["PS_st"][0]==3,"blocks: static paralyzes a contact attacker (st=%s)"%it.lst["PS_st"][0])
+it=duel(25,30,130,30,GD.MVIDX["tackle"]); it.setv("pa",1); it.setv("fi",1); it.call("enter_f"); ok(it.lst["PS_stg"][1-1+0]==-1,"blocks: intimidate lowers attack on entry (%s)"%it.lst["PS_stg"][:3])
+it=duel(7,30,74,30,GD.MVIDX["tackle"]); 
+def dmg(weather,ahp=0,asp=7,mv="bubble"):
+    for k,x in zip(("ds_asp","ds_alv","ds_ast","ds_dsp","ds_dlv","ds_mv","ds_asg","ds_dsg","weather","ds_ahp"),(asp,30,0,74,30,GD.MVIDX[mv],0,0,weather,ahp)): it.setv(k,x)
+    it.rndfn=lambda a,b:b; it.call("calc_damage"); return it.var["ds_dmg"]
+d0,d1,d2=dmg(0),dmg(1),dmg(2); ok(abs(d1/d0-1.5)<0.05 and abs(d2/d0-0.5)<0.05,"blocks: rain x1.5 / sun x0.5 water (%s,%s,%s)"%(d0,d1,d2))
+ok(dmg(0,ahp=3,asp=7)>=d0*1.4,"blocks: torrent-type boost at low HP"); ok(dmg(0,ahp=0)==d0,"no boost when hp unknown/high")
+p,it=fresh2(); it.setv("pa",1); it.setv("fi",1); it.setv("w_sp",25); it.setv("w_lv",20); it.call("foe_setup_single"); it.setv("weather",3); it.lst["PS_hp"][0]=50; it.setv("es_side",1); it.call("weather_chip"); ok(it.lst["PS_hp"][0]<50,"blocks: sandstorm chips non-rock Pikachu")
+it.lst["PS_sp"][0]=74; it.lst["PS_hp"][0]=50; it.call("weather_chip"); ok(it.lst["PS_hp"][0]==50,"blocks: rock types ignore sandstorm")
+# hidden passage, lock glyph, switch glyph
+hm=next(k for k,m in GD.WORLD["maps"].items() if m.get("hidden")); hx,hy=GD.WORLD["maps"][hm]["hidden"]
+p,it=fresh2(); it.stubs["place_actors"]=lambda i:None; it.stubs["draw_tiles"]=lambda i:None
+it.stubs["check_sight"]=lambda i:None; it.setv("enc_on",0); it.setv("mp",GD.MIDX[hm]); it.setv("px",hx); it.setv("py",hy+1); it.setv("tx",hx); it.setv("ty",hy); it.call("tile_at"); ok(it.var["tch"]=="#","blocks: closed hidden tile reads as wall")
+it.call("pika_open_hidden"); it.setv("tx",hx); it.setv("ty",hy); it.call("tile_at"); ok(it.var["tch"]==".","blocks: Pikachu opens the hidden passage"); it.setv("cmd",4); it.call("try_move"); ok(it.var["py"]==hy,"player walks into the passage")
+it.setv("cur_npc",GD.NIDX["n_hid_"+hm]); b0=sum(it.lst["BAG"]); it.call("run_rules"); b1=sum(it.lst["BAG"]); it.call("run_rules"); ok(b1>b0 and sum(it.lst["BAG"])==b1,"hidden cache pays out exactly once")
+p,it=fresh2(); rec=[]; it.stubs["stamp_npc"]=lambda i:rec.append(i.var["nk"]); it.setv("mp",GD.MIDX["H01_1"]); it.setv("px",5); it.setv("py",5); it.call("draw_tiles"); ok(11 in rec,"locked door shows a lock glyph")
+for f in ("c1_lab","c1_lost"): it.lst["FS"][GD.FIDX[f]-1]=1
+rec.clear(); it.call("draw_tiles"); ok(11 not in rec,"unlocked door shows no lock")
+pz=next(n for n in GD.NPCS if n[1]["id"].startswith("n_c1_x") ) if False else None
+sw=next((i for i,(m,n) in enumerate(GD.NPCS,1) if n["kind"]=="switch" and "e1_p1" in n["id"]),None)
+p,it=fresh2(); rec=[]; it.stubs["stamp_npc"]=lambda i:rec.append(i.var["nk"]); mid=GD.NPCS[sw-1][0]; it.setv("mp",GD.MIDX[mid]); it.setv("px",10); it.setv("py",5); it.call("draw_tiles"); n_off=rec.count(10)
+it.lst["FS"][GD.N_ON1_FOR(sw)-1 if False else 0]=0
 # trainer sight + rival loss branch
 tn=next(n for n in GD.WORLD["maps"]["R01_2"]["npcs"] if n["kind"]=="trainer" and n["id"]=="n_c1_tr1") if any(n["id"]=="n_c1_tr1" for n in GD.WORLD["maps"]["R01_2"]["npcs"]) else None
 for mid,m in GD.WORLD["maps"].items():

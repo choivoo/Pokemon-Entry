@@ -17,6 +17,36 @@ def logic():
         k=v("rs_k"); k.set(1)
         with Repeat(7): l("PS_stg").set((v("rs_i")-1)*7+k,0); k.inc()
         l("PS_chg").set(v("rs_i"),0); l("PS_rech").set(v("rs_i"),0)
+    with proc("weather_chip"):  # in es_side
+        with If((v("weather")==3)|(v("weather")==4)):
+            with IfElse(v("es_side")==1) as ie:
+                v("wc_sp").set(l("PS_sp")[pa]); v("wc_lv").set(l("PS_lv")[pa]); v("wc_hp").set(l("PS_hp")[pa]); ie.other()
+                v("wc_sp").set(l("FO_sp")[fi]); v("wc_lv").set(l("FO_lv")[fi]); v("wc_hp").set(l("FO_hp")[fi])
+            with If(v("wc_hp")>0):
+                t1=l("S_t1")[v("wc_sp")]; t2=l("S_t2")[v("wc_sp")]; v("wc_imm").set(0)
+                with If(v("weather")==3):
+                    for tn_ in ("rock","ground","steel"):
+                        with If((t1==TYIDX[tn_])|(t2==TYIDX[tn_])): v("wc_imm").set(1)
+                with If(v("weather")==4):
+                    with If((t1==TYIDX["ice"])|(t2==TYIDX["ice"])): v("wc_imm").set(1)
+                with If(v("wc_imm")==0):
+                    v("st_sp").set(v("wc_sp")); v("st_lv").set(v("wc_lv")); call("max_hp"); v("wc_d").set(floor(v("st_out")/16))
+                    with If(v("wc_d")<1): v("wc_d").set(1)
+                    v("wc_hp").set(v("wc_hp")-v("wc_d"))
+                    with If(v("wc_hp")<0): v("wc_hp").set(0)
+                    with IfElse(v("es_side")==1) as ie:
+                        l("PS_hp").set(pa,v("wc_hp")); ie.other(); l("FO_hp").set(fi,v("wc_hp"))
+                    say("기상 피해를 입었다!")
+    with proc("enter_p"):
+        with If((l("S_abil")[l("PS_sp")[pa]]==7)&(l("PS_hp")[pa]>0)):
+            ix=(fi-1)*7+1; v("in_old").set(l("FO_stg")[ix]); v("in_new").set(v("in_old")-1)
+            with If(v("in_new")<-6): v("in_new").set(-6)
+            l("FO_stg").set(ix,v("in_new")); say(join(l("S_name")[l("PS_sp")[pa]],"의 위협! 상대의 공격이 떨어졌다!"))
+    with proc("enter_f"):
+        with If((l("S_abil")[l("FO_sp")[fi]]==7)&(l("FO_hp")[fi]>0)):
+            ix=(pa-1)*7+1; v("in_old").set(l("PS_stg")[ix]); v("in_new").set(v("in_old")-1)
+            with If(v("in_new")<-6): v("in_new").set(-6)
+            l("PS_stg").set(ix,v("in_new")); say(join(l("S_name")[l("FO_sp")[fi]],"의 위협! 공격이 떨어졌다!"))
     with proc("end_status"):  # in es_side 1/2
         with IfElse(v("es_side")==1) as ie:
             with If((l("PS_hp")[pa]>0)&((l("PS_st")[pa]==2)|(l("PS_st")[pa]==4))):
@@ -38,7 +68,7 @@ def logic():
         with IfElse(need_sw==1) as ie:
             with IfElse((v("bt_cmd")==2)&(v("bt_i")>=1)&(v("bt_i")<=pn)) as ie2:
                 with IfElse(l("PS_hp")[v("bt_i")]>0) as ie3:
-                    v("rs_i").set(pa); call("reset_stg_p"); pa.set(v("bt_i")); v("rs_i").set(pa); call("reset_stg_p"); l("PART").set(pa,1); need_sw.set(0); say(join(l("S_name")[l("PS_sp")[pa]],", 나가!"))
+                    v("rs_i").set(pa); call("reset_stg_p"); pa.set(v("bt_i")); v("rs_i").set(pa); call("reset_stg_p"); l("PART").set(pa,1); need_sw.set(0); say(join(l("S_name")[l("PS_sp")[pa]],", 나가!")); call("enter_p")
                     ie3.other(); v("bt_ok").set(0)
                 ie2.other(); v("bt_ok").set(0)
             ie.other()
@@ -51,7 +81,7 @@ def logic():
                 with IfElse((v("bt_i")==pa)|(v("bt_i")<1)|(v("bt_i")>pn)) as ie2:
                     v("bt_ok").set(0); ie2.other()
                     with IfElse(l("PS_hp")[v("bt_i")]<=0) as ie3:
-                        v("bt_ok").set(0); ie3.other(); v("rs_i").set(pa); call("reset_stg_p"); pa.set(v("bt_i")); v("rs_i").set(pa); call("reset_stg_p"); l("PART").set(pa,1); say(join(l("S_name")[l("PS_sp")[pa]],", 나가!"))
+                        v("bt_ok").set(0); ie3.other(); v("rs_i").set(pa); call("reset_stg_p"); pa.set(v("bt_i")); v("rs_i").set(pa); call("reset_stg_p"); l("PART").set(pa,1); say(join(l("S_name")[l("PS_sp")[pa]],", 나가!")); call("enter_p")
             with If((v("bt_cmd")==3)&(v("bt_ok")==1)):
                 v("ui_item").set(v("bt_item")); v("ui_i").set(v("bt_i")); call("use_item")
                 with If(v("ui_ok")==0): v("bt_ok").set(0)
@@ -108,7 +138,7 @@ def logic():
                             v("ex_mvidx").set(v("f_act")); call("exec_f"); call("handle_faints")
                     v("act_i").inc()
                 with If((bover==0)&(need_sw==0)):
-                    v("es_side").set(1); call("end_status"); v("es_side").set(2); call("end_status"); call("handle_faints")
+                    v("es_side").set(1); call("end_status"); call("weather_chip"); v("es_side").set(2); call("end_status"); call("weather_chip"); call("handle_faints")
                 with If(v("p_act")==0): pass
     with proc("use_item"):  # in ui_item, ui_i (party idx) -> ui_ok
         v("ui_ok").set(0)
@@ -141,6 +171,12 @@ def logic():
             bover.set(1); bres.set(2); ie.other()
             l("PART").set(pa,1); v("bturns").set(0)
             v("bgm_mood").set(4)
+            v("weather").set(l("TH_weather")[l("M_theme")[mp]])
+            with If(v("weather")==1): say("비가 내리고 있다! (물 기술 강화, 불꽃 약화)")
+            with If(v("weather")==2): say("햇볕이 강하다! (불꽃 기술 강화, 물 약화)")
+            with If(v("weather")==3): say("모래바람이 분다! (바위·땅·강철 외 지속 피해)")
+            with If(v("weather")==4): say("싸라기눈이 내린다! (얼음 외 지속 피해)")
+            call("enter_p"); call("enter_f")
             with If(v("is_trainer")==1):
                 with If(l("TR_kind")[v("tr_idx")]==3): v("bgm_mood").set(5)
                 with If(l("TR_kind")[v("tr_idx")]==2): v("bgm_mood").set(6)
@@ -181,7 +217,7 @@ def logic():
         with If((l("M_area")[mp]==AIDX["R01"])&(l("FS")[FIDX["c1_catch"]]==0)): l("FS").set(FIDX["c1_catch"],1)
         with If((mp==MIDX["D07_3"])&(l("FS")[FIDX["c7_rare"]]==0)): l("FS").set(FIDX["c7_rare"],1)
     with proc("throw_ball"):  # in tb_ball (item idx), tb_grade (0 miss,1 nice,2 great,3 excellent), c_sp,c_lv,c_bait ; -> c_over, c_res (1 caught 2 fled 0 broke free)
-        l("BAG").set(v("tb_ball"),l("BAG")[v("tb_ball")]-1); v("stat_throws").inc()
+        l("BAG").set(v("tb_ball"),l("BAG")[v("tb_ball")]-1); v("stat_throws").inc(); P.emit(blk("message_cast",P.msg("anim_throw")))
         with IfElse(v("tb_grade")==0) as ie:
             say("볼이 빗나갔다!")
             with If(rnd(1,100)<=15): v("c_over").set(1); v("c_res").set(2); say("포켓몬이 도망쳤다!")
@@ -322,6 +358,8 @@ def logic():
                     with IfElse(ddx>=ddy) as ie:
                         mx.set(0-v("ws_sx")); ie.other(); my.set(0-v("ws_sy"))
                 with If((mx!=0)|(my!=0)):
+                    with If(mx<0): v(f"vw{k}dir").set(1)
+                    with If(mx>0): v(f"vw{k}dir").set(2)
                     tx.set(x+mx); ty.set(y+my); call("tile_at")
                     with If(((tch==".")|(tch=="g"))&~((tx==v(f"vw{o}x"))&(ty==v(f"vw{o}y")))):
                         call("npc_at")

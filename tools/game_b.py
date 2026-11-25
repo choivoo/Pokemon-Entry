@@ -67,7 +67,17 @@ def logic():
             ds_base.set(floor(floor(floor(2*v("ds_alv")/5+2)*l("MV_pow")[v("ds_mv")]*ds_a/ds_d)/50)+2)
             v("ds_f").set(1)
             with If(ds_crit==1): v("ds_f").set(1.5)
-            ds_dmg.set(floor(ds_base*ds_stab*ds_e*v("ds_f")*(85+rnd(0,15))/100))
+            wm=v("ds_wm"); wm.set(1); mtyp=l("MV_type")[v("ds_mv")]
+            with If((v("weather")==1)&(mtyp==TYIDX["water"])): wm.set(1.5)
+            with If((v("weather")==1)&(mtyp==TYIDX["fire"])): wm.set(0.5)
+            with If((v("weather")==2)&(mtyp==TYIDX["fire"])): wm.set(1.5)
+            with If((v("weather")==2)&(mtyp==TYIDX["water"])): wm.set(0.5)
+            st_sp.set(v("ds_asp")); st_lv.set(v("ds_alv")); call("max_hp")
+            with If((v("ds_ahp")>0)&(v("ds_ahp")<=st_out/3)):
+                with If((l("S_abil")[v("ds_asp")]==8)&(mtyp==TYIDX["grass"])): wm.set(wm*1.5)
+                with If((l("S_abil")[v("ds_asp")]==9)&(mtyp==TYIDX["fire"])): wm.set(wm*1.5)
+                with If((l("S_abil")[v("ds_asp")]==10)&(mtyp==TYIDX["water"])): wm.set(wm*1.5)
+            ds_dmg.set(floor(ds_base*ds_stab*ds_e*v("ds_f")*wm*(85+rnd(0,15))/100))
             with If((ds_e>0)&(ds_dmg<1)): ds_dmg.set(1)
             with If((v("ds_asp")==25)&(v("aff")>=30)&(ds_dmg>0)): ds_dmg.set(floor(ds_dmg*1.1))
     # ---------- templated per-side exec ----------
@@ -109,19 +119,42 @@ def logic():
                 with If(v("ex_ok")==1):
                     with IfElse(rnd(1,100)>l("MV_acc")[mvv]*v("ex_am")) as ie:
                         say("그러나 빗나갔다!"); ie.other()
-                        ds[0].set(A.g("sp")); ds[1].set(A.g("lv")); ds[2].set(A.g("st")); ds[3].set(D.g("sp")); ds[4].set(D.g("lv")); ds[5].set(mvv)
+                        ds[0].set(A.g("sp")); ds[1].set(A.g("lv")); ds[2].set(A.g("st")); ds[3].set(D.g("sp")); ds[4].set(D.g("lv")); ds[5].set(mvv); v("ds_ahp").set(A.g("hp"))
                         ak=l(A.pre+"_stg"); dk=l(D.pre+"_stg")
                         with IfElse(l("MV_cls")[mvv]==1) as ie9:
                             v("ds_asg").set(ak[(A.idx-1)*7+1]); v("ds_dsg").set(dk[(D.idx-1)*7+2]); ie9.other()
                             v("ds_asg").set(ak[(A.idx-1)*7+3]); v("ds_dsg").set(dk[(D.idx-1)*7+4])
                         call("calc_damage")
+
+                        v("ex_abs").set(0); dab=l("S_abil")[D.g("sp")]; mty=l("MV_type")[mvv]
+                        with If((dab==4)&(mty==TYIDX["water"])): v("ex_abs").set(1)
+                        with If((dab==5)&(mty==TYIDX["electric"])): v("ex_abs").set(1)
+                        with If((dab==6)&(mty==TYIDX["ground"])): v("ex_abs").set(2)
                         with If(l("MV_pow")[mvv]>0):
-                            with IfElse(ds_e==0) as ie2:
-                                say("효과가 없는 것 같다..."); ie2.other()
+                            with IfElse((ds_e==0)|(v("ex_abs")>0)) as ie2:
+                                with IfElse(v("ex_abs")==2) as ie8:
+                                    say(join(l("S_name")[D.g("sp")],"은(는) 부유로 맞지 않는다!")); ie8.other()
+                                    with IfElse(v("ex_abs")==1) as ie9:
+                                        st_sp.set(D.g("sp")); st_lv.set(D.g("lv")); call("max_hp")
+                                        D.s_("hp",D.g("hp")+floor(st_out/4))
+                                        with If(D.g("hp")>st_out): D.s_("hp",st_out)
+                                        say(join(l("S_name")[D.g("sp")],"은(는) 특성으로 HP를 회복했다!")); ie9.other(); say("효과가 없는 것 같다...")
+                                ie2.other()
                                 v("ex_dealt").set(ds_dmg)
                                 with If(v("ex_dealt")>D.g("hp")): v("ex_dealt").set(D.g("hp"))
                                 D.s_("hp",D.g("hp")-v("ex_dealt")); call("blink_foe" if asideP else "blink_own")
                                 with If((l("MV_rech")[mvv]==1)&(D.g("hp")>0)): l(A.pre+"_rech").set(A.idx,1)
+
+                                with If((l("MV_cls")[mvv]==1)&(dab>=1)&(dab<=3)&(A.g("st")==0)&(A.g("hp")>0)&(rnd(1,100)<=30)):
+                                    v("ct_st").set(0)
+                                    with If(dab==1): v("ct_st").set(3)
+                                    with If(dab==2): v("ct_st").set(2)
+                                    with If(dab==3): v("ct_st").set(4)
+                                    a_sp=A.g("sp"); v("ct_imm").set(0)
+                                    with If((v("ct_st")==3)&((l("S_t1")[a_sp]==TYIDX["electric"])|(l("S_t2")[a_sp]==TYIDX["electric"]))): v("ct_imm").set(1)
+                                    with If((v("ct_st")==2)&((l("S_t1")[a_sp]==TYIDX["poison"])|(l("S_t2")[a_sp]==TYIDX["poison"])|(l("S_t1")[a_sp]==TYIDX["steel"])|(l("S_t2")[a_sp]==TYIDX["steel"]))): v("ct_imm").set(1)
+                                    with If((v("ct_st")==4)&((l("S_t1")[a_sp]==TYIDX["fire"])|(l("S_t2")[a_sp]==TYIDX["fire"]))): v("ct_imm").set(1)
+                                    with If(v("ct_imm")==0): A.s_("st",v("ct_st")); say(join(l("S_name")[a_sp],"은(는) 특성 때문에 상태가 변했다!"))
                                 with If(ds_crit==1): say("급소에 맞았다!")
                                 with If(ds_e>1): say("효과는 굉장했다!")
                                 with If(ds_e<1): say("효과는 별로인 듯하다...")
@@ -206,6 +239,7 @@ def logic():
                     v("ev_i").set(xp_i); v("ev_to").set(l("S_evto")[l("PS_sp")[xp_i]]); call("evolve")
     with proc("evolve"):  # in ev_i, ev_to
         st_sp.set(l("PS_sp")[v("ev_i")]); st_lv.set(l("PS_lv")[v("ev_i")]); call("max_hp"); v("ev_old").set(st_out)
+        P.emit(blk("message_cast",P.msg("anim_evolve")))
         say(join(l("S_name")[l("PS_sp")[v("ev_i")]],"의 모습이... ",l("S_name")[v("ev_to")],"(으)로 진화했다!"))
         l("PS_sp").set(v("ev_i"),v("ev_to")); st_sp.set(v("ev_to")); call("max_hp")
         l("PS_hp").set(v("ev_i"),l("PS_hp")[v("ev_i")]+st_out-v("ev_old")); 
@@ -342,7 +376,7 @@ def logic():
                 with Repeat(6): l("PART").set(i,0); i.inc()
                 l("PART").set(pa,1)
                 with If(l("DEX")[l("FO_sp")[fi]]<1): l("DEX").set(l("FO_sp")[fi],1)
-                say(join("상대는 ",l("S_name")[l("FO_sp")[fi]],"을(를) 내보냈다!"))
+                say(join("상대는 ",l("S_name")[l("FO_sp")[fi]],"을(를) 내보냈다!")); call("enter_f")
                 ie.other()
                 bover.set(1); bres.set(1)
                 with If(v("is_trainer")==1): money.inc(l("TR_reward")[v("tr_idx")]); say(join(l("TR_reward")[v("tr_idx")],"원을 얻었다!"))

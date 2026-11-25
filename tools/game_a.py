@@ -24,7 +24,12 @@ def data_lists():
         rr=RBY.get(n["id"],[]); b=next((x for x in rr if x["act"]=="battle"),None)
         tf.append(FIDX[b["set"]] if (n["kind"]=="trainer" and b) else 0)
         st=next((FIDX[x["set"]] for x in rr if x["set"] and TITLES.get(x["set"])),0); stp.append(st)
-    l("N_tflag",tf); l("N_step",stp)
+    on1=[];on2=[]
+    for m,n in NPCS:
+        sets=[FIDX[x["set"]] for x in RBY.get(n["id"],[]) if x["set"] and n["kind"]=="switch"]
+        on1.append(sets[0] if sets else 0); on2.append(sets[1] if len(sets)>1 else 0)
+    l("N_on1",on1); l("N_on2",on2)
+    l("M_hflag",[FIDX.get("open_"+m,0) for m in MAPS]); l("N_tflag",tf); l("N_step",stp)
     l("M_dark",[1 if next(a for a in WORLD["areas"] if a["id"]==WORLD["maps"][m]["area"])["theme"] in ("cave","cellar","ship","hq") else 0 for m in MAPS])
     rs=[];rc=[]; R=[]
     for m,n in NPCS:
@@ -76,7 +81,8 @@ def data_lists():
     l("MV_prio",[m["prio"] for m in MOVES]); l("MV_cls",[CLS[m["cls"]] for m in MOVES]); l("MV_ail",[AIL.get(m["ailment"],0) for m in MOVES]); l("MV_chance",[m["ail_chance"] for m in MOVES]); l("MV_drain",[m["drain"] for m in MOVES]); l("MV_crit",[m["crit"] for m in MOVES])
     def sc(m,i,k): return m["sc"][i][k] if len(m["sc"])>i else 0
     l("MV_s1",[sc(m,0,0) for m in MOVES]); l("MV_d1",[sc(m,0,1) for m in MOVES]); l("MV_s2",[sc(m,1,0) for m in MOVES]); l("MV_d2",[sc(m,1,1) for m in MOVES])
-    l("STAT_name",["","공격","방어","특수공격","특수방어","스피드","명중률","회피율"]); l("MV_two",[m.get("two",0) for m in MOVES]); l("MV_rech",[m.get("rech",0) for m in MOVES]); l("MV_self",[1 if m["sc_self"] else 0 for m in MOVES]); l("MV_schance",[m["stat_chance"] for m in MOVES])
+    l("STAT_name",["","공격","방어","특수공격","특수방어","스피드","명중률","회피율"]); WM={"canal":1,"coast":1,"tide":1,"harbor":1,"swamp":1,"volcano":2,"desert":3,"mountain":4}
+    l("TH_weather",[WM.get(t,0) for t in THEMES]); l("S_abil",[sp.get("abil",0) for sp in SPECIES]); l("MV_two",[m.get("two",0) for m in MOVES]); l("MV_rech",[m.get("rech",0) for m in MOVES]); l("MV_self",[1 if m["sc_self"] else 0 for m in MOVES]); l("MV_schance",[m["stat_chance"] for m in MOVES])
     l("TC",[x for row in TC["chart"] for x in row]); l("TYPE_name",TYPES)
     # trainers
     l("TR_name",[TR[t]["name"] for t in TRIDS]); l("TR_reward",[TR[t]["reward"] for t in TRIDS]); l("TR_badge",[TR[t].get("badge",0) for t in TRIDS]); l("TR_n",[len(TR[t]["party"]) for t in TRIDS])
@@ -108,6 +114,9 @@ def field_logic():
     with proc("tile_at"):  # in: tx,ty -> tch ('#' if out of range)
         with IfElse((tx<0)|(ty<0)|(tx>19)|(ty>10)) as ie:
             tch.set("#"); ie.other(); tch.set(charat(T[(mp-1)*11+ty+1],tx+1))
+            with If(tch=="h"):
+                with IfElse((l("M_hflag")[mp]>0)&(FS[l("M_hflag")[mp]]==1)) as ie2:
+                    tch.set("."); ie2.other(); tch.set("#")
     with proc("npc_at"):   # in: tx,ty -> hit (npc idx or 0)
         hit.set(0); mi.set(l("M_nstart")[mp])
         with Repeat(l("M_ncount")[mp]):
@@ -186,7 +195,9 @@ def field_logic():
         with If(pf==2): dx.set(1)
         with If(pf==3): dy.set(-1)
         tx.set(px+dx); ty.set(py+dy); call("npc_at")
-        with If(hit>0): v("cur_npc").set(hit); call("run_rules")
+        with If(hit>0):
+            v("cur_npc").set(hit); call("run_rules")
+            with If(l("N_kind")[hit]==3): call("draw_tiles")
     # rules
     n=v("cur_npc"); r=v("rr"); k=v("rk"); done=v("rdone"); act=v("ract")
     with proc("run_rules"):

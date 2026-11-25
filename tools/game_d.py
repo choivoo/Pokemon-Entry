@@ -16,7 +16,7 @@ def logic():
             stamp()
     with proc("stamp_npc",obj="npc_glyph"):
         locate(v("dx_"),v("dy_"))
-        for k in range(1,10):
+        for k in range(1,12):
             with If(v("nk")==k): shape(f"PIC:npc_glyph:{k}")
         stamp()
     with proc("draw_tiles"):
@@ -40,6 +40,16 @@ def logic():
                     with If(ch=="~"): call("stamp_water")
                     with If(ch=="D"): call("stamp_door")
                     with If(ch=="."): call("stamp_floor")
+                    with If(ch=="h"):
+                        with IfElse((l("M_hflag")[mp]>0)&(l("FS")[l("M_hflag")[mp]]==1)) as ieh:
+                            call("stamp_floor"); ieh.other(); call("stamp_wall")
+                    with If(ch=="D"):
+                        v("lk_e").set(1); v("lk_f").set(0)
+                        with Repeat(l("X_map").length()):
+                            with If((v("lk_f")==0)&(l("X_map")[v("lk_e")]==mp)&(l("X_x")[v("lk_e")]==x)&(l("X_y")[v("lk_e")]==y)):
+                                v("lk_f").set(1); v("gi").set(l("X_gate")[v("lk_e")]); call("gate_check")
+                                with If(v("ok_")==0): v("nk").set(11); call("stamp_npc")
+                            v("lk_e").inc()
                 x.inc()
             y.inc()
         i=v("dm_i"); i.set(l("M_nstart")[mp])
@@ -48,7 +58,11 @@ def logic():
             with If(v("dk_a")<0): v("dk_a").set(0-v("dk_a"))
             with If(v("dk_b")<0): v("dk_b").set(0-v("dk_b"))
             with If(v("dk_a")+v("dk_b")<=v("dk_r")):
-                v("dx_").set(-228+24*l("N_x")[i]); v("dy_").set(123-24*l("N_y")[i]); v("nk").set(l("N_kind")[i]); call("stamp_npc")
+                v("dx_").set(-228+24*l("N_x")[i]); v("dy_").set(123-24*l("N_y")[i]); v("nk").set(l("N_kind")[i])
+                with If(v("nk")==3):
+                    with If((l("N_on1")[i]>0)&(l("FS")[l("N_on1")[i]]==1)): v("nk").set(10)
+                    with If((l("N_on2")[i]>0)&(l("FS")[l("N_on2")[i]]==1)): v("nk").set(10)
+                call("stamp_npc")
             i.inc()
     with proc("redraw_dark"): call("draw_tiles"); P.emit(blk("message_cast",P.msg("wild_view")))
     with proc("draw_map"):
@@ -148,7 +162,17 @@ def logic():
             with If(l("DEX")[i]>=1): seen.inc()
             with If(l("DEX")[i]==2): caught.inc()
             i.inc()
-        say(join("도감: 본 포켓몬 ",seen," / 잡은 포켓몬 ",caught," / 151")); ask("도감 번호 (0 닫기)"); v("dx_q").set(answer())
+        say(join("도감: 본 포켓몬 ",seen," / 잡은 포켓몬 ",caught," / 151")); ask("페이지 1~16 (한 페이지 10마리, 0 닫기)"); pg=v("dx_pg"); pg.set(answer())
+        with If((pg>=1)&(pg<=16)):
+            v("pt").set(join("도감 ",pg,"쪽  (? 미발견 · 본 · 잡음)\n")); i.set((pg-1)*10+1)
+            with Repeat(10):
+                with If(i<=151):
+                    with IfElse(l("DEX")[i]==0) as ie:
+                        v("pt").set(join(v("pt"),i,". ??? \n")); ie.other()
+                        v("pt").set(join(v("pt"),i,". ",l("S_name")[i],"  [",l("TYPE_name")[l("S_t1")[i]],"] ",txt("본")+"" if False else "","\n"))
+                i.inc()
+            v("panel_text").set(v("pt")); call("panel_set")
+        ask("자세히 볼 번호 (0 닫기)"); v("dx_q").set(answer()); call("panel_hide")
         with If((v("dx_q")>=1)&(v("dx_q")<=151)):
             with IfElse(l("DEX")[v("dx_q")]==0) as ie:
                 say("???  아직 만나지 못했다."); ie.other()

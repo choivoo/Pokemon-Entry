@@ -80,6 +80,10 @@ for k,c in cols.items():
     if k==8: dr.text((9,8),"!",fill=(255,255,255,255))
     save(im,f"{OUT}/ui/npc{k}.png")
 im=Image.new("RGBA",(24,24),(0,0,0,0)); dr=ImageDraw.Draw(im); dr.ellipse([4,6,19,21],fill=(255,120,160,255),outline=(40,40,40,255)); dr.polygon([(6,8),(5,1),(10,6)],fill=(255,120,160,255),outline=(40,40,40,255)); dr.polygon([(18,8),(19,1),(14,6)],fill=(255,120,160,255),outline=(40,40,40,255)); dr.point((9,12),fill=(20,20,20,255)); dr.point((15,12),fill=(20,20,20,255)); save(im,f"{OUT}/ui/npc9.png")
+im=Image.new("RGBA",(24,24),(0,0,0,0)); dr=ImageDraw.Draw(im); dr.rectangle([6,6,17,17],fill=(80,220,110,255),outline=(20,80,40,255)); dr.rectangle([9,9,14,14],fill=(200,255,210,255)); save(im,f"{OUT}/ui/npc10.png")
+im=Image.new("RGBA",(24,24),(0,0,0,0)); dr=ImageDraw.Draw(im); dr.rectangle([6,10,17,20],fill=(230,190,40,255),outline=(60,50,10,255)); dr.arc([8,3,15,12],180,360,fill=(60,50,10,255),width=2); dr.rectangle([11,13,12,17],fill=(60,50,10,255)); save(im,f"{OUT}/ui/npc11.png")
+im=Image.new("RGBA",(16,16),(0,0,0,0)); dr=ImageDraw.Draw(im); dr.ellipse([1,1,14,14],fill=(230,50,50,255),outline=(30,30,30,255)); dr.rectangle([1,7,14,8],fill=(30,30,30,255)); dr.ellipse([6,6,9,9],fill=(255,255,255,255),outline=(30,30,30,255)); save(im,f"{OUT}/ui/fx_ball.png")
+Image.new("RGBA",(480,270),(255,255,255,170)).save(f"{OUT}/ui/fx_flash.png")
 # player dirs 1 down 2 left 3 right 4 up
 for d in range(4):
     im=Image.new("RGBA",(24,24),(0,0,0,0)); dr=ImageDraw.Draw(im)
@@ -150,3 +154,13 @@ os.makedirs(OUT+"/icons",exist_ok=True)
 for i in range(1,152):
     im=Image.open(f"assets/sprites/{i:03d}.png").convert("RGBA"); bb=im.getbbox() or (0,0,96,96); im=im.crop(bb); im.thumbnail((24,24),Image.LANCZOS)
     c=Image.new("RGBA",(24,24),(0,0,0,0)); c.paste(im,((24-im.width)//2,(24-im.height)//2)); c.save(f"{OUT}/icons/{i:03d}.png")
+
+# derived left/right + 2-frame bob variants of the wild icons (mirror of the front sprite; NOT original walk art)
+from PIL import ImageOps
+for i in range(1,152):
+    base=Image.open(f"{OUT}/icons/{i:03d}.png")
+    for var in range(4):
+        im=ImageOps.mirror(base) if var<2 else base.copy()
+        if var%2==1:
+            c=Image.new("RGBA",(24,24),(0,0,0,0)); c.paste(im,(0,1)); im=c
+        im.save(f"{OUT}/icons/{i:03d}_{var}.png")
