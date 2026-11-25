@@ -19,24 +19,42 @@ def logic():
         for k in range(1,10):
             with If(v("nk")==k): shape(f"PIC:npc_glyph:{k}")
         stamp()
-    with proc("draw_map"):
-        erase_blk=blk("erase_all_stamps"); P.emit(erase_blk)
+    with proc("draw_tiles"):
+        P.emit(blk("erase_all_stamps"))
         v("th").set(l("M_theme")[mp]); y=v("dm_y"); y.set(0)
+        v("dk_r").set(99)
+        with If(l("M_dark")[mp]==1):
+            v("dk_r").set(3)
+            with If(v("aff")>=20): v("dk_r").set(4)
+            with If(v("aff")>=50): v("dk_r").set(5)
         with Repeat(11):
             row=v("dm_row"); row.set(T[(mp-1)*11+y+1]); x=v("dm_x"); x.set(0)
             with Repeat(20):
                 ch=v("dm_c"); ch.set(charat(row,x+1)); v("dx_").set(-228+24*x); v("dy_").set(123-24*y)
-                with If(ch=="#"): call("stamp_wall")
-                with If(ch=="g"): call("stamp_grass")
-                with If(ch=="~"): call("stamp_water")
-                with If(ch=="D"): call("stamp_door")
-                with If(ch=="."): call("stamp_floor")
+                v("dk_a").set(x-px); v("dk_b").set(y-py)
+                with If(v("dk_a")<0): v("dk_a").set(0-v("dk_a"))
+                with If(v("dk_b")<0): v("dk_b").set(0-v("dk_b"))
+                with If(v("dk_a")+v("dk_b")<=v("dk_r")):
+                    with If(ch=="#"): call("stamp_wall")
+                    with If(ch=="g"): call("stamp_grass")
+                    with If(ch=="~"): call("stamp_water")
+                    with If(ch=="D"): call("stamp_door")
+                    with If(ch=="."): call("stamp_floor")
                 x.inc()
             y.inc()
         i=v("dm_i"); i.set(l("M_nstart")[mp])
         with Repeat(l("M_ncount")[mp]):
-            v("dx_").set(-228+24*l("N_x")[i]); v("dy_").set(123-24*l("N_y")[i]); v("nk").set(l("N_kind")[i]); call("stamp_npc"); i.inc()
-        call("spawn_wild"); v("moved_map").set(1); call("place_actors"); call("bgm_set_for_map"); call("area_greet")
+            v("dk_a").set(l("N_x")[i]-px); v("dk_b").set(l("N_y")[i]-py)
+            with If(v("dk_a")<0): v("dk_a").set(0-v("dk_a"))
+            with If(v("dk_b")<0): v("dk_b").set(0-v("dk_b"))
+            with If(v("dk_a")+v("dk_b")<=v("dk_r")):
+                v("dx_").set(-228+24*l("N_x")[i]); v("dy_").set(123-24*l("N_y")[i]); v("nk").set(l("N_kind")[i]); call("stamp_npc")
+            i.inc()
+    with proc("redraw_dark"): call("draw_tiles"); P.emit(blk("message_cast",P.msg("wild_view")))
+    with proc("draw_map"):
+        call("draw_tiles"); call("spawn_wild"); v("moved_map").set(1); call("place_actors"); call("bgm_set_for_map"); call("area_greet")
+        with IfElse(((v("steps")//300)%2)==1) as ie:
+            hud("밤: 어둠 속에서 ghost·독·에스퍼 포켓몬이 더 자주 나타난다"); ie.other(); hud(join(l("M_name")[mp]," (낮)"))
     with proc("place_actors"):
         v("pl_x").set(-228+24*px); v("pl_y").set(123-24*py)
         with IfElse(v("moved_map")==1) as ie:
@@ -46,7 +64,9 @@ def logic():
     with proc("actors_move",obj="player"):
         locate(v("pl_x"),v("pl_y"))
         for d in range(4):
-            with If(pf==d): shape(f"PIC:player:{d+1}")
+            with If(pf==d):
+                with IfElse(v("steps")%2==0) as ie:
+                    shape(f"PIC:player:{d+1}_1"); ie.other(); shape(f"PIC:player:{d+1}_2")
     with proc("actors_move",obj="pika"):
         locate(v("pk_x"),v("pk_y"))
     # ---------- new game ----------
@@ -83,15 +103,17 @@ def logic():
     # ---------- menus ----------
     def status_text(i): return ST_TXT
     with proc("party_view"):
-        i=v("pv_i"); i.set(1)
+        v("pt").set(""); i=v("pv_i"); i.set(1)
         with Repeat(pn):
-            v("st_sp").set(l("PS_sp")[i]); v("st_lv").set(l("PS_lv")[i]); call("max_hp")
-            say(join(i,". ",l("S_name")[l("PS_sp")[i]]," Lv",l("PS_lv")[i]," HP ",l("PS_hp")[i],"/",v("st_out")," [",l("TYPE_name")[l("S_t1")[l("PS_sp")[i]]],"] 기술:",l("M_nm")[l("PS_mv")[(i-1)*4+1]]))
+            v("st_sp").set(l("PS_sp")[i]); v("st_lv").set(l("PS_lv")[i]); call("max_hp"); v("bar_hp").set(l("PS_hp")[i]); v("bar_mx").set(v("st_out")); call("bar")
+            v("pt").set(join(v("pt"),i,". ",l("S_name")[l("PS_sp")[i]]," Lv",l("PS_lv")[i]," ",v("bar_out")," ",l("PS_hp")[i],"/",v("st_out")," [",l("TYPE_name")[l("S_t1")[l("PS_sp")[i]]],"]\n"))
             i.inc()
+        v("panel_text").set(v("pt")); call("panel_set")
         ask("0 닫기  1 순서 변경"); 
         with If(answer()==1):
             ask("바꿀 번호 첫 번째?"); v("sw_a").set(answer()); ask("바꿀 번호 두 번째?"); v("sw_b").set(answer())
             with If((v("sw_a")>=1)&(v("sw_a")<=pn)&(v("sw_b")>=1)&(v("sw_b")<=pn)&(v("sw_a")!=v("sw_b"))): call("swap_party")
+        call("panel_hide")
     with proc("swap_party"):
         a=v("sw_a"); b=v("sw_b")
         for k in ("sp","lv","exp","hp","st"):
@@ -100,11 +122,12 @@ def logic():
             v("sw_t").set(l("PS_mv")[(a-1)*4+q]); l("PS_mv").set((a-1)*4+q,l("PS_mv")[(b-1)*4+q]); l("PS_mv").set((b-1)*4+q,v("sw_t"))
             v("sw_t").set(l("PS_pp")[(a-1)*4+q]); l("PS_pp").set((a-1)*4+q,l("PS_pp")[(b-1)*4+q]); l("PS_pp").set((b-1)*4+q,v("sw_t"))
     with proc("bag_view"):
-        i=v("bg_i"); i.set(1)
+        v("pt").set(join("소지금 ",money,"원\n")); i=v("bg_i"); i.set(1)
         with Repeat(NI):
-            with If(l("BAG")[i]>0): say(join(i,". ",l("I_name")[i]," x",l("BAG")[i]))
+            with If(l("BAG")[i]>0): v("pt").set(join(v("pt"),i,". ",l("I_name")[i]," x",l("BAG")[i],"\n"))
             i.inc()
-        ask("사용할 아이템 번호 (0 닫기)"); v("ui_item").set(answer())
+        v("panel_text").set(v("pt")); call("panel_set")
+        ask("사용할 아이템 번호 (0 닫기)"); v("ui_item").set(answer()); call("panel_hide")
         with If((v("ui_item")>=1)&(v("ui_item")<=NI)):
             with IfElse(l("I_kind")[v("ui_item")]==6) as ie:
                 ask("진화시킬 포켓몬 번호?"); v("ui_i").set(answer()); call("use_stone"); ie.other()
@@ -167,14 +190,26 @@ def logic():
                 bn.inc(); call("party_remove"); say("보관함에 맡겼다.")
                 ie.other(); say("마지막 한 마리는 맡길 수 없다.")
     with proc("settings"):
-        ask("설정 1 조우율 끄기/켜기  2 우연 조우 낮춤(1)/높임(12)  3 닫기"); v("se_in").set(answer())
+        ask("설정 1 우연 조우 끄기/켜기  2 조우율  3 글자 속도  4 음량(0~10)  5 효과 깜빡임  6 닫기"); v("se_in").set(answer())
         with If(v("se_in")==1):
             with IfElse(v("enc_on")==1) as ie:
-                v("enc_on").set(0); say("필드 조우를 껐다."); ie.other(); v("enc_on").set(1); say("필드 조우를 켰다.")
+                v("enc_on").set(0); say("필드 야생 포켓몬과 우연 조우를 껐다."); ie.other(); v("enc_on").set(1); say("필드 야생 포켓몬과 우연 조우를 켰다.")
         with If(v("se_in")==2):
             with IfElse(v("enc_rate")!=1) as ie:
                 v("enc_rate").set(1); ie.other(); v("enc_rate").set(12)
-            say(join("조우율: ",v("enc_rate"),"%"))
+            say(join("우연 조우율: ",v("enc_rate"),"%"))
+        with If(v("se_in")==3):
+            ask("글자 속도 1 느림  2 보통  3 빠름"); v("se_v").set(answer())
+            with If(v("se_v")==1): v("txt_wait").set(0.8)
+            with If(v("se_v")==2): v("txt_wait").set(0.2)
+            with If(v("se_v")==3): v("txt_wait").set(0)
+            say(join("글자 속도 설정: ",v("se_v")))
+        with If(v("se_in")==4):
+            ask("음량 0~10"); v("se_v").set(answer())
+            with If((v("se_v")>=0)&(v("se_v")<=10)): v("vol").set(v("se_v")+0); P.emit(blk("message_cast",P.msg("apply_vol"))); say(join("음량: ",v("vol")))
+        with If(v("se_in")==5):
+            with IfElse(v("fx_blink")==1) as ie:
+                v("fx_blink").set(0); say("피격 깜빡임 효과를 껐다."); ie.other(); v("fx_blink").set(1); say("피격 깜빡임 효과를 켰다.")
     with proc("main_menu"):
         ask("메뉴 1 파티  2 가방  3 도감  4 보관함  5 세이브  6 설정  7 닫기  8 힌트"); v("mm_in").set(answer())
         with If(v("mm_in")==1): call("party_view")

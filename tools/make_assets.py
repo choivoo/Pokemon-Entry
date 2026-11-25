@@ -86,7 +86,8 @@ for d in range(4):
     dr.ellipse([6,2,17,13],fill=(245,215,180,255),outline=(40,40,40,255)); dr.rectangle([6,13,17,22],fill=(220,50,50,255),outline=(40,40,40,255)); dr.rectangle([5,1,18,5],fill=(240,240,240,255),outline=(40,40,40,255))
     eye={0:[(9,8),(14,8)],1:[(8,8)],2:[(15,8)],3:[]}[d]
     for e in eye: dr.point(e,fill=(20,20,20,255)); dr.point((e[0]+1,e[1]),fill=(20,20,20,255))
-    save(im,f"{OUT}/ui/player{d+1}.png")
+    save(im,f"{OUT}/ui/player{d+1}_1.png")
+    im2=Image.new("RGBA",(24,24),(0,0,0,0)); im2.paste(im,(0,1)); ImageDraw.Draw(im2).rectangle([8,22,10,23],fill=(60,40,40,255)); save(im2,f"{OUT}/ui/player{d+1}_2.png")
 # pikachu moods 1 normal 2 happy 3 clue(!)
 for m in (1,2,3):
     im=Image.new("RGBA",(24,24),(0,0,0,0)); dr=ImageDraw.Draw(im)
@@ -96,7 +97,8 @@ for m in (1,2,3):
     dr.point((8,10),fill=(20,20,20,255)); dr.point((15,10),fill=(20,20,20,255))
     if m==2: dr.arc([9,12,14,17],20,160,fill=(20,20,20,255))
     if m==3: dr.rectangle([11,-1,12,3],fill=(255,60,60,255)) if False else dr.text((10,0),"!",fill=(255,60,60,255))
-    save(im,f"{OUT}/ui/pika{m}.png")
+    save(im,f"{OUT}/ui/pika{m}_1.png")
+    im2=Image.new("RGBA",(24,24),(0,0,0,0)); im2.paste(im,(0,1)); save(im2,f"{OUT}/ui/pika{m}_2.png")
 # touch buttons 40x40 translucent
 def btn(name,shape):
     im=Image.new("RGBA",(40,40),(0,0,0,0)); dr=ImageDraw.Draw(im); dr.rounded_rectangle([1,1,38,38],8,fill=(30,30,40,150),outline=(255,255,255,200),width=2)
@@ -142,3 +144,9 @@ for k,(mel,bas,bpm,duty) in M.items():
     wp=f"{OUT}/bgm/bgm{k}.wav"; synth(wp,mel,bas,bpm,duty)
     subprocess.run(["ffmpeg","-y","-loglevel","error","-i",wp,"-ac","1","-b:a","48k",f"{OUT}/bgm/bgm{k}.mp3"],check=True); os.remove(wp)
 print("assets ok", sum(os.path.getsize(os.path.join(dp,f)) for dp,_,fs in os.walk(OUT) for f in fs)//1024,"KB")
+
+# 24px species icons for visible wild Pokemon (downscaled from the 96px front sprites; NOT directional walk art)
+os.makedirs(OUT+"/icons",exist_ok=True)
+for i in range(1,152):
+    im=Image.open(f"assets/sprites/{i:03d}.png").convert("RGBA"); bb=im.getbbox() or (0,0,96,96); im=im.crop(bb); im.thumbnail((24,24),Image.LANCZOS)
+    c=Image.new("RGBA",(24,24),(0,0,0,0)); c.paste(im,((24-im.width)//2,(24-im.height)//2)); c.save(f"{OUT}/icons/{i:03d}.png")

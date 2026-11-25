@@ -20,10 +20,12 @@ def build(out="build/%s.ent"%NAME):
     for k in ("floor","wall","grass","water","door"):
         objs.append(Obj("tile_"+k,[(str(i+1),f"{T}{k}_{t}.png",24) for i,t in enumerate(GD.THEMES)],vis=False,size=24))
     objs.append(Obj("npc_glyph",[(str(k),f"{U}npc{k}.png",24) for k in range(1,10)],vis=False,size=24))
-    objs.append(Obj("player",[(str(d),f"{U}player{d}.png",24) for d in range(1,5)],x=-204,y=3,size=24))
-    objs.append(Obj("pika",[(str(m),f"{U}pika{m}.png",24) for m in (1,2,3)],x=-204,y=3,size=24))
+    objs.append(Obj("player",[(f"{d}_{f}",f"{U}player{d}_{f}.png",24) for d in range(1,5) for f in (1,2)],x=-204,y=3,size=24))
+    objs.append(Obj("pika",[(f"{m}_{f}",f"{U}pika{m}_{f}.png",24) for m in (1,2,3) for f in (1,2)],x=-204,y=3,size=24))
     objs.append(Obj("mon_view",[(str(i),f"assets/sprites/{i:03d}.png",96) for i in range(1,152)],x=150,y=35,vis=False,size=96))
     objs.append(Obj("mon_own",[(str(i),f"assets/sprites/{i:03d}.png",96) for i in range(1,152)],x=-150,y=-30,vis=False,size=96))
+    for k in (1,2): objs.append(Obj(f"wild{k}",[(str(i),f"assets/gen/icons/{i:03d}.png",24) for i in range(1,152)],vis=False,size=24))
+    objs.append(Obj("panel",[],x=0,y=10,typ="textBox",vis=False))
     pos={"btn_left":(-215,-100),"btn_right":(-155,-100),"btn_up":(-185,-70),"btn_down":(-185,-130),"btn_ok":(205,-100),"btn_menu":(205,-60)}
     for n,(x,y) in pos.items(): objs.append(Obj(n,[("1",f"{U}{n}.png",40)],x=x,y=y,size=40))
     objs.append(Obj("bgm",[("1",U+"blank.png",2)],vis=False,size=2,sounds=[(str(k),f"assets/gen/bgm/bgm{k}.mp3") for k in range(1,9)]))
@@ -57,7 +59,7 @@ def build(out="build/%s.ent"%NAME):
         sc=by_obj.get(o.name,[])
         d={"id":uid(),"name":o.name,"script":json.dumps(sc,ensure_ascii=False),"objectType":"textBox" if o.typ=="textBox" else "sprite","rotateMethod":"free","scene":"scn1","lock":False}
         if o.typ=="textBox":
-            d["text"]=""; d["entity"]={"x":o.x,"y":o.y,"regX":200,"regY":15,"scaleX":1,"scaleY":1,"rotation":0,"direction":90,"width":400,"height":30,"text":"","font":"16px Nanum Gothic","colour":"#ffffff","bgColor":"#000000a0","underLine":False,"strike":False,"fontSize":16,"textAlign":1,"lineBreak":False,"visible":True}
+            d["text"]=""; d["entity"]={"x":o.x,"y":o.y,"regX":200,"regY":15 if o.name=="hud" else 100,"scaleX":1,"scaleY":1,"rotation":0,"direction":90,"width":400,"height":30 if o.name=="hud" else 200,"text":"","font":"16px Nanum Gothic","colour":"#ffffff","bgColor":"#000000a0","underLine":False,"strike":False,"fontSize":16,"textAlign":0 if o.name=="panel" else 1,"lineBreak":o.name=="panel","visible":o.vis}
         else:
             pics=[]
             for key,path,sz in o.pics:

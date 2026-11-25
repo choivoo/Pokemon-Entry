@@ -50,6 +50,16 @@ for(const s of Object.values(SPECIES)) ok(s.learn.length>0&&s.learn.every(([l,k]
   s.bag['ultra-ball']=50; let c; for(let t=0;t<30;t++){ c=E.newCatch(s,129,3); while(!c.over&&s.bag['ultra-ball']>0) E.throwBall(s,c,'ultra-ball','excellent'); if(c.result==='caught') break }
   ok(c.result==='caught'&&c.dest==='full','box-full capture released'); ok(s.box.length===E.BOX_MAX&&s.party.length===6,'box cap enforced');
   s.flags.c2_hub=1; const before=JSON.stringify(s.flags); const out=E.interact(s,'n_gift_squirtle',{}); ok(!s.flags.got_n_gift_squirtle&&out.some(x=>x.includes('가득')),'gift not consumed when box full'); }
+{ // stat stages and sight
+  const s=E.newState(21); const a=E.mkMon(25,20), d=E.mkMon(19,20); s.party=[a]; const b=E.newBattle(s,[d],{wild:true}); b.part=new Set([0]);
+  const g=E.MOVES['growl']? 'growl':null; a.moves=[{k:g,pp:40}]; let guard=0; while(d.stg[0]>-6&&guard++<40&&!b.over){ E.turn(b,{t:'move',k:g}); }
+  ok(d.stg[0]<=-1||b.over,'growl lowers attack stage: '+d.stg[0]);
+  const m1=E.mkMon(25,30), m2=E.mkMon(19,30); m1.stg=[0,0,0,0,0]; m2.stg=[0,0,0,0,0]; const r0=0; 
+  const s2=E.newState(3); s2.map='R01_1'; const tr=WORLD.maps['R01_1'].npcs.find(n=>n.kind==='trainer'||true);
+  const tn=Object.values(WORLD.maps).flatMap(m=>m.npcs.filter(n=>n.kind==='trainer').map(n=>({...n,map:m.id})))[0];
+  const s3=E.newState(4); s3.map=tn.map; const T=WORLD.maps[tn.map]; let seen=null;
+  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ for(let dd=1;dd<=3;dd++){ s3.x=tn.x+dx*dd; s3.y=tn.y+dy*dd; if('.g'.includes(E.tile(s3.map,s3.x,s3.y))){ const r=E.sight(s3); if(r===tn.id) seen=[dx,dy,dd] } } }
+  ok(!!seen,'trainer sight works along a row/column'); s3.x=tn.x+4>19?tn.x-4:tn.x+4; s3.y=tn.y; if('.g'.includes(E.tile(s3.map,s3.x,s3.y))) ok(E.sight(s3)!==tn.id,'no sight beyond 3 tiles'); }
 // 5 battle rules
 { ok(E.eff('water',['fire'])===2&&E.eff('electric',['ground'])===0&&E.eff('fire',['water','rock'])===0.25,'type chart');
   const s=E.newState(11); const a=E.mkMon(7,20), d=E.mkMon(4,20); s.party=[a]; const b=E.newBattle(s,[d],{wild:true}); b.part=new Set([0]);

@@ -35,9 +35,16 @@ chart=[[E[a].get(d,1) for d in T] for a in T]
 
 # ---------- moves & species ----------
 BAN={"fly","dig","solar-beam","skull-bash","razor-wind","sky-attack","hyper-beam","bide","counter","self-destruct","explosion","fissure","guillotine","horn-drill","dream-eater","transform","metronome","mimic","mirror-move","psywave","super-fang","night-shade","seismic-toss","dragon-rage","sonic-boom","bind","wrap","clamp","fire-spin","whirlwind","roar","substitute","struggle","rage","thrash","petal-dance","razor-leaf" if False else "x","focus-energy","double-team","minimize","haze","mist","light-screen","reflect","leech-seed","conversion","disable","splash","teleport","swift" if False else "x2","jump-kick","high-jump-kick","spore" if False else "x3","absorb" if False else "x4","rest","recover","softboiled","sing" if False else "x5","supersonic","confuse-ray","stun-spore" if False else "x6","poison-gas" if False else "x7"}
+STATIDX={"attack":1,"defense":2,"special-attack":3,"special-defense":4,"speed":5}
+def statfx(m):
+    sc=[[STATIDX[a],c] for a,c in m.get("stat_changes",[]) if a in STATIDX]
+    return sc if len(sc)==len(m.get("stat_changes",[])) else None
 def usable(m):
     if m["key"] in BAN: return False
-    if m["cls"]=="status": return m["ailment"] in ("sleep","poison","paralysis","burn") and m["power"]==0
+    sc=statfx(m)
+    if m["cls"]=="status":
+        if m["ailment"] in ("sleep","poison","paralysis","burn") and m["power"]==0: return True
+        return bool(sc) and m["power"]==0 and m["target"] in ("user","selected-pokemon","all-opponents")
     return m["power"]>0
 gm={k:m for k,m in MV.items() if usable(m)}
 def learnset(s):
@@ -53,7 +60,10 @@ def learnset(s):
     lv=[1,6,13,22,32,44][:len(pick)]
     out=[[l,m["key"]] for l,m in zip(lv,pick)]
     if s["id"]==25: out=[[1,"thunder-shock"],[1,"quick-attack"]]+[[l,k] for l,k in [(9,"thunder-wave"),(16,"slam" if "slam" in gm else "body-slam"),(26,"thunderbolt" if "thunderbolt" in gm else "thunder"),(40,"thunder")] if k in gm]
-    elif sta: out.append([12,sta[0]["key"]]); 
+    elif sta:
+        a_=[m for m in sta if m["ailment"] in ("sleep","poison","paralysis","burn")]; b_=[m for m in sta if m not in a_]
+        if a_: out.append([12,a_[0]["key"]])
+        if b_: out.append([8,b_[0]["key"]]); 
     return out
 # evolution
 STONE={26:"thunder-stone",134:"water-stone",135:"thunder-stone",136:"fire-stone",31:"moon-stone",34:"moon-stone",36:"moon-stone",40:"moon-stone",
@@ -86,7 +96,9 @@ def natural_level(i):
     e=sbyid[i]["evo"]
     if not e: return 1
     return natural_level(e["from"])+ (e.get("level",25) if "level" in e else 25) if False else (e.get("level") or 25)
-moves=[{k:v for k,v in m.items()} for m in gm.values()]
+moves=[]
+for m in gm.values():
+    d={k:v for k,v in m.items() if k not in('stat_changes','target')}; sc=statfx(m) or []; d['sc']=sc; d['sc_self']=m['target']=='user'; moves.append(d)
 mindex={m["key"]:n for n,m in enumerate(moves)}
 for s in species:
     s["learn"]=[[l,k] for l,k in s["learn"] if k in mindex]
@@ -189,7 +201,7 @@ npcs=[]; rules=[]; trainers={}; flags=set(); gate=collections.defaultdict(list)
 def addnpc(mapid,nid,kind,label,pos_=None):
     m=maps[mapid]; p=pos_ or free_slot(m)
     n=dict(id=nid,x=p[0],y=p[1],kind=kind,label=label); m["npcs"].append(n); return n
-def R(npc,act="say",text="",req="",nreq="",arg="",set_="",clr=""): rules.append(dict(npc=npc,req=req,nreq=nreq,act=act,arg=str(arg),set=set_,clr=clr,text=text))
+def R(npc,act="say",text="",req="",nreq="",arg="",set_="",clr="",lose=""): rules.append(dict(npc=npc,req=req,nreq=nreq,act=act,arg=str(arg),set=set_,clr=clr,text=text,lose=lose))
 # trainer party generator
 pool_by_type=collections.defaultdict(list)
 for s in species:
@@ -299,14 +311,19 @@ for ch,steps in Q.items():
                 th=areas[aid]["types"] or ["normal"]
                 pty=party(th,L-1,min(4,1+ch//3),hash(sid)%1000)
             trainers[tid]=dict(id=tid,name=nm,party=pty,reward=L*60,kind=typ)
-            R(n["id"],"battle",line,nreq=sid,arg=tid,set_=sid)
-            R(n["id"],"say","승부는 졌지만 좋은 배틀이었어.",req=sid)
+            lf=sid+"_lost"; flags.add(lf)
+            alt={"rival":"하루: 또 나한테 졌지? ...아니, 이번엔 다를 거야. 다시 붙자!","rocket":"로켓단: 한 번 이겼다고 우쭐대지 마! 이번엔 안 진다!","trainer":"트레이너: 아까는 방심했어. 이번엔 진짜 실력을 보여 주지!"}[typ]
+            R(n["id"],"battle",alt,req=lf,nreq=sid,arg=tid,set_=sid,lose=lf)
+            R(n["id"],"battle",line,nreq=sid,arg=tid,set_=sid,lose=lf)
+            R(n["id"],"say",{"rival":"하루: ...다음에는 지지 않아. 먼저 갈게.","rocket":"로켓단: 크윽... 철수한다!","trainer":"승부는 졌지만 좋은 배틀이었어."}[typ],req=sid)
         elif typ=="gym":
             g=GYMS[int(areas[aid]["id"][1:])-1]; n=addnpc(mapid,"n_"+sid,"leader",g["leader"]+" 관장")
             pty=party([g["type"]],L+3,min(6,3+g["n"]//2),g["n"]*77,0,60)
             pty=[dict(sp=p["sp"],lv=L+3+(1 if k==len(pty)-1 else 0)) for k,p in enumerate(pty)]
             trainers["t_"+sid]=dict(id="t_"+sid,name=g["leader"]+" 관장",party=pty,reward=L*120,kind="gym",badge=g["n"])
-            R(n["id"],"battle",line,nreq=sid,arg="t_"+sid,set_=sid)
+            lf=sid+"_lost"; flags.add(lf)
+            R(n["id"],"battle",f"{g['leader']}: 다시 왔군. 지난번 패배에서 뭘 배웠는지 보여 줘라. 퍼즐은 풀린 채로 남아 있다.",req=lf,nreq=sid,arg="t_"+sid,set_=sid,lose=lf)
+            R(n["id"],"battle",line,nreq=sid,arg="t_"+sid,set_=sid,lose=lf)
             R(n["id"],"say",f"{g['leader']}: 배지는 이미 건넸다. 다음 도시에서 만나자.",req=sid)
         elif typ=="league":
             i=len([1 for s_ in steps if s_[1]=="league" and [q[0] for q in steps].index(s_[0])<[q[0] for q in steps].index(sid)])
@@ -316,7 +333,9 @@ for ch,steps in Q.items():
             if ty: pty=party([ty],lv,5,hash(sid)%1000,0,200)
             else: pty=[dict(sp=i_,lv=lv) for i_ in (18,65,112,130,59,3)]
             trainers["t_"+sid]=dict(id="t_"+sid,name=nm,party=pty,reward=lv*150,kind="league")
-            R(n["id"],"battle",line,nreq=sid,arg="t_"+sid,set_=sid)
+            lf=sid+"_lost"; flags.add(lf)
+            R(n["id"],"battle",nm+": 한 번 졌다고 끝이 아니다. 다시 와라.",req=lf,nreq=sid,arg="t_"+sid,set_=sid,lose=lf)
+            R(n["id"],"battle",line,nreq=sid,arg="t_"+sid,set_=sid,lose=lf)
             R(n["id"],"say","이미 쓰러뜨렸다. 다음으로 가라.",req=sid)
     # gym internals: practice switch, puzzle, gym trainer
 for g in GYMS:
@@ -334,6 +353,10 @@ for g in GYMS:
     # screen1: puzzle (a different mechanic per gym)
     sid=f"gym{g['n']}_puz"; var=["seq3","code4","seq4","code4","decoy5","branch","seq5","decoy5"][g["n"]-1]
     make_puzzle(sid,var,g["rule"],[mid(a,1),mid(a,0)],mid(a,1),PUZ_NUM,"장치")
+EPI={"H01":"엄마: 박사님이 전해 주셨단다. 네 피카츄 이야기가 온 마을에 퍼졌어. 오늘은 네가 좋아하는 걸 해 줄게.","H02":"한돌: 낙반 방지 공사가 끝났다. 발판 순서표는 이제 마을 사람들 모두가 안다. 이 돌여울이 네 덕을 봤지.","H03":"소라: 수문마다 순서표를 붙였다. 범람은 이제 순서를 읽을 줄 아는 사람들이 막는다.","H04":"전서: 푸른닻의 불이 다시 안 꺼진다. 저 등대 불빛, 배 위에서도 보이지?","H05":"이파: 되찾은 약초를 새 밭에 옮겨 심었다. 잎새장터는 올해 최고의 수확이다.","H06":"역장: 연락선로가 이어진 뒤로 도시 간 소식이 하루 만에 닿네. 옛 철도길도 다시 달린다.","H07":"독초: 서식지가 맑아졌다. 희귀 포켓몬이 다시 돌아오고 있어. 조용히 지켜봐 줘.","H08":"서연: 연구 시설은 에너지 장치를 폐기했다. 이제 포켓몬을 억지로 쓰는 연구는 없다.","H09":"불씨: 화산 계측이 안정됐다. 섬 사람들이 관측소 견학 코스를 만들 계획이야.","H10":"황토: 조합은 화물 검사표를 새로 만들었다. 다시는 이용당하지 않아.","H11":"산채 주인: 챔피언로드를 지난 사람은 여기서 한 번 쉬어 가지. 자네도 어깨가 가벼워 보이네.","H12":"접수원: 새 챔피언의 이름이 리그 현판에 새겨졌습니다. 관동의 모든 마을이 소식을 들었어요."}
+for h,txt in EPI.items():
+    ar=areas[h]; n=addnpc(mid(ar,ar["screens"]-1),f"n_{h}_epi","npc","후일담")
+    R(n["id"],"say",txt,req="c12_end"); R(n["id"],"say","(지금은 평범한 이야기만 하고 있다.)")
 # ambient: pokecenter/shop/save & flavor NPCs & optional trainers & gifts
 SHOP={"H01":["monster-ball","potion"],"H02":["monster-ball","potion","antidote"],"H03":["monster-ball","great-ball","potion","super-potion","awakening"],
  "H04":["great-ball","super-potion","parlyz-heal","burn-heal"],"H05":["great-ball","super-potion","antidote","bait"],"H06":["great-ball","super-potion","parlyz-heal"],

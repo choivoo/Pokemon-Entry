@@ -12,6 +12,6 @@ def one(n):
     ef=m.get("meta") or {}
     return {"key":n,"name_ko":ko,"type":m["type"]["name"],"power":m["power"] or 0,"acc":m["accuracy"] or 100,"pp":m["pp"] or 5,
             "prio":m["priority"],"cls":m["damage_class"]["name"],"ailment":(ef.get("ailment") or {}).get("name","none"),
-            "ail_chance":ef.get("ailment_chance",0),"crit":ef.get("crit_rate",0),"drain":ef.get("drain",0),"heal":ef.get("healing",0)}
+            "ail_chance":ef.get("ailment_chance",0),"crit":ef.get("crit_rate",0),"drain":ef.get("drain",0),"heal":ef.get("healing",0),"stat_changes":[[x["stat"]["name"],x["change"]] for x in m.get("stat_changes",[])],"target":m["target"]["name"],"stat_chance":ef.get("stat_chance",0)}
 with cf.ThreadPoolExecutor(8) as ex: out=list(ex.map(one,names))
 json.dump(out,open("data/moves.json","w"),ensure_ascii=False,indent=1); print(len(out))

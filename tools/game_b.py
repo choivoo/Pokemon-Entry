@@ -5,7 +5,7 @@ from game_data import *
 def party_lists():
     for p in ("PS","FO"):
         for k in ("sp","lv","exp","hp","st"): l(f"{p}_{k}",[0]*6)
-        l(f"{p}_mv",[0]*24); l(f"{p}_pp",[0]*24)
+        l(f"{p}_mv",[0]*24); l(f"{p}_pp",[0]*24); l(f"{p}_stg",[0]*30)
     for k in ("sp","lv","exp","hp","st"): l(f"BX_{k}",[])
     l("BX_mv",[]); l("BX_pp",[])
     l("PART",[0]*6)
@@ -35,6 +35,9 @@ def logic():
             st_out.set(floor(2*base*st_lv/100)+st_lv+10); ie.other(); st_out.set(floor(2*base*st_lv/100)+5)
     with proc("max_hp"):
         st_kind.set(1); call("calc_stat")
+    with proc("stage_mul"):  # in sm_g -> sm_out
+        with IfElse(v("sm_g")>=0) as ie:
+            v("sm_out").set((2+v("sm_g"))/2); ie.other(); v("sm_out").set(2/(2-v("sm_g")))
     te_mt=v("te_mt"); te_sp=v("te_sp"); te_out=v("te_out")
     with proc("type_eff"):
         te_out.set(l("TC")[(te_mt-1)*18+l("S_t1")[te_sp]])
@@ -49,11 +52,13 @@ def logic():
             with IfElse(l("MV_cls")[v("ds_mv")]==1) as ie:
                 st_kind.set(2); ie.other(); st_kind.set(4)
             call("calc_stat"); ds_a.set(st_out)
+            v("sm_g").set(v("ds_asg")); call("stage_mul"); ds_a.set(floor(ds_a*v("sm_out")))
             with If((l("MV_cls")[v("ds_mv")]==1)&(v("ds_ast")==4)): ds_a.set(floor(ds_a/2))
             st_sp.set(v("ds_dsp")); st_lv.set(v("ds_dlv"))
             with IfElse(l("MV_cls")[v("ds_mv")]==1) as ie:
                 st_kind.set(3); ie.other(); st_kind.set(5)
             call("calc_stat"); ds_d.set(st_out)
+            v("sm_g").set(v("ds_dsg")); call("stage_mul"); ds_d.set(floor(ds_d*v("sm_out")))
             with If(ds_d<1): ds_d.set(1)
             ds_stab.set(1)
             with If((l("S_t1")[v("ds_asp")]==l("MV_type")[v("ds_mv")])|(l("S_t2")[v("ds_asp")]==l("MV_type")[v("ds_mv")])): ds_stab.set(1.5)
@@ -64,6 +69,7 @@ def logic():
             with If(ds_crit==1): v("ds_f").set(1.5)
             ds_dmg.set(floor(ds_base*ds_stab*ds_e*v("ds_f")*(85+rnd(0,15))/100))
             with If((ds_e>0)&(ds_dmg<1)): ds_dmg.set(1)
+            with If((v("ds_asp")==25)&(v("aff")>=30)&(ds_dmg>0)): ds_dmg.set(floor(ds_dmg*1.1))
     # ---------- templated per-side exec ----------
     def gen_exec(name,A,D,asideP):
         ak=v("ex_k"); mvv=v("ex_mv")
@@ -90,13 +96,17 @@ def logic():
                 with IfElse(rnd(1,100)>l("MV_acc")[mvv]) as ie:
                     say("그러나 빗나갔다!"); ie.other()
                     ds[0].set(A.g("sp")); ds[1].set(A.g("lv")); ds[2].set(A.g("st")); ds[3].set(D.g("sp")); ds[4].set(D.g("lv")); ds[5].set(mvv)
+                    ak=l(A.pre+"_stg"); dk=l(D.pre+"_stg")
+                    with IfElse(l("MV_cls")[mvv]==1) as ie9:
+                        v("ds_asg").set(ak[(A.idx-1)*5+1]); v("ds_dsg").set(dk[(D.idx-1)*5+2]); ie9.other()
+                        v("ds_asg").set(ak[(A.idx-1)*5+3]); v("ds_dsg").set(dk[(D.idx-1)*5+4])
                     call("calc_damage")
                     with If(l("MV_pow")[mvv]>0):
                         with IfElse(ds_e==0) as ie2:
                             say("효과가 없는 것 같다..."); ie2.other()
                             v("ex_dealt").set(ds_dmg)
                             with If(v("ex_dealt")>D.g("hp")): v("ex_dealt").set(D.g("hp"))
-                            D.s_("hp",D.g("hp")-v("ex_dealt"))
+                            D.s_("hp",D.g("hp")-v("ex_dealt")); call("blink_foe" if asideP else "blink_own")
                             with If(ds_crit==1): say("급소에 맞았다!")
                             with If(ds_e>1): say("효과는 굉장했다!")
                             with If(ds_e<1): say("효과는 별로인 듯하다...")
@@ -119,6 +129,27 @@ def logic():
                         with IfElse((v("ex_imm")==0)&(v("ex_ch")>0)&(rnd(1,100)<=v("ex_ch"))) as ie3:
                             D.s_("st",l("MV_ail")[mvv]); say(join(l("S_name")[d_sp],"의 상태가 변했다!")); ie3.other()
                             with If(l("MV_pow")[mvv]==0): say("그러나 실패했다!")
+                    # stat stage changes (self or target)
+                    def apply_sc(side):
+                        sl=l(side.pre+"_stg")
+                        v("sc_ch").set(100)
+                        with If(l("MV_pow")[mvv]>0): v("sc_ch").set(l("MV_schance")[mvv])
+                        with If((side.g("hp")>0)&(v("sc_ch")>0)&(rnd(1,100)<=v("sc_ch"))):
+                            for slot in ("1","2"):
+                                with If(l("MV_s"+slot)[mvv]>0):
+                                    ix=(side.idx-1)*5+l("MV_s"+slot)[mvv]
+                                    v("sc_old").set(sl[ix]); v("sc_new").set(v("sc_old")+l("MV_d"+slot)[mvv])
+                                    with If(v("sc_new")>6): v("sc_new").set(6)
+                                    with If(v("sc_new")<-6): v("sc_new").set(-6)
+                                    sl.set(ix,v("sc_new"))
+                                    with IfElse(v("sc_new")==v("sc_old")) as ie8:
+                                        say(join(l("S_name")[side.g("sp")],"의 능력은 더 이상 변하지 않는다!")); ie8.other()
+                                        with IfElse(l("MV_d"+slot)[mvv]>0) as ie7:
+                                            say(join(l("S_name")[side.g("sp")],"의 ",l("STAT_name")[l("MV_s"+slot)[mvv]],"이(가) 올랐다!")); ie7.other()
+                                            say(join(l("S_name")[side.g("sp")],"의 ",l("STAT_name")[l("MV_s"+slot)[mvv]],"이(가) 떨어졌다!"))
+                    with If(l("MV_s1")[mvv]>0):
+                        with IfElse(l("MV_self")[mvv]==1) as ie6:
+                            apply_sc(A); ie6.other(); apply_sc(D)
     P_=Side("PS",pa); F_=Side("FO",fi)
     gen_exec("exec_p",P_,F_,True); gen_exec("exec_f",F_,P_,False)
     # ---------- progression ----------
@@ -257,7 +288,10 @@ def logic():
                     with If((l("S_t1")[l("FO_sp")[fi]]==l("MV_type")[mvn])|(l("S_t2")[l("FO_sp")[fi]]==l("MV_type")[mvn])): v("ai_stab").set(1.5)
                     v("ai_sc").set(l("MV_pow")[mvn]*te_out*v("ai_stab")*l("MV_acc")[mvn]/100)
                     ie.other()
-                    with If(l("PS_st")[pa]==0): v("ai_sc").set(35)
+                    v("ai_sc").set(0)
+                    with If((l("MV_s1")[mvn]>0)&(l("MV_ail")[mvn]==0)): v("ai_sc").set(22)
+                    with If((l("MV_s1")[mvn]==0)|(l("MV_ail")[mvn]>0)):
+                        with If(l("PS_st")[pa]==0): v("ai_sc").set(35)
                 v("ai_sc").set(v("ai_sc")*(90+rnd(0,20))/100)
                 with If(v("ai_sc")>bs): bs.set(v("ai_sc")); best.set(mvn)
             k.inc()

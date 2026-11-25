@@ -1,30 +1,30 @@
-maps 213 npcs 580 rules 1267 trainers 173 wild areas 37 added roots 27 species 151 moves 89
+maps 213 npcs 592 rules 1369 trainers 173 wild areas 37 added roots 27 species 151 moves 105
 --- engine invariants (node tests/test.js)
-pass 9782 fail 0
+pass 10247 fail 0
 --- trace dump
-build/trace_fast7.json 107002 events true
-build/trace_normal9.json 67445 events true
+build/trace_fast7.json 100308 events true
+build/trace_normal9.json 48645 events true
 --- blocks replay vs engine
-build/trace_fast7.json replayed in 19s steps 10188868
-build/trace_normal9.json replayed in 12s steps 6601246
-pass 27 fail 0
+build/trace_fast7.json replayed in 18s steps 10264320
+build/trace_normal9.json replayed in 9s steps 5181945
+pass 26 fail 0
 --- packaged .ent (serialized JSON) replay
-build/trace_fast7.json replayed in 19s steps 10188868
-build/trace_normal9.json replayed in 12s steps 6601246
-pass 27 fail 0
+build/trace_fast7.json replayed in 19s steps 10264320
+build/trace_normal9.json replayed in 10s steps 5181945
+pass 26 fail 0
 --- blocks unit tests
-blocks2: pass 426 fail 0
+blocks2: pass 453 fail 0
 --- multi seed full playthroughs
 runs 48 failed 0
-fast n 24 total h 13.00 grind h 9.75 wipes 20.08 steps 83971.33 battles 1305.17
-normal n 24 total h 11.58 grind h 8.45 wipes 4.75 steps 78321.08 battles 1211.25
+fast n 24 total h 15.68 grind h 12.54 wipes 66.63 steps 98260.63 battles 2263.88
+normal n 24 total h 9.80 grind h 6.99 wipes 20.21 steps 61941.21 battles 1463.46
 --- chapter report
-fast: total 15.0h grind 11.3h required 3.68h
-normal: total 11.1h grind 7.9h required 3.17h
-normal_shuffled_clues: total 10.6h grind 7.8h required 2.85h
+fast: total 16.4h grind 12.5h required 3.94h
+normal: total 10.1h grind 6.9h required 3.14h
+normal_shuffled_clues: total 9.1h grind 6.5h required 2.58h
 --- assemble
-assets ok 346 KB
-wrote build/Pokemon_Pikachu_Kanto_Journey_1.0.ent 0.6 MB objects 19 blocks 11327 files 333 errors 0
+assets ok 597 KB
+wrote build/Pokemon_Pikachu_Kanto_Journey_1.0.ent 0.9 MB objects 22 blocks 15252 files 491 errors 0
 []
 docs written
 qa written

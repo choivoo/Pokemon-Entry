@@ -4,13 +4,18 @@ from bdsl import *
 from game_data import *
 from game_b import Side
 def logic():
+    tx=v("tx"); ty=v("ty"); tch=v("tch"); hit=v("hit")
     pn=v("pn"); pa=v("pa"); fi=v("fi"); fn=v("fn"); bover=v("bover"); bres=v("bres"); money=v("money"); need_sw=v("need_sw"); mp=v("mp"); px=v("px"); py=v("py")
     P_=Side("PS",pa); F_=Side("FO",fi)
     TACKLE=MVIDX["tackle"]
     def speed_of(side,out):
         st_sp=v("st_sp"); st_lv=v("st_lv"); st_kind=v("st_kind"); st_out=v("st_out")
         st_sp.set(side.g("sp")); st_lv.set(side.g("lv")); st_kind.set(6); call("calc_stat"); out.set(st_out)
+        v("sm_g").set(l(side.pre+"_stg")[(side.idx-1)*5+5]); call("stage_mul"); out.set(floor(out*v("sm_out")))
         with If(side.g("st")==3): out.set(floor(out/2))
+    with proc("reset_stg_p"):  # in rs_i
+        k=v("rs_k"); k.set(1)
+        with Repeat(5): l("PS_stg").set((v("rs_i")-1)*5+k,0); k.inc()
     with proc("end_status"):  # in es_side 1/2
         with IfElse(v("es_side")==1) as ie:
             with If((l("PS_hp")[pa]>0)&((l("PS_st")[pa]==2)|(l("PS_st")[pa]==4))):
@@ -32,7 +37,7 @@ def logic():
         with IfElse(need_sw==1) as ie:
             with IfElse((v("bt_cmd")==2)&(v("bt_i")>=1)&(v("bt_i")<=pn)) as ie2:
                 with IfElse(l("PS_hp")[v("bt_i")]>0) as ie3:
-                    pa.set(v("bt_i")); l("PART").set(pa,1); need_sw.set(0); say(join(l("S_name")[l("PS_sp")[pa]],", 나가!"))
+                    v("rs_i").set(pa); call("reset_stg_p"); pa.set(v("bt_i")); v("rs_i").set(pa); call("reset_stg_p"); l("PART").set(pa,1); need_sw.set(0); say(join(l("S_name")[l("PS_sp")[pa]],", 나가!"))
                     ie3.other(); v("bt_ok").set(0)
                 ie2.other(); v("bt_ok").set(0)
             ie.other()
@@ -45,7 +50,7 @@ def logic():
                 with IfElse((v("bt_i")==pa)|(v("bt_i")<1)|(v("bt_i")>pn)) as ie2:
                     v("bt_ok").set(0); ie2.other()
                     with IfElse(l("PS_hp")[v("bt_i")]<=0) as ie3:
-                        v("bt_ok").set(0); ie3.other(); pa.set(v("bt_i")); l("PART").set(pa,1); say(join(l("S_name")[l("PS_sp")[pa]],", 나가!"))
+                        v("bt_ok").set(0); ie3.other(); v("rs_i").set(pa); call("reset_stg_p"); pa.set(v("bt_i")); v("rs_i").set(pa); call("reset_stg_p"); l("PART").set(pa,1); say(join(l("S_name")[l("PS_sp")[pa]],", 나가!"))
             with If((v("bt_cmd")==3)&(v("bt_ok")==1)):
                 v("ui_item").set(v("bt_item")); v("ui_i").set(v("bt_i")); call("use_item")
                 with If(v("ui_ok")==0): v("bt_ok").set(0)
@@ -120,6 +125,8 @@ def logic():
         bover.set(0); bres.set(0); need_sw.set(0); fi.set(1); l("PART").set(1,0)
         j=v("br_j"); j.set(1)
         with Repeat(6): l("PART").set(j,0); j.inc()
+        j.set(1)
+        with Repeat(30): l("PS_stg").set(j,0); l("FO_stg").set(j,0); j.inc()
         pa.set(0); j.set(1)
         with Repeat(pn):
             with If((l("PS_hp")[j]>0)&(pa==0)): pa.set(j)
@@ -237,15 +244,28 @@ def logic():
                             ie3.other(); say("그 볼은 없다.")
                         ie2.other(); say("그 볼은 없다.")
         call("hide_foe"); call("bgm_set_for_map")
-    with proc("wild_roll"):  # uses mp area -> w_sp w_lv (w_sp=0 if none)
-        ar=l("M_area")[mp]; v("w_sp").set(0)
+    with proc("wild_roll"):  # uses mp area -> w_sp w_lv w_beh (w_sp=0 if none); night favors ghost/poison/psychic/dark
+        ar=l("M_area")[mp]; v("w_sp").set(0); v("is_night").set((v("steps")//300)%2)
         with If(l("W_count")[ar]>0):
-            r=v("wr"); r.set(rnd(1,l("W_total")[ar])); i=v("wi"); i.set(l("W_start")[ar]); v("wdone").set(0)
+            tot=v("wr_tot"); tot.set(0); i=v("wi"); i.set(l("W_start")[ar])
+            with Repeat(l("W_count")[ar]):
+                v("wr_w").set(l("W_w")[i])
+                with If(l("S_night")[l("W_sp")[i]]==1):
+                    with IfElse(v("is_night")==1) as ie:
+                        v("wr_w").set(v("wr_w")*3); ie.other(); v("wr_w").set(v("wr_w")/4)
+                tot.inc(v("wr_w")); i.inc()
+            r=v("wr"); r.set(rnd(1,floor(tot)+1)); v("wdone").set(0); i.set(l("W_start")[ar]); v("wdone").set(0)
             with Repeat(l("W_count")[ar]):
                 with If(v("wdone")==0):
-                    r.inc(0-l("W_w")[i])
-                    with If(r<=0): v("wdone").set(1); v("w_sp").set(l("W_sp")[i]); v("w_lv").set(l("W_lo")[i]+rnd(0,l("W_hi")[i]-l("W_lo")[i]))
+                    v("wr_w").set(l("W_w")[i])
+                    with If(l("S_night")[l("W_sp")[i]]==1):
+                        with IfElse(v("is_night")==1) as ie:
+                            v("wr_w").set(v("wr_w")*3); ie.other(); v("wr_w").set(v("wr_w")/4)
+                    r.inc(0-v("wr_w"))
+                    with If(r<=0): v("wdone").set(1); v("w_sp").set(l("W_sp")[i]); v("w_beh").set(l("W_beh")[i]); v("w_lv").set(l("W_lo")[i]+rnd(0,l("W_hi")[i]-l("W_lo")[i]))
                 i.inc()
+            with If(v("wdone")==0):
+                i.set(l("W_start")[ar]); v("w_sp").set(l("W_sp")[i]); v("w_beh").set(l("W_beh")[i]); v("w_lv").set(l("W_lo")[i])
     with proc("wild_prompt"):  # in w_sp w_lv
         with If(l("DEX")[v("w_sp")]<1): l("DEX").set(v("w_sp"),1)
         say(join("야생 ",l("S_name")[v("w_sp")],"(Lv",v("w_lv"),")이(가) 나타났다!"))
@@ -264,9 +284,43 @@ def logic():
                 with While((v(f"vw{k}x")==-1)&(tries<25)):
                     tries.inc(); x=v("sp_x"); y=v("sp_y"); x.set(rnd(1,18)); y.set(rnd(1,9))
                     with If((charat(l("T_rows")[(mp-1)*11+y+1],x+1)=="g")&~((x==px)&(y==py))&~((x==v("vw1x"))&(y==v("vw1y")))):
-                        v(f"vw{k}x").set(x); v(f"vw{k}y").set(y); call("wild_roll"); v(f"vw{k}sp").set(v("w_sp")); v(f"vw{k}lv").set(v("w_lv"))
-                        with If(v("w_sp")>0): v("dx_").set(-228+24*x); v("dy_").set(123-24*y); v("nk").set(9); call("stamp_npc")
+                        v(f"vw{k}x").set(x); v(f"vw{k}y").set(y); call("wild_roll"); v(f"vw{k}sp").set(v("w_sp")); v(f"vw{k}lv").set(v("w_lv")); v(f"vw{k}beh").set(v("w_beh"))
                         with If(v("w_sp")==0): v(f"vw{k}x").set(-1); tries.set(99)
+    with proc("wild_step"):
+        for k in (1,2):
+            x=v(f"vw{k}x"); y=v(f"vw{k}y"); beh=v(f"vw{k}beh"); o=3-k
+            with If(x>=0):
+                ddx=v("ws_ax"); ddy=v("ws_ay"); ddx.set(x-px); ddy.set(y-py)
+                v("ws_sx").set(0); v("ws_sy").set(0)
+                with If(ddx>0): v("ws_sx").set(1)
+                with If(ddx<0): v("ws_sx").set(-1); ddx.set(0-ddx)
+                with If(ddy>0): v("ws_sy").set(1)
+                with If(ddy<0): v("ws_sy").set(-1); ddy.set(0-ddy)
+                dist=v("ws_d"); dist.set(ddx+ddy); mx=v("ws_mx"); my=v("ws_my"); mx.set(0); my.set(0)
+                def rnd_dir():
+                    r4=v("ws_r"); r4.set(rnd(1,4))
+                    with If(r4==1): mx.set(1)
+                    with If(r4==2): mx.set(-1)
+                    with If(r4==3): my.set(1)
+                    with If(r4==4): my.set(-1)
+                with If((beh==1)&(v("steps")%2==0)): rnd_dir()
+                with If((beh==2)&(v("steps")%4==0)): rnd_dir()
+                with If((beh==3)&(dist<=3)):
+                    with IfElse(ddx>=ddy) as ie:
+                        mx.set(v("ws_sx")); 
+                        with If(mx==0): mx.set(1)
+                        ie.other()
+                        my.set(v("ws_sy"))
+                        with If(my==0): my.set(1)
+                with If((beh==4)&(dist<=5)&(dist>0)):
+                    with IfElse(ddx>=ddy) as ie:
+                        mx.set(0-v("ws_sx")); ie.other(); my.set(0-v("ws_sy"))
+                with If((mx!=0)|(my!=0)):
+                    tx.set(x+mx); ty.set(y+my); call("tile_at")
+                    with If(((tch==".")|(tch=="g"))&~((tx==v(f"vw{o}x"))&(ty==v(f"vw{o}y")))):
+                        call("npc_at")
+                        with If(hit==0): x.set(tx); y.set(ty)
+        call("wild_view")
     with proc("check_visible_wild"):
         v("vw_hit").set(0)
         for k in (1,2):

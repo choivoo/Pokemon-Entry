@@ -90,7 +90,9 @@ def substr(x,a,b): return X(blk("substring",C(x).b,C(a).b,C(b).b))
 def charat(x,i): return X(blk("char_at",C(x).b,C(i).b))
 def answer(): return X(blk("get_canvas_input_value"))
 def mn(a,b): return X(blk("calc_basic",blk("number","0"),"PLUS",blk("number","0"))) if False else None
-def say(t): P.emit(blk("dialog",C(t).b,"speak"))
+def say(t):
+    P.emit(blk("dialog",C(t).b,"speak"))
+    if "txt_wait" in P.vars: P.emit(blk("wait_second",blk("get_variable",P.vars["txt_wait"])))
 def ask(t): P.emit(blk("ask_and_wait",C(t).b))
 def wait(t): P.emit(blk("wait_second",C(t).b))
 def call(name): P.emit(blk("message_cast_wait",P.msg(name)))
@@ -265,6 +267,8 @@ class Interp:
         if t=="stamp": s.stamps+=1; return
         if t=="sound_something_wait_with_block":
             s.__dict__.setdefault("sounds",[]).append(p[0]); raise Break()
+        if t in("sound_volume_set",):
+            return
         if t=="wait_second":
             if getattr(s,"on_wait",None): s.on_wait(s)
             return

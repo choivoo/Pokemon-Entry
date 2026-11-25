@@ -19,9 +19,13 @@ function run(opt){
         if(t==='D'){ const e=WORLD.maps[m].exits.find(e=>e.x===nx&&e.y===ny); if(e.req.some(f=>!s.flags[f])) continue; tm=e.to;tx=e.tx;ty=e.ty }
         const k=keyOf(tm,tx,ty); if(prev.has(k)) continue; prev.set(k,{from:keyOf(m,x,y),step:[dx,dy]}); q.push([tm,tx,ty]) } }
     return null }
-  function walk(p){ for(const [dx,dy] of p){ const r=E.move(s,dx,dy); if(!r.ok) throw new Error(`walk blocked at ${s.map} ${s.x},${s.y} -> ${dx},${dy} ${JSON.stringify(r)}`); clk.move++; if(r.changed) clk.load++ } }
-  function goAdj(nid){ const n=E.NPC[nid]; const p=path((m,x,y)=>m===n.map&&Math.abs(x-n.x)+Math.abs(y-n.y)===1); if(!p) return false; walk(p); return true }
-  function goMap(mapId){ const p=path((m)=>m===mapId); if(!p) return false; walk(p); return true }
+  function walk(p){ for(const [dx,dy] of p){ const r=E.move(s,dx,dy); if(!r.ok) throw new Error(`walk blocked at ${s.map} ${s.x},${s.y} -> ${dx},${dy} ${JSON.stringify(r)}`); clk.move++; if(r.changed) clk.load++;
+      if(r.sight){ const nid=r.sight; const rule=E.RULES_BY[nid].find(x=>x.act==='battle'); const out=E.interact(s,nid,io,'l'); clk.line+=out.length;
+        if(!s.flags[rule.set]){ log('SIGHT-LOST',rule.arg); losses++; whiteout(); ensureStrength(rule.arg,Math.min(8,losses)) } return false } } return true }
+  let losses=0;
+  function go(pf){ for(let g=0;g<60;g++){ const p=pf(); if(!p) return false; if(walk(p)) return true } throw new Error('unreachable (interrupted too often)') }
+  function goAdj(nid){ const n=E.NPC[nid]; return go(()=>path((m,x,y)=>m===n.map&&Math.abs(x-n.x)+Math.abs(y-n.y)===1)) }
+  function goMap(mapId){ return go(()=>path((m)=>m===mapId)) }
   const hpFrac=()=>s.party.reduce((a,m)=>a+m.hp/E.maxHp(m.sp,m.lv),0)/s.party.length;
   function effScore(m,fsp){ let best=0; for(const mo of m.moves){ const M=MOVES[mo.k]; if(M.power>0&&mo.pp>0){ best=Math.max(best,M.power*E.eff(M.type,SPECIES[fsp].types)*(SPECIES[m.sp].types.includes(M.type)?1.5:1)*M.acc/100) } } return best }
   const leadScore=(m,fsp)=>m.hp>0?(m.lv+10)*(effScore(m,fsp)+5):0;
@@ -50,7 +54,7 @@ function run(opt){
     if(E.RULES_BY[nid][0].arg.includes('stone')) for(const k of ['thunder-stone','water-stone','fire-stone','leaf-stone','moon-stone']) if((s.bag[k]||0)<1&&s.money>6000) want(k,1);
     clk.menu++ }
   function grindArea(){ const c=Object.values(WORLD.areas).filter(a=>a.kind!=='gym'&&a.types.length&&a.ch<=curCh&&E.WILD[a.id]); const top=c.filter(a=>a.ch===Math.max(...c.map(x=>x.ch))); return top[0].id }
-  function nearGrass(a){ a=a||grindArea(); if(s.map.split('_')[0]===a&&E.tile(s.map,s.x,s.y)==='g') return true; const p=path((m,x,y)=>m.split('_')[0]===a&&E.tile(m,x,y)==='g'); if(!p) return false; walk(p); return true }
+  function nearGrass(a){ a=a||grindArea(); if(s.map.split('_')[0]===a&&E.tile(s.map,s.x,s.y)==='g') return true; return go(()=>path((m,x,y)=>m.split('_')[0]===a&&E.tile(m,x,y)==='g')) }
   function healItems(){ let used=0; for(const m of s.party){ while(m.hp>0&&m.hp<E.maxHp(m.sp,m.lv)*.6){ const k=['potion','super-potion','hyper-potion'].find(k=>s.bag[k]>0); if(!k) return used; E.useItem(s,k,m,null); used++; clk.menu+=.1 } } return used }
   function promote(m){ // make m the lead (box -> party swap if needed)
     let i=s.party.indexOf(m); if(i<0){ const j=s.box.indexOf(m); s.box.splice(j,1); if(s.party.length>=6){ const w=s.party.reduce((a,c)=>c.lv<a.lv?c:a); s.party.splice(s.party.indexOf(w),1); s.box.push(w) } s.party.push(m); i=s.party.length-1 }
@@ -92,7 +96,7 @@ function run(opt){
     if(!rule){ if(!goAdj(nid)) throw new Error('unreachable '+nid); return E.interact(s,nid,io) }
     let tries=0; while(!s.flags[rule.set]&&tries<7){ const c0={...clk}; ensureStrength(rule.arg,tries*2); grindSecs+=wsum(clk)-wsum(c0);
       if(!goAdj(nid)) throw new Error('unreachable '+nid); out=E.interact(s,nid,io); tries++; if(!s.flags[rule.set]){ log('LOST',rule.arg); whiteout() } }
-    return out }
+    return out||[] }
   function catchStatic(sp,lv){ const c=E.newCatch(s,sp,lv,'flee'); let g=0; while(!c.over&&g++<30){ const ball=['ultra-ball','great-ball','monster-ball'].find(k=>s.bag[k]>0); if(!ball){shop();continue} E.throwBall(s,c,ball,'great'); clk.throw++ } return c.result }
   function catchSomeWild(area){ // capture one wild mon in the area (also sets quest hook)
     for(let g=0;g<60;g++){ if(!nearGrass(area)) return false; clk.move+=5; const w=E.rollWild(s); if(!w) return false; const c=E.newCatch(s,w.sp,w.lv,w.beh); clk.catchIntro++; let t=0;

@@ -154,5 +154,94 @@ for name,c in bad.items():
     p3,it3=fresh(40); s0=snapshot(it3); e=tryload(c,it3); ok(e!="",f"bad save '{name}' accepted"); ok(snapshot(it3)==s0,f"state mutated by bad save '{name}'")
 # 8 center heal/shop/gate behaviours via blocks
 p,it=fresh(); it.lst["PS_hp"][0]=1; it.lst["PS_st"][0]=2; it.call("heal_all"); it.setv("st_sp",25); it.setv("st_lv",5); it.call("max_hp"); ok(it.lst["PS_hp"][0]==it.var["st_out"] and it.lst["PS_st"][0]==0,"heal restores hp/status")
+
+# ---- new systems ----
+def fresh2(seed=3):
+    p,it=fresh(seed); it.stubs["redraw_dark"]=lambda i:None; return p,it
+# stat stages: exec growl on foe, swords-dance on self, staged damage
+p,it=fresh2(); it.rndfn=lambda a,b:b
+it.setv("g_sp",19); it.setv("g_lv",10); it.call("foe_setup_single") if False else None
+it.setv("w_sp",19); it.setv("w_lv",10); it.call("foe_setup_single"); it.setv("pa",1); it.setv("fi",1)
+GR=GD.MVIDX["growl"]; SD=GD.MVIDX["swords-dance"]
+it.setv("ex_mvidx",GR); it.setv("slp_p",0); it.call("exec_p"); ok(it.lst["FO_stg"][0]==-1,"growl lowers foe attack stage (%s)"%it.lst["FO_stg"][:5])
+it.setv("ex_mvidx",SD); it.call("exec_p"); ok(it.lst["PS_stg"][0]==2,"swords dance raises own attack by 2 (%s)"%it.lst["PS_stg"][:5])
+for _ in range(5): it.call("exec_p")
+ok(it.lst["PS_stg"][0]==6,"stage clamps at +6")
+# staged damage vs reference
+for g in (-2,0,3):
+    it.setv("ds_asp",19); it.setv("ds_alv",30); it.setv("ds_ast",0); it.setv("ds_dsp",74); it.setv("ds_dlv",30); it.setv("ds_mv",GD.MVIDX["tackle"]); it.setv("ds_asg",g); it.setv("ds_dsg",0); it.call("calc_damage")
+    mul=(2+g)/2 if g>=0 else 2/(2-g); A=math.floor((math.floor(2*GD.SPECIES[18]["base"]["attack"]*30/100)+5)*mul); Dv=math.floor(2*GD.SPECIES[73]["base"]["defense"]*30/100)+5
+    base=math.floor(math.floor(math.floor(2*30/5+2)*GD.MOVES[GD.MVIDX["tackle"]-1]["power"]*A/Dv)/50)+2
+    e=1
+    for t in GD.SPECIES[73]["types"]: e*=GD.TC["chart"][GD.TYIDX["normal"]-1][GD.TYIDX[t]-1]
+    stab=1.5 if "normal" in GD.SPECIES[18]["types"] else 1
+    ref=max(1,math.floor(base*stab*e)) if e>0 else 0
+    ok(it.var["ds_dmg"]==ref,f"staged damage g={g}: {it.var['ds_dmg']} vs {ref}")
+it.rndfn=None
+# trainer sight + rival loss branch
+tn=next(n for n in GD.WORLD["maps"]["R01_2"]["npcs"] if n["kind"]=="trainer" and n["id"]=="n_c1_tr1") if any(n["id"]=="n_c1_tr1" for n in GD.WORLD["maps"]["R01_2"]["npcs"]) else None
+for mid,m in GD.WORLD["maps"].items():
+    for n in m["npcs"]:
+        if n["id"]=="n_c1_tr1": tn=n; tmid=mid
+p,it=fresh2(); it.stubs["place_actors"]=lambda i:None
+calls=[]; it.stubs["trainer_battle"]=lambda i:(calls.append(i.var["tr_idx"]),i.setv("bres",1))
+it.setv("mp",GD.MIDX[tmid]); 
+placed=None
+for dx,dy in ((1,0),(-1,0),(0,1),(0,-1)):
+    for dd in (3,2,1):
+        x,y=tn["x"]+dx*dd,tn["y"]+dy*dd
+        if 0<=x<20 and 0<=y<11 and GD.WORLD["maps"][tmid]["tiles"][y][x] in ".g" and all(GD.WORLD["maps"][tmid]["tiles"][tn["y"]+dy*k][tn["x"]+dx*k] in ".g" for k in range(1,dd)): placed=(x,y)
+it.setv("px",placed[0]); it.setv("py",placed[1]); it.call("check_sight"); ok(len(calls)==1,"trainer sees player within 3 tiles -> fight starts (%d)"%len(calls))
+ok(it.lst["FS"][GD.FIDX["c1_tr1"]-1]==1,"sight fight win sets trainer flag"); it.call("check_sight"); ok(calls.count(GD.TRIDX["t_c1_tr1"])==1,"defeated trainer no longer triggers")
+p,it=fresh2(); it.stubs["place_actors"]=lambda i:None; it.stubs["trainer_battle"]=lambda i:i.setv("bres",2); it.stubs["whiteout"]=lambda i:None
+for mid,m in GD.WORLD["maps"].items():
+    for n in m["npcs"]:
+        if n["id"]=="n_c1_rival": rmid=mid
+it.setv("mp",GD.MIDX[rmid]); it.setv("cur_npc",GD.NIDX["n_c1_rival"]); it.call("run_rules")
+ok(it.lst["FS"][GD.FIDX["c1_rival_lost"]-1]==1 and it.lst["FS"][GD.FIDX["c1_rival"]-1]==0,"rival loss records a lost flag, step not complete")
+it.out.clear(); it.call("run_rules"); ok(any("또 나한테 졌지" in o for o in it.out),"rival says a different line after a loss")
+# visible wild movement behaviours
+p,it=fresh2(); it.stubs["place_actors"]=lambda i:None; it.stubs["wild_prompt"]=lambda i:None; it.stubs["draw_map"]=lambda i:None
+it.setv("mp",GD.MIDX["R01_1"]); it.setv("enc_on",1); it.call("spawn_wild")
+x0,y0=it.var["vw1x"],it.var["vw1y"]; it.setv("vw1beh",4); it.setv("px",max(1,min(18,x0+3))); it.setv("py",y0)
+it.rndfn=lambda a,b:a; d0=abs(it.var["vw1x"]-it.var["px"])+abs(it.var["vw1y"]-it.var["py"]); 
+for _ in range(6): it.call("wild_step")
+d1=abs(it.var["vw1x"]-it.var["px"])+abs(it.var["vw1y"]-it.var["py"]); ok(d1<=d0,"approaching wild does not move away (%d->%d)"%(d0,d1))
+tiles=GD.WORLD["maps"]["R01_1"]["tiles"]; ok(tiles[it.var["vw1y"]][it.var["vw1x"]] in ".g","wild stays on walkable tile")
+it.setv("vw1beh",3); it.setv("px",it.var["vw1x"]+1 if it.var["vw1x"]<18 else it.var["vw1x"]-1); it.setv("py",it.var["vw1y"]); d0=1
+for _ in range(4): it.call("wild_step")
+d2=abs(it.var["vw1x"]-it.var["px"])+abs(it.var["vw1y"]-it.var["py"]); ok(d2>=d0,"fleeing wild does not approach")
+it.rndfn=None
+# day/night weighting
+def night_share(steps):
+    cnt=0; N=400
+    for s_ in range(N):
+        p,it=fresh2(1000+s_); it.setv("mp",GD.MIDX["D04_1"]); it.setv("steps",steps); it.call("wild_roll"); cnt+= GD.SPECIES[it.var["w_sp"]-1]["types"].__contains__("ghost") or GD.SPECIES[it.var["w_sp"]-1]["types"].__contains__("poison")
+    return cnt/N
+dn,nn=night_share(0),night_share(300); ok(nn>dn+0.1,"night raises ghost/poison share (day %.2f night %.2f)"%(dn,nn))
+# darkness radius
+p,it=fresh2(); it.setv("mp",GD.MIDX["D02_1"]); it.setv("px",5); it.setv("py",5); it.setv("aff",0); it.call("draw_tiles"); s_dark=it.stamps
+p,it=fresh2(); it.setv("mp",GD.MIDX["R01_1"]); it.setv("px",5); it.setv("py",5); it.call("draw_tiles"); s_light=it.stamps
+ok(s_dark<s_light//2,"dark cave stamps far fewer tiles (%d vs %d)"%(s_dark,s_light))
+p,it=fresh2(); it.setv("mp",GD.MIDX["D02_1"]); it.setv("px",5); it.setv("py",5); it.setv("aff",50); it.call("draw_tiles"); ok(it.stamps>s_dark,"affection widens light radius")
+# pikachu sniff + bond
+p,it=fresh2(); it.setv("mp",GD.MIDX["H01_0"]); it.setv("px",3); it.setv("py",5); it.call("pika_sniff"); ok(any("할 일이" in o and "있어" in o for o in it.out),"sniff finds unfinished step on screen: %s"%it.out[-2:])
+for i_ in range(len(it.lst["FS"])): it.lst["FS"][i_]=1
+it.out.clear(); it.call("pika_sniff"); ok(any("지금 할 일이 없어" in o for o in it.out),"sniff says none when screen is done")
+it.rndfn=lambda a,b:b
+for aff,exp in ((0,1.0),(40,1.1)):
+    it.setv("aff",aff)
+    for k,x in zip(("ds_asp","ds_alv","ds_ast","ds_dsp","ds_dlv","ds_mv","ds_asg","ds_dsg"),(25,20,0,19,20,GD.MVIDX["thunder-shock"],0,0)): it.setv(k,x)
+    it.call("calc_damage"); (base if aff==0 else None) if False else None
+    if aff==0: b0=it.var["ds_dmg"]
+    else: ok(it.var["ds_dmg"]==math.floor(b0*1.1),"bond bonus x1.1 for Pikachu at affection>=30 (%s vs %s)"%(it.var["ds_dmg"],b0))
+it.rndfn=None
+# panel menu + settings
+p,it=fresh2(); it.inputs=["0"]; it.call("party_view"); ok(any("피카츄 Lv5" in h for h in it.hudlog),"party panel lists Pikachu with HP bar: %s"%it.hudlog[-1:])
+it.inputs=["3","1"]; it.call("settings"); ok(it.var["txt_wait"]==0.8,"text speed setting"); it.inputs=["4","3"]; it.call("settings"); ok(it.var["vol"]==3,"volume setting"); it.inputs=["5"]; it.call("settings"); ok(it.var["fx_blink"]==0,"blink toggle")
+it.inputs=["4","99"]; it.call("settings"); ok(it.var["vol"]==3,"volume out of range rejected")
+# epilogue NPC only speaks after the ending
+p,it=fresh2(); it.setv("mp",GD.MIDX["H02_1"]); it.setv("cur_npc",GD.NIDX["n_H02_epi"]); it.call("run_rules"); ok(any("평범한 이야기" in o for o in it.out),"epilogue NPC quiet before ending")
+it.lst["FS"][GD.FIDX["c12_end"]-1]=1; it.out.clear(); it.call("run_rules"); ok(any("낙반 방지" in o for o in it.out),"epilogue NPC speaks after ending")
 print("blocks2: pass",passes,"fail",len(fails)); [print(" ",f) for f in fails[:15]]
 sys.exit(1 if fails else 0)

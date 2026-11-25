@@ -19,7 +19,7 @@ def replay(path,it,limit=None):
     tr=json.load(open(path)); ev=tr["trace"]
     W={n["id"]:n for m in GD.WORLD["maps"].values() for n in m["npcs"]}
     FS=it.lst["FS"]; it.setv("enc_on",0)
-    it.stubs["draw_map"]=lambda i:None; it.stubs["place_actors"]=lambda i:None
+    it.stubs["draw_map"]=lambda i:None; it.stubs["place_actors"]=lambda i:None; it.stubs["redraw_dark"]=lambda i:None
     pend=[]; 
     def trainer_battle(i): r=pend.pop(0); i.setv("bres",1 if r=="win" else 2)
     def static_battle(i):
@@ -33,6 +33,9 @@ def replay(path,it,limit=None):
         if limit and k>limit: break
         t=e[0]
         if t=="m":
+            if k+1<len(ev) and ev[k+1][0]=="l":   # line-of-sight fight triggers inside try_move
+                j=k+2; pend.clear()
+                while j<len(ev) and ev[j][0] in("b","s"): pend.append(ev[j][1]); j+=1
             it.setv("cmd",cmdmap[(e[1],e[2])]); it.call("try_move")
             got=(it.var["mp"],it.var["px"],it.var["py"])
             if got!=(e[3],e[4],e[5]):
@@ -49,6 +52,11 @@ def replay(path,it,limit=None):
             have=sum(1 for x in FS if x==1)
             if have!=e[2]:
                 bad+=1; fails.append(f"flag count mismatch after {nid} (ev {k}): blocks {have} engine {e[2]}")
+                if bad>3: return False
+        elif t=="l":
+            have=sum(1 for x in FS if x==1)
+            if have!=e[2]:
+                bad+=1; fails.append(f"flag count mismatch after sight fight {e[1]} (ev {k}): blocks {have} engine {e[2]}")
                 if bad>3: return False
         elif t=="h":
             it.call("catch_hook")
@@ -77,7 +85,7 @@ def idempotence(it):
     ok(not bad,"re-interaction changed state: %s"%bad[:5])
 def wild_test():
     p,it=fresh(); it.stubs["place_actors"]=lambda i:None; it.setv("mp",GD.MIDX["R01_0"]); it.setv("px",2); it.setv("py",5); it.setv("enc_on",1)
-    it.call("spawn_wild"); ok(it.var["vw1x"]>0 and it.var["vw1sp"]>0,"visible wild spawned on grass"); ok(it.stamps>0,"wild glyph stamped")
+    it.call("spawn_wild"); ok(it.var["vw1x"]>0 and it.var["vw1sp"]>0,"visible wild spawned on grass")
     x,y=it.var["vw1x"],it.var["vw1y"]; assert GD.WORLD["maps"]["R01_0"]["tiles"][y][x]=="g"
     seen=[]; it.stubs["wild_prompt"]=lambda i:seen.append((i.var["w_sp"],i.var["w_lv"])); it.stubs["draw_map"]=lambda i:None
     it.setv("px",x); it.setv("py",y); it.call("check_visible_wild"); ok(len(seen)==1 and it.var["vw1x"]==-1,"stepping on a visible wild starts an encounter once")

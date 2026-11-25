@@ -19,6 +19,13 @@ def data_lists():
     # first row index of gate: simple scan at runtime
     l("F_clue",[1 if "_clue" in f else 0 for f in FLAGS]); l("F_name",FLAGS); l("F_title",[TITLES.get(f,"") for f in FLAGS]); l("FS",[0]*len(FLAGS))
     l("N_map",[MIDX[m] for m,n in NPCS]); l("N_x",[n["x"] for m,n in NPCS]); l("N_y",[n["y"] for m,n in NPCS]); l("N_kind",[KIND[n["kind"]] for m,n in NPCS]); l("N_label",[n["label"] for m,n in NPCS])
+    tf=[]; stp=[]
+    for m,n in NPCS:
+        rr=RBY.get(n["id"],[]); b=next((x for x in rr if x["act"]=="battle"),None)
+        tf.append(FIDX[b["set"]] if (n["kind"]=="trainer" and b) else 0)
+        st=next((FIDX[x["set"]] for x in rr if x["set"] and TITLES.get(x["set"])),0); stp.append(st)
+    l("N_tflag",tf); l("N_step",stp)
+    l("M_dark",[1 if next(a for a in WORLD["areas"] if a["id"]==WORLD["maps"][m]["area"])["theme"] in ("cave","cellar","ship","hq") else 0 for m in MAPS])
     rs=[];rc=[]; R=[]
     for m,n in NPCS:
         rr=RBY.get(n["id"],[]); rs.append(len(R)+1); rc.append(len(rr)); R+=rr
@@ -31,7 +38,7 @@ def data_lists():
         x=y=0
         if r["act"]=="give": k,q=r["arg"].split(":"); x,y=IIDX[k],int(q)
         elif r["act"] in("gift","static"): x,y=map(int,r["arg"].split(":"))
-        elif r["act"]=="battle": x=TRIDX[r["arg"]]
+        elif r["act"]=="battle": x=TRIDX[r["arg"]]; y=FIDX[r["lose"]] if r.get("lose") else 0
         elif r["act"]=="shop": shops.append([IIDX[k] for k in r["arg"].split(",")]); x=len(shops)
         a1.append(x); a2.append(y)
     l("R_a1",a1); l("R_a2",a2)
@@ -67,6 +74,9 @@ def data_lists():
     l("LN_start",ln_s); l("LN_count",ln_c); l("LN_lv",llv); l("LN_mv",lmv)
     l("M_nm",[m["name_ko"] for m in MOVES]); l("MV_type",[TYIDX[m["type"]] for m in MOVES]); l("MV_pow",[m["power"] for m in MOVES]); l("MV_acc",[m["acc"] for m in MOVES]); l("MV_pp",[m["pp"] for m in MOVES])
     l("MV_prio",[m["prio"] for m in MOVES]); l("MV_cls",[CLS[m["cls"]] for m in MOVES]); l("MV_ail",[AIL.get(m["ailment"],0) for m in MOVES]); l("MV_chance",[m["ail_chance"] for m in MOVES]); l("MV_drain",[m["drain"] for m in MOVES]); l("MV_crit",[m["crit"] for m in MOVES])
+    def sc(m,i,k): return m["sc"][i][k] if len(m["sc"])>i else 0
+    l("MV_s1",[sc(m,0,0) for m in MOVES]); l("MV_d1",[sc(m,0,1) for m in MOVES]); l("MV_s2",[sc(m,1,0) for m in MOVES]); l("MV_d2",[sc(m,1,1) for m in MOVES])
+    l("STAT_name",["","공격","방어","특수공격","특수방어","스피드"]); l("MV_self",[1 if m["sc_self"] else 0 for m in MOVES]); l("MV_schance",[m["stat_chance"] for m in MOVES])
     l("TC",[x for row in TC["chart"] for x in row]); l("TYPE_name",TYPES)
     # trainers
     l("TR_name",[TR[t]["name"] for t in TRIDS]); l("TR_reward",[TR[t]["reward"] for t in TRIDS]); l("TR_badge",[TR[t].get("badge",0) for t in TRIDS]); l("TR_n",[len(TR[t]["party"]) for t in TRIDS])
@@ -82,11 +92,14 @@ def data_lists():
             ents=WILD[a]["entries"]; ws.append(len(wsp)+1); wc.append(len(ents)); wt.append(sum(e["w"] for e in ents))
             for e in ents: wsp.append(e["sp"]); ww.append(e["w"]); wlo.append(e["lo"]); whi.append(e["hi"])
         else: ws.append(0); wc.append(0); wt.append(0)
-    l("W_start",ws); l("W_count",wc); l("W_total",wt); l("W_sp",wsp); l("W_w",ww); l("W_lo",wlo); l("W_hi",whi)
+    BEH={"slow":1,"pause":2,"flee":3,"approach":4}
+    wb=[BEH.get(e["beh"],1) for a in AREAS if a in WILD for e in WILD[a]["entries"]]
+    l("W_beh",wb); l("S_night",[1 if set(sp["types"])&{"ghost","poison","psychic","dark"} else 0 for sp in SPECIES]); l("W_start",ws); l("W_count",wc); l("W_total",wt); l("W_sp",wsp); l("W_w",ww); l("W_lo",wlo); l("W_hi",whi)
     TL={"town":"(코를 킁킁) 집 냄새가 나. 안심돼.","meadow":"(풀 사이를 가리킨다) 저기 뭔가 움직여!","forest":"(귀를 쫑긋) 나뭇잎 소리 말고 다른 소리가 나.","quarry":"(바위를 톡톡) 단단하다. 낙석 조심해.","cave":"(꼬리를 곧게 세운다) 어두워... 내 뒤에 붙어.","canal":"(물소리에 귀를 기울인다) 물길이 막힌 곳이 있나 봐.","coast":"(바닷바람에 수염이 흔들린다) 짠 냄새!","harbor":"(뺨에서 파직) 전선이 많아. 전기 장치 근처야.","ship":"(몸을 웅크린다) 삐걱거리는 소리가 무서워...","market":"(냄새를 맡는다) 맛있는 열매 냄새!","cellar":"(콜록) 곰팡이 냄새. 환기구를 찾자.","rail":"(귀 끝이 파직 튄다) 선로에 전기가 흐르고 있어.","hill":"(높이 올라가려 한다) 전망이 좋을 것 같아.","lab":"(뺨이 따끔) 기계 소리... 전기 장치 단서가 있을지도.","swamp":"(발을 털며) 질척거려. 조용히 걷자.","city":"(두리번) 사람도 건물도 너무 많아!","tide":"(첨벙) 물이 빠지는 중이야.","volcano":"(땀을 닦는다) 뜨거워! 빨리 지나가자.","desert":"(눈을 가늘게 뜬다) 모래바람이야...","hq":"(털을 곤두세운다) 나쁜 기운이 느껴져.","mountain":"(몸을 부르르) 바람이 차가워.","road":"(앞장서 달려간다) 이 길이 챔피언로드로 이어지는 걸까?","league":"(기대에 찬 눈) 여기가 리그... 두근두근."}
     l("A_pika",[("(주먹을 불끈) 피카! 관장과의 승부다!" if a["theme"].startswith("gym") else TL[a["theme"]]) for a in WORLD["areas"]]); l("VIS",[0]*len(WORLD["areas"]))
     l("DEX",[0]*151); l("CHAIN_key",[FIDX[G["chstep_key"][str(c)]] for c in range(1,13)])
 
+def M_dark_here(): return l("M_dark")[v("mp")]==1
 def field_logic():
     mp=v("mp",1); px=v("px",3); py=v("py",5); pf=v("pf",0); money=v("money",3000); badges=v("badges",0); cleared=v("cleared",0)
     busy=v("busy",0); cmd=v("cmd",0); enc_on=v("enc_on",1); steps=v("steps",0); msg=v("msg",""); mode=v("mode",0)
@@ -140,8 +153,32 @@ def field_logic():
                 with IfElse(tch=="D") as ie:
                     call("check_exit"); ie.other()
                     call("place_actors")
-                with If((v("moved_map")==0)&(enc_on==1)&(tch!="D")): call("check_visible_wild")
+                with If((v("moved_map")==0)&(tch!="D")): call("check_sight")
+                with If((v("moved_map")==0)&(enc_on==1)&(tch!="D")): call("wild_step"); call("check_visible_wild")
+                with If((v("moved_map")==0)&(M_dark_here())): call("redraw_dark")
+                with If((steps%25==0)&(v("aff")<100)): v("aff").inc()
                 with If((tch=="g")&(v("moved_map")==0)&(enc_on==1)): call("maybe_encounter")
+    with proc("check_sight"):  # trainers see 3 tiles along row/column when no wall is between; fires once per trainer
+        v("sg_hit").set(0); i=v("sg_i"); i.set(l("M_nstart")[mp])
+        with Repeat(l("M_ncount")[mp]):
+            with If((v("sg_hit")==0)&(l("N_tflag")[i]>0)):
+                with If(FS[l("N_tflag")[i]]==0):
+                    nx=l("N_x")[i]; ny=l("N_y")[i]; d=v("sg_d"); d.set(0); v("sg_dx").set(0); v("sg_dy").set(0)
+                    with If(nx==px):
+                        d.set(py-ny); v("sg_dy").set(1)
+                        with If(d<0): d.set(0-d); v("sg_dy").set(-1)
+                    with If((nx!=px)&(ny==py)):
+                        d.set(px-nx); v("sg_dx").set(1)
+                        with If(d<0): d.set(0-d); v("sg_dx").set(-1)
+                    with If((d>=1)&(d<=3)):
+                        v("sg_ok").set(1); k=v("sg_k"); k.set(1)
+                        with Repeat(d-1):
+                            tx.set(nx+v("sg_dx")*k); ty.set(ny+v("sg_dy")*k); call("tile_at")
+                            with If((tch!=".")&(tch!="g")): v("sg_ok").set(0)
+                            k.inc()
+                        with If(v("sg_ok")==1): v("sg_hit").set(1); v("cur_npc").set(i)
+            i.inc()
+        with If(v("sg_hit")==1): say("!  트레이너와 눈이 마주쳤다!"); call("run_rules")
     with proc("talk"):  # facing target
         dx=v("dx"); dy=v("dy"); dx.set(0); dy.set(0)
         with If(pf==0): dy.set(1)
@@ -184,6 +221,7 @@ def field_logic():
                             with If(l("TR_badge")[v("tr_idx")]>0): call("grant_badge")
                             ie.other()
                             say("(패배했다)"); v("do_set").set(0)
+                            with If(v("ra2")>0): FS.set(v("ra2"),1)
                     with If(v("do_set")==1):
                         a1=v("a1"); a1.set(v("rset")); call("set_flag")
             r.inc()

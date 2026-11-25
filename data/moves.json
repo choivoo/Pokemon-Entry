@@ -12,7 +12,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 50,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "acid",
@@ -27,7 +30,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "special-defense",
+    -1
+   ]
+  ],
+  "target": "all-opponents",
+  "stat_chance": 10
  },
  {
   "key": "acid-armor",
@@ -42,7 +53,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "defense",
+    2
+   ]
+  ],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "agility",
@@ -57,7 +76,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "speed",
+    2
+   ]
+  ],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "amnesia",
@@ -72,7 +99,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "special-defense",
+    2
+   ]
+  ],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "aurora-beam",
@@ -87,7 +122,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "attack",
+    -1
+   ]
+  ],
+  "target": "selected-pokemon",
+  "stat_chance": 10
  },
  {
   "key": "barrage",
@@ -102,7 +145,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "barrier",
@@ -117,7 +163,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "defense",
+    2
+   ]
+  ],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "bide",
@@ -132,7 +186,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "bind",
@@ -147,7 +204,10 @@
   "ail_chance": 100,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "bite",
@@ -162,7 +222,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "blizzard",
@@ -177,7 +240,10 @@
   "ail_chance": 10,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "all-opponents",
+  "stat_chance": 0
  },
  {
   "key": "body-slam",
@@ -192,7 +258,10 @@
   "ail_chance": 30,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "bone-club",
@@ -207,7 +276,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "bonemerang",
@@ -222,7 +294,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "bubble",
@@ -237,7 +312,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "speed",
+    -1
+   ]
+  ],
+  "target": "all-opponents",
+  "stat_chance": 10
  },
  {
   "key": "bubble-beam",
@@ -252,7 +335,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "speed",
+    -1
+   ]
+  ],
+  "target": "selected-pokemon",
+  "stat_chance": 10
  },
  {
   "key": "clamp",
@@ -267,7 +358,10 @@
   "ail_chance": 100,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "comet-punch",
@@ -282,7 +376,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "confuse-ray",
@@ -297,7 +394,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "confusion",
@@ -312,7 +412,10 @@
   "ail_chance": 10,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "constrict",
@@ -327,7 +430,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "speed",
+    -1
+   ]
+  ],
+  "target": "selected-pokemon",
+  "stat_chance": 10
  },
  {
   "key": "conversion",
@@ -342,7 +453,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "counter",
@@ -357,7 +471,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "specific-move",
+  "stat_chance": 0
  },
  {
   "key": "crabhammer",
@@ -372,7 +489,10 @@
   "ail_chance": 0,
   "crit": 1,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "cut",
@@ -387,7 +507,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "defense-curl",
@@ -402,7 +525,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "defense",
+    1
+   ]
+  ],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "dig",
@@ -417,7 +548,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "disable",
@@ -432,7 +566,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "dizzy-punch",
@@ -447,7 +584,10 @@
   "ail_chance": 20,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "double-edge",
@@ -462,7 +602,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": -33,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "double-kick",
@@ -477,7 +620,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "double-slap",
@@ -492,7 +638,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "double-team",
@@ -507,7 +656,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "evasion",
+    1
+   ]
+  ],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "dragon-rage",
@@ -522,7 +679,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "dream-eater",
@@ -537,7 +697,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 50,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "drill-peck",
@@ -552,7 +715,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "earthquake",
@@ -567,7 +733,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "all-other-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "egg-bomb",
@@ -582,7 +751,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "ember",
@@ -597,7 +769,10 @@
   "ail_chance": 10,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "explosion",
@@ -612,7 +787,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "all-other-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "fire-blast",
@@ -627,7 +805,10 @@
   "ail_chance": 10,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "fire-punch",
@@ -642,7 +823,10 @@
   "ail_chance": 10,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "fire-spin",
@@ -657,7 +841,10 @@
   "ail_chance": 100,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "fissure",
@@ -672,7 +859,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "flamethrower",
@@ -687,7 +877,10 @@
   "ail_chance": 10,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "flash",
@@ -702,7 +895,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "accuracy",
+    -1
+   ]
+  ],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "fly",
@@ -717,7 +918,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "focus-energy",
@@ -732,7 +936,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "fury-attack",
@@ -747,7 +954,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "fury-swipes",
@@ -762,7 +972,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "glare",
@@ -777,7 +990,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "growl",
@@ -792,7 +1008,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "attack",
+    -1
+   ]
+  ],
+  "target": "all-opponents",
+  "stat_chance": 0
  },
  {
   "key": "growth",
@@ -807,7 +1031,19 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "attack",
+    1
+   ],
+   [
+    "special-attack",
+    1
+   ]
+  ],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "guillotine",
@@ -822,7 +1058,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "gust",
@@ -837,7 +1076,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "harden",
@@ -852,7 +1094,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "defense",
+    1
+   ]
+  ],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "haze",
@@ -867,7 +1117,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "entire-field",
+  "stat_chance": 0
  },
  {
   "key": "headbutt",
@@ -882,7 +1135,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "high-jump-kick",
@@ -897,7 +1153,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "horn-attack",
@@ -912,7 +1171,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "horn-drill",
@@ -927,7 +1189,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "hydro-pump",
@@ -942,7 +1207,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "hyper-beam",
@@ -957,7 +1225,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "hyper-fang",
@@ -972,7 +1243,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "hypnosis",
@@ -987,7 +1261,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "ice-beam",
@@ -1002,7 +1279,10 @@
   "ail_chance": 10,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "ice-punch",
@@ -1017,7 +1297,10 @@
   "ail_chance": 10,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "jump-kick",
@@ -1032,7 +1315,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "karate-chop",
@@ -1047,7 +1333,10 @@
   "ail_chance": 0,
   "crit": 1,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "leech-life",
@@ -1062,7 +1351,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 50,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "leech-seed",
@@ -1077,7 +1369,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "leer",
@@ -1092,7 +1387,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "defense",
+    -1
+   ]
+  ],
+  "target": "all-opponents",
+  "stat_chance": 100
  },
  {
   "key": "lick",
@@ -1107,7 +1410,10 @@
   "ail_chance": 30,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "light-screen",
@@ -1122,7 +1428,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "users-field",
+  "stat_chance": 0
  },
  {
   "key": "lovely-kiss",
@@ -1137,7 +1446,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "low-kick",
@@ -1152,7 +1464,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "meditate",
@@ -1167,7 +1482,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "attack",
+    1
+   ]
+  ],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "mega-drain",
@@ -1182,7 +1505,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 50,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "mega-kick",
@@ -1197,7 +1523,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "mega-punch",
@@ -1212,7 +1541,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "metronome",
@@ -1227,7 +1559,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "mimic",
@@ -1242,7 +1577,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "minimize",
@@ -1257,7 +1595,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "evasion",
+    2
+   ]
+  ],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "mirror-move",
@@ -1272,7 +1618,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "mist",
@@ -1287,7 +1636,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "users-field",
+  "stat_chance": 0
  },
  {
   "key": "night-shade",
@@ -1302,7 +1654,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "pay-day",
@@ -1317,7 +1672,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "peck",
@@ -1332,7 +1690,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "petal-dance",
@@ -1347,7 +1708,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "random-opponent",
+  "stat_chance": 0
  },
  {
   "key": "pin-missile",
@@ -1362,7 +1726,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "poison-gas",
@@ -1377,7 +1744,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "all-opponents",
+  "stat_chance": 0
  },
  {
   "key": "poison-powder",
@@ -1392,7 +1762,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "poison-sting",
@@ -1407,7 +1780,10 @@
   "ail_chance": 30,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "pound",
@@ -1422,7 +1798,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "psybeam",
@@ -1437,7 +1816,10 @@
   "ail_chance": 10,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "psychic",
@@ -1452,7 +1834,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "special-defense",
+    -1
+   ]
+  ],
+  "target": "selected-pokemon",
+  "stat_chance": 10
  },
  {
   "key": "psywave",
@@ -1467,7 +1857,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "quick-attack",
@@ -1482,7 +1875,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "rage",
@@ -1497,7 +1893,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "razor-leaf",
@@ -1512,7 +1911,10 @@
   "ail_chance": 0,
   "crit": 1,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "all-opponents",
+  "stat_chance": 0
  },
  {
   "key": "razor-wind",
@@ -1527,7 +1929,10 @@
   "ail_chance": 0,
   "crit": 1,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "all-opponents",
+  "stat_chance": 0
  },
  {
   "key": "recover",
@@ -1542,7 +1947,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 50
+  "heal": 50,
+  "stat_changes": [],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "reflect",
@@ -1557,7 +1965,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "users-field",
+  "stat_chance": 0
  },
  {
   "key": "rest",
@@ -1572,7 +1983,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "roar",
@@ -1587,7 +2001,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "rock-slide",
@@ -1602,7 +2019,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "all-opponents",
+  "stat_chance": 0
  },
  {
   "key": "rock-throw",
@@ -1617,7 +2037,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "rolling-kick",
@@ -1632,7 +2055,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "sand-attack",
@@ -1647,7 +2073,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "accuracy",
+    -1
+   ]
+  ],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "scratch",
@@ -1662,7 +2096,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "screech",
@@ -1677,7 +2114,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "defense",
+    -2
+   ]
+  ],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "seismic-toss",
@@ -1692,7 +2137,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "self-destruct",
@@ -1707,7 +2155,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "all-other-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "sharpen",
@@ -1722,7 +2173,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "attack",
+    1
+   ]
+  ],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "sing",
@@ -1737,7 +2196,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "skull-bash",
@@ -1752,7 +2214,10 @@
   "ail_chance": 100,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "sky-attack",
@@ -1767,7 +2232,10 @@
   "ail_chance": 0,
   "crit": 1,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "slam",
@@ -1782,7 +2250,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "slash",
@@ -1797,7 +2268,10 @@
   "ail_chance": 0,
   "crit": 1,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "sleep-powder",
@@ -1812,7 +2286,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "sludge",
@@ -1827,7 +2304,10 @@
   "ail_chance": 30,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "smog",
@@ -1842,7 +2322,10 @@
   "ail_chance": 40,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "smokescreen",
@@ -1857,7 +2340,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "accuracy",
+    -1
+   ]
+  ],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "soft-boiled",
@@ -1872,7 +2363,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 50
+  "heal": 50,
+  "stat_changes": [],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "solar-beam",
@@ -1887,7 +2381,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "sonic-boom",
@@ -1902,7 +2399,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "spike-cannon",
@@ -1917,7 +2417,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "splash",
@@ -1932,7 +2435,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "spore",
@@ -1947,7 +2453,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "stomp",
@@ -1962,7 +2471,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "strength",
@@ -1977,7 +2489,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "string-shot",
@@ -1992,7 +2507,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "speed",
+    -2
+   ]
+  ],
+  "target": "all-opponents",
+  "stat_chance": 0
  },
  {
   "key": "stun-spore",
@@ -2007,7 +2530,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "submission",
@@ -2022,7 +2548,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": -25,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "substitute",
@@ -2037,7 +2566,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "super-fang",
@@ -2052,7 +2584,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "supersonic",
@@ -2067,7 +2602,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "surf",
@@ -2082,7 +2620,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "all-other-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "swift",
@@ -2097,7 +2638,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "all-opponents",
+  "stat_chance": 0
  },
  {
   "key": "swords-dance",
@@ -2112,7 +2656,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "attack",
+    2
+   ]
+  ],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "tackle",
@@ -2127,7 +2679,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "tail-whip",
@@ -2142,7 +2697,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "defense",
+    -1
+   ]
+  ],
+  "target": "all-opponents",
+  "stat_chance": 0
  },
  {
   "key": "take-down",
@@ -2157,7 +2720,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": -25,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "teleport",
@@ -2172,7 +2738,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "thrash",
@@ -2187,7 +2756,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "random-opponent",
+  "stat_chance": 0
  },
  {
   "key": "thunder",
@@ -2202,7 +2774,10 @@
   "ail_chance": 30,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "thunder-punch",
@@ -2217,7 +2792,10 @@
   "ail_chance": 10,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "thunder-shock",
@@ -2232,7 +2810,10 @@
   "ail_chance": 10,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "thunder-wave",
@@ -2247,7 +2828,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "thunderbolt",
@@ -2262,7 +2846,10 @@
   "ail_chance": 10,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "toxic",
@@ -2277,7 +2864,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "transform",
@@ -2292,7 +2882,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "tri-attack",
@@ -2307,7 +2900,10 @@
   "ail_chance": 20,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "twineedle",
@@ -2322,7 +2918,10 @@
   "ail_chance": 20,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "vice-grip",
@@ -2337,7 +2936,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "vine-whip",
@@ -2352,7 +2954,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "water-gun",
@@ -2367,7 +2972,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "waterfall",
@@ -2382,7 +2990,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "whirlwind",
@@ -2397,7 +3008,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "wing-attack",
@@ -2412,7 +3026,10 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  },
  {
   "key": "withdraw",
@@ -2427,7 +3044,15 @@
   "ail_chance": 0,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [
+   [
+    "defense",
+    1
+   ]
+  ],
+  "target": "user",
+  "stat_chance": 0
  },
  {
   "key": "wrap",
@@ -2442,6 +3067,9 @@
   "ail_chance": 100,
   "crit": 0,
   "drain": 0,
-  "heal": 0
+  "heal": 0,
+  "stat_changes": [],
+  "target": "selected-pokemon",
+  "stat_chance": 0
  }
 ]

@@ -19,7 +19,7 @@ const stat=(sp,lv,k)=>Math.floor(2*SPECIES[sp].base[k]*lv/100)+5;
 const expFor=lv=>lv*lv*lv;
 function moveSetAt(sp,lv){const l=SPECIES[sp].learn.filter(x=>x[0]<=lv).map(x=>x[1]);const u=[...new Set(l)].slice(-4);return u.map(k=>({k,pp:MOVES[k].pp}))}
 let UID=1;
-function mkMon(sp,lv,where){return{uid:UID++,sp,nick:'',lv,exp:expFor(lv),hp:maxHp(sp,lv),st:'',moves:moveSetAt(sp,lv),where:where||''}}
+function mkMon(sp,lv,where){return{stg:[0,0,0,0,0],uid:UID++,sp,nick:'',lv,exp:expFor(lv),hp:maxHp(sp,lv),st:'',moves:moveSetAt(sp,lv),where:where||''}}
 function newState(seed){
   const s={ver:1,map:'H01_0',x:3,y:5,flags:{},money:3000,bag:{'monster-ball':5,'potion':5},party:[],box:[],dex:{},badges:0,pika:{aff:0,mood:'idle'},
     settings:{text:2,vol:5,shake:1},cleared:false,seed:seed||12345,rngn:0,stats:{steps:0,battles:0,turns:0,lines:0,throws:0,wipes:0,heals:0}};
@@ -52,7 +52,9 @@ function evolve(s,mon,to,log){ const keepNick=mon.nick&&mon.nick!==SPECIES[mon.s
 const name=m=>m.nick||SPECIES[m.sp].name;
 // ---- battle ----
 function mkFoe(sp,lv){const m=mkMon(sp,lv);return m}
-function calcStat(m,k){ let v=stat(m.sp,m.lv,k); if(k==='speed'&&m.st==='paralysis') v=Math.floor(v/2); if(k==='attack'&&m.st==='burn') v=Math.floor(v/2); return Math.max(1,v) }
+const STG={attack:0,defense:1,'special-attack':2,'special-defense':3,speed:4};
+function stageMul(g){ return g>=0?(2+g)/2:2/(2-g) }
+function calcStat(m,k){ let v=stat(m.sp,m.lv,k); if(m.stg&&STG[k]!==undefined) v=Math.floor(v*stageMul(m.stg[STG[k]])); if(k==='speed'&&m.st==='paralysis') v=Math.floor(v/2); if(k==='attack'&&m.st==='burn') v=Math.floor(v/2); return Math.max(1,v) }
 function dmgCalc(a,d,mv,rng,forceCrit){
   const M=MOVES[mv]; if(M.power<=0) return {d:0,e:1,crit:false};
   const phys=M.cls==='physical'; const A=calcStat(a,phys?'attack':'special-attack'), Df=calcStat(d,phys?'defense':'special-defense');
@@ -62,6 +64,7 @@ function dmgCalc(a,d,mv,rng,forceCrit){
   let dmg=Math.floor(base*stab*e*(crit?1.5:1)*(0.85+rng()*0.15)); if(e>0&&dmg<1) dmg=1; return {d:dmg,e,crit}
 }
 function newBattle(s,foes,opt){ // opt: {trainer, wild}
+  s.party.forEach(m=>m.stg=[0,0,0,0,0]); foes.forEach(m=>m.stg=[0,0,0,0,0]);
   return {s,foes:foes.map(f=>f),fi:0,pi:s.party.findIndex(m=>m.hp>0),log:[],over:false,result:'',trainer:opt.trainer||null,wild:!!opt.wild,turn:0,
     seen:new Set(),sleep:{},aiPot:opt.trainer&&['league','gym','rival','rocket'].includes(opt.trainer.kind)?2:0,part:new Set(),run:0}
 }
@@ -81,14 +84,17 @@ function exec(b,att,def,mvk,side,rng){ // returns false if mon cannot act
   if(def.hp>0&&['sleep','poison','paralysis','burn'].includes(M.ailment)&&!def.st){
     const ch=M.power>0?M.ail_chance:100; const imm=(M.ailment==='poison'&&SPECIES[def.sp].types.some(t=>t==='poison'||t==='steel'))||(M.ailment==='burn'&&SPECIES[def.sp].types.includes('fire'))||(M.ailment==='paralysis'&&SPECIES[def.sp].types.includes('electric')&&M.type==='electric');
     if(!imm&&ch>0&&rng()*100<ch){def.st=M.ailment; L(`${name(def)}은(는) ${{sleep:'잠들었다',poison:'독에 걸렸다',paralysis:'마비되었다',burn:'화상을 입었다'}[M.ailment]}!`)}
-    else if(M.power===0) L('그러나 실패했다!') }
+    else if(M.power===0&&M.ail_chance===0&&!(M.sc&&M.sc.length)) L('그러나 실패했다!') }
+  if(M.sc&&M.sc.length){ const tgt=M.sc_self?att:def; const ch=M.power>0?M.stat_chance:100;
+    if(tgt.hp>0&&ch>0&&rng()*100<ch){ const names=['공격','방어','특수공격','특수방어','스피드']; for(const [i,d] of M.sc){ const old=tgt.stg[i-1]; tgt.stg[i-1]=Math.max(-6,Math.min(6,old+d));
+      L(tgt.stg[i-1]===old?`${name(tgt)}의 ${names[i-1]}은(는) 더 이상 ${d>0?'오르지':'떨어지지'} 않는다!`:`${name(tgt)}의 ${names[i-1]}이(가) ${Math.abs(d)>1?'크게 ':''}${d>0?'올랐다':'떨어졌다'}!`) } } }
 }
 function aiPick(b,rng){
   const f=foe(b),p=active(b);
   let best=null,bs=-1;
   for(const mo of f.moves){ const M=MOVES[mo.k]; if(mo.pp<=0) continue; let sc;
     if(M.power>0){ sc=M.power*(eff(M.type,SPECIES[p.sp].types))*(SPECIES[f.sp].types.includes(M.type)?1.5:1)*M.acc/100 }
-    else sc=(p.st?0:35); sc*=(0.9+rng()*0.2); if(sc>bs){bs=sc;best=mo.k}}
+    else sc=(M.sc&&M.sc.length&&!M.ail_chance)?22:(p.st?0:35); sc*=(0.9+rng()*0.2); if(sc>bs){bs=sc;best=mo.k}}
   return best||f.moves[0].k
 }
 function endTurnStatus(b,m){ if(m.hp<=0)return; if(m.st==='poison'||m.st==='burn'){const d=Math.max(1,Math.floor(maxHp(m.sp,m.lv)/8)); m.hp=Math.max(0,m.hp-d); b.log.push(`${name(m)}은(는) ${m.st==='poison'?'독':'화상'} 피해를 입었다!`)}}
@@ -107,10 +113,10 @@ function handleFaints(b){
 }
 function turn(b,cmd){ // cmd: {t:'move',k} | {t:'switch',i} | {t:'item',k,i} | {t:'run'}
   const s=b.s, rng=()=>rnd(s); b.log=[]; b.turn++; s.stats.turns++;
-  if(b.needSwitch){ if(cmd.t!=='switch'||!s.party[cmd.i]||s.party[cmd.i].hp<=0) return false; b.pi=cmd.i; b.part.add(b.pi); b.needSwitch=false; b.log.push(`${name(active(b))}, 나가!`); return true }
+  if(b.needSwitch){ if(cmd.t!=='switch'||!s.party[cmd.i]||s.party[cmd.i].hp<=0) return false; active(b).stg=[0,0,0,0,0]; b.pi=cmd.i; active(b).stg=[0,0,0,0,0]; b.part.add(b.pi); b.needSwitch=false; b.log.push(`${name(active(b))}, 나가!`); return true }
   const f=foe(b); let pAct=null;
   if(cmd.t==='run'){ if(!b.wild){b.log.push('트레이너 배틀에서는 도망칠 수 없다!');return false} b.over=true;b.result='run';return true }
-  if(cmd.t==='switch'){ if(cmd.i===b.pi||!s.party[cmd.i]||s.party[cmd.i].hp<=0) return false; b.pi=cmd.i; b.part.add(b.pi); b.log.push(`${name(active(b))}, 나가!`) }
+  if(cmd.t==='switch'){ if(cmd.i===b.pi||!s.party[cmd.i]||s.party[cmd.i].hp<=0) return false; active(b).stg=[0,0,0,0,0]; b.pi=cmd.i; active(b).stg=[0,0,0,0,0]; b.part.add(b.pi); b.log.push(`${name(active(b))}, 나가!`) }
   else if(cmd.t==='item'){ const it=ITEMS[cmd.k]; if(!it||!(s.bag[cmd.k]>0)) return false; const m=s.party[cmd.i]; if(!m) return false; if(!useItem(s,cmd.k,m,t=>b.log.push(t))) return false }
   else if(cmd.t==='move'){ const mo=active(b).moves.find(m=>m.k===cmd.k); if(!mo) return false; if(mo.pp<=0&&active(b).moves.some(m=>m.pp>0)) return false; pAct=cmd.k; if(mo.pp<=0){ b.log.push('쓸 수 있는 기술이 없다! 발버둥친다!'); pAct='tackle'; } } else return false;
   // foe decision
@@ -152,7 +158,13 @@ function tile(m,x,y){ const r=WORLD.maps[m].tiles[y]; return r?r[x]:'#' }
 function npcAt(s,x,y){ return WORLD.maps[s.map].npcs.find(n=>n.x===x&&n.y===y) }
 function exitAt(s,x,y){ return WORLD.maps[s.map].exits.find(e=>e.x===x&&e.y===y) }
 const TRACE={on:null};
-function move(s,dx,dy){ const r=move0(s,dx,dy); if(TRACE.on&&r.ok) TRACE.on.push(['m',dx,dy,WORLD_IDX[s.map],s.x,s.y]); return r }
+const BATTLE_RULE={}; RULES.forEach(r=>{ if(r.act==='battle'&&!BATTLE_RULE[r.npc]) BATTLE_RULE[r.npc]=r });
+function sight(s){ // trainers see 3 tiles along their row/column if no wall between
+  for(const n of WORLD.maps[s.map].npcs){ if(n.kind!=='trainer') continue; const br=RULES_BY[n.id].find(r=>r.act==='battle'); if(!br||s.flags[br.set]) continue;
+    let dx=0,dy=0,d=0; if(n.x===s.x){ d=Math.abs(n.y-s.y); dy=Math.sign(s.y-n.y) } else if(n.y===s.y){ d=Math.abs(n.x-s.x); dx=Math.sign(s.x-n.x) } else continue;
+    if(d<1||d>3) continue; let clear=true; for(let i=1;i<d;i++){ if(!'.g'.includes(tile(s.map,n.x+dx*i,n.y+dy*i))){clear=false;break} } if(clear) return n.id }
+  return null }
+function move(s,dx,dy){ const r=move0(s,dx,dy); if(r.ok&&!r.changed) r.sight=sight(s); if(TRACE.on&&r.ok) TRACE.on.push(['m',dx,dy,WORLD_IDX[s.map],s.x,s.y]); return r }
 function move0(s,dx,dy){
   const nx=s.x+dx, ny=s.y+dy; const t=tile(s.map,nx,ny); if(!'.gD'.includes(t)) return {ok:false};
   const n=npcAt(s,nx,ny); if(n) return {ok:false,npc:n};
@@ -162,7 +174,7 @@ function move0(s,dx,dy){
 }
 function rollWild(s){ const a=s.map.split('_')[0]; const w=WILD[a]; if(!w) return null; const tot=w.entries.reduce((x,e)=>x+e.w,0); let r=rnd(s)*tot;
   for(const e of w.entries){ r-=e.w; if(r<=0) return {sp:e.sp,lv:e.lo+Math.floor(rnd(s)*(e.hi-e.lo+1)),beh:e.beh} } return null }
-function interact(s,nid,io0){ const io=io0; if(TRACE.on){ TRACE.on.push(['i',nid,0]); const idx=TRACE.on.length-1; const o=interact0(s,nid,{...io0,battle:t=>{const r=io0.battle(t);TRACE.on.push(['b',r]);return r},static:(a,b)=>{const r=io0.static(a,b);TRACE.on.push(['s',r]);return r}}); TRACE.on[idx][2]=Object.keys(s.flags).length; return o } return interact0(s,nid,io0) }
+function interact(s,nid,io0,kind){ const io=io0; if(TRACE.on){ TRACE.on.push([kind||'i',nid,0]); const idx=TRACE.on.length-1; const o=interact0(s,nid,{...io0,battle:t=>{const r=io0.battle(t);TRACE.on.push(['b',r]);return r},static:(a,b)=>{const r=io0.static(a,b);TRACE.on.push(['s',r]);return r}}); TRACE.on[idx][2]=Object.keys(s.flags).length; return o } return interact0(s,nid,io0) }
 function interact0(s,nid,io){
   const n=NPC[nid]; const out=[]; s.stats.lines++;
   for(const r of RULES_BY[nid]||[]){
@@ -175,7 +187,7 @@ function interact0(s,nid,io){
     else if(r.act==='shop'){ say(r.text); io&&io.shop&&io.shop(r.arg.split(',')) ; return out }
     else if(r.act==='gift'){ say(r.text); const [sp,lv]=r.arg.split(':').map(Number); const m=mkMon(sp,lv,'gift'); const w=addMon(s,m); if(w==='full'){ out.push('(보관함이 가득 차서 받을 수 없다)'); return out } dexSee(s,sp,true) }
     else if(r.act==='static'){ say(r.text); const [sp,lv]=r.arg.split(':').map(Number); const res=io.static&&io.static(sp,lv); if(res!=='caught'&&res!=='win'&&res!=='fled') return out }
-    else if(r.act==='battle'){ say(r.text); const res=io.battle(r.arg); if(res!=='win'){ out.push('(패배했다)'); return out }
+    else if(r.act==='battle'){ say(r.text); const res=io.battle(r.arg); if(res!=='win'){ out.push('(패배했다)'); if(r.lose) s.flags[r.lose]=1; return out }
       const T=TR[r.arg]; if(T.badge){ s.badges|=1<<(T.badge-1); } }
     if(r.set){ s.flags[r.set]=1; checkHooks(s,r.set) }
     return out }
@@ -210,5 +222,5 @@ function decode(code){
     s.party=p[13]?p[13].split('~').map(mon):[]; s.box=p[14]?p[14].split('~').map(mon):[];
     if(s.party.length<1||s.party.length>6) return {err:'파티 오류'}; return {s}
   }catch(e){ return {err:'복원 오류: '+e.message} } }
-module.exports={BOX_MAX,stat,TRACE,WORLD_IDX,G,WORLD,RULES,TR,WILD,SPECIES,MOVES,ITEMS,NPC,RULES_BY,newState,mkMon,mkFoe,maxHp,newBattle,turn,active,foe,newCatch,throwBall,move,interact,rollWild,healAll,useItem,
+module.exports={sight,BOX_MAX,stat,TRACE,WORLD_IDX,G,WORLD,RULES,TR,WILD,SPECIES,MOVES,ITEMS,NPC,RULES_BY,newState,mkMon,mkFoe,maxHp,newBattle,turn,active,foe,newCatch,throwBall,move,interact,rollWild,healAll,useItem,
   addItem,addMon,dexSee,giveExp,evolve,encode,decode,catchHook,tile,exitAt,npcAt,rnd,name,expFor,eff,FL};
