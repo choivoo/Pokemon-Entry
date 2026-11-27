@@ -2,6 +2,7 @@ import "#app/polyfills"; // All polyfills MUST be loaded first for side effects
 import "#init/init-manifest"; // initializes the manifest, must be done *before* i18n is initialized due to being used for caching
 import "#app/i18n"; // Initializes i18n on import
 
+import { maybeShowDiagnostics } from "#app/edu/diagnose";
 import { enableTouchControlsOnQuadrupleTap, isMobile, preventDoubleTapZoom } from "#app/touch-controls";
 import { isBeta, isDev } from "#constants/app-constants";
 import { version } from "#package.json";
@@ -10,6 +11,9 @@ import BBCodeTextPlugin from "phaser4-rex-plugins/plugins/bbcodetext-plugin";
 import InputTextPlugin from "phaser4-rex-plugins/plugins/inputtext-plugin";
 import TransitionImagePackPlugin from "phaser4-rex-plugins/templates/transitionimagepack/transitionimagepack-plugin";
 import UIPlugin from "phaser4-rex-plugins/templates/ui/ui-plugin";
+
+// 주소 끝에 ?diag 를 붙이면 서버 연결 점검 화면이 뜬다
+maybeShowDiagnostics();
 
 if (isBeta || isDev) {
   document.title += " (Beta)";

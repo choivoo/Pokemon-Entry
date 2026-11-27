@@ -1,5 +1,6 @@
 import { ApiBase } from "#api/api-base";
 import { SESSION_ID_COOKIE_NAME } from "#app/constants";
+import { backend } from "#app/edu/backend";
 import type {
   AccountChangePwRequest,
   AccountInfoResponse,
@@ -48,7 +49,9 @@ export class PokerogueAccountApi extends ApiBase {
       console.warn("Register failed!", err);
     }
 
-    return "Unknown registration error!";
+    return backend.lastError
+      ? `서버 연결 문제: ${backend.lastError} (주소 끝에 ?diag 를 붙여 점검하세요)`
+      : "Unknown registration error!";
   }
 
   /**

@@ -1,4 +1,5 @@
 import { updateUserInfo } from "#app/account";
+import { backend } from "#app/edu/backend";
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { TextStyle } from "#enums/text-style";
@@ -10,6 +11,7 @@ import { removeCookie } from "#utils/cookies";
 import i18next from "i18next";
 
 export class UnavailableModalUiHandler extends ModalUiHandler {
+  private label: Phaser.GameObjects.Text;
   private reconnectDuration: number;
   private reconnectCallback: () => void;
 
@@ -47,16 +49,26 @@ export class UnavailableModalUiHandler extends ModalUiHandler {
   setup(): void {
     super.setup();
 
-    const label = addTextObject(
-      this.getWidth() / 2,
-      this.getHeight() / 2,
-      i18next.t("menu:errorServerDown"),
-      TextStyle.WINDOW,
-      { fontSize: "48px", align: "center" },
-    );
+    const label = addTextObject(this.getWidth() / 2, this.getHeight() / 2, this.errorText(), TextStyle.WINDOW, {
+      fontSize: "48px",
+      align: "center",
+    });
     label.setOrigin(0.5, 0.5);
+    this.label = label;
 
     this.modalContainer.add(label);
+  }
+
+  /**
+   * 서버에 연결하지 못했을 때 보여 주는 글.
+   * 원본 글에는 외부 커뮤니티(Discord) 안내가 있어서, 학교에서 쓰는 안내와 실제 원인으로 바꿔 보여 준다.
+   */
+  private errorText(): string {
+    const cause = backend.lastError ? backend.lastError.slice(0, 44) : "";
+    if (i18next.resolvedLanguage?.startsWith("ko")) {
+      return `서버에 연결하지 못했어요.\n${cause ? `(${cause})\n` : ""}잠시 뒤 자동으로 다시 접속해요.\n계속되면 선생님께 알려 주세요.\n점검: 주소 끝에 ?diag 를 붙여 보세요.`;
+    }
+    return `Could not reach the server.\n${cause ? `(${cause})\n` : ""}Retrying automatically.\nAsk your teacher if it continues.\nCheck: add ?diag to the page address.`;
   }
 
   tryReconnect(): void {
@@ -85,6 +97,7 @@ export class UnavailableModalUiHandler extends ModalUiHandler {
         buttonActions: [],
       };
 
+      this.label?.setText(this.errorText());
       this.reconnectCallback = args[0];
       this.reconnectDuration = this.minTime;
       setTimeout(() => this.tryReconnect(), this.reconnectDuration);
