@@ -12,6 +12,8 @@
     "build:beta": "vite build --mode beta",
     "build:dev": "vite build --mode development",
     "build:app": "vite build --mode app",
+    "build:pages": "vite build --mode pages && node scripts/pages/copy-assets.mjs",
+    "start:pages": "vite --mode pages",
     "preview": "vite preview",
     "test": "vitest run",
     "test:profile": "vite-node scripts/profiling/profiling.ts",

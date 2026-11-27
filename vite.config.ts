@@ -14,7 +14,7 @@ export const sharedConfig: UserConfigFnPromise = async ({ mode }) => {
     clearScreen: false,
     appType: "mpa",
     build: {
-      sourcemap: mode !== "production",
+      sourcemap: mode !== "production" && mode !== "pages",
       chunkSizeWarningLimit: 10000,
       minify: "oxc",
       manifest: true,

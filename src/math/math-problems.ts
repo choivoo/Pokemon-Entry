@@ -1,38 +1,54 @@
 /**
  * 수학 포켓로그: 비례식 / 비례배분 문제 생성기.
- * 순수 함수 모듈이라 게임 엔진 없이도 테스트할 수 있다.
+ *
+ * 문제는 "숫자 데이터"({@linkcode MathProblem})로만 만들고, 문장은 `math-text.ts`가 언어별로 만든다.
+ * 이 파일은 게임 엔진에 의존하지 않는 순수 모듈이라 단독으로 테스트할 수 있다.
  */
 
 export type MathProblemKind = "proportion" | "share2" | "share3" | "difference";
 
-export interface MathProblem {
+/** 문제에 등장하는 물건 종류 */
+export type MathItemKey = "pokeball" | "potion" | "berry" | "rareCandy" | "pokeFood" | "stardust";
+
+interface BaseProblem {
   kind: MathProblemKind;
-  /** 문제 본문 (줄바꿈 포함 가능) */
-  question: string;
   /** 정답 (항상 양의 정수) */
   answer: number;
-  /** 답 뒤에 붙는 단위 (없으면 빈 문자열) */
-  unit: string;
-  /** 힌트 */
-  hint: string;
-  /** 풀이 설명 */
-  explanation: string;
+  /** 난이도 1~4 */
+  level: 1 | 2 | 3 | 4;
 }
+
+/** `terms[0] : terms[1] = terms[2] : terms[3]`, `terms[blank]`가 빈칸 */
+export interface ProportionProblem extends BaseProblem {
+  kind: "proportion";
+  terms: [number, number, number, number];
+  blank: 0 | 1 | 2 | 3;
+}
+
+/** 전체 `total`을 `ratio`로 나누었을 때 `ask`번째 사람의 몫 */
+export interface ShareProblem extends BaseProblem {
+  kind: "share2" | "share3";
+  item: MathItemKey;
+  total: number;
+  ratio: number[];
+  ask: number;
+}
+
+/** 비 `ratio[0] : ratio[1]` (ratio[0] > ratio[1]), 차이가 `diff`일 때 `ask`번째 값 */
+export interface DifferenceProblem extends BaseProblem {
+  kind: "difference";
+  ratio: [number, number];
+  diff: number;
+  ask: 0 | 1;
+}
+
+export type MathProblem = ProportionProblem | ShareProblem | DifferenceProblem;
 
 export type Rng = () => number;
 
-const ITEMS: readonly { name: string; unit: string }[] = [
-  { name: "몬스터볼", unit: "개" },
-  { name: "상처약", unit: "개" },
-  { name: "나무열매", unit: "개" },
-  { name: "이상한사탕", unit: "개" },
-  { name: "포켓몬 사료", unit: "g" },
-  { name: "모의 배틀 점수", unit: "점" },
-];
+const ITEM_KEYS: readonly MathItemKey[] = ["pokeball", "potion", "berry", "rareCandy", "pokeFood", "stardust"];
 
-const NAMES: readonly string[] = ["피카츄", "이브이", "리자몽", "거북왕", "이상해꽃", "루카리오", "갸라도스", "잠만보"];
-
-function randInt(rng: Rng, min: number, max: number): number {
+export function randInt(rng: Rng, min: number, max: number): number {
   return Math.floor(rng() * (max - min + 1)) + min;
 }
 
@@ -40,13 +56,13 @@ function pick<T>(rng: Rng, arr: readonly T[]): T {
   return arr[randInt(rng, 0, arr.length - 1)];
 }
 
-function gcd(a: number, b: number): number {
+export function gcd(a: number, b: number): number {
   return b === 0 ? a : gcd(b, a % b);
 }
 
-/** 서로소인 (a, b) 비를 뽑는다. a !== b */
+/** 서로 다르고 서로소인 (a, b) */
 function coprimePair(rng: Rng, max: number): [number, number] {
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 200; i++) {
     const a = randInt(rng, 1, max);
     const b = randInt(rng, 1, max);
     if (a !== b && gcd(a, b) === 1) {
@@ -70,150 +86,95 @@ export function getDifficulty(wave: number): 1 | 2 | 3 | 4 {
   return 4;
 }
 
-/** a : b = c : x 형태 (미지수 위치 무작위) */
-function makeProportion(rng: Rng, level: number): MathProblem {
-  const maxTerm = level === 1 ? 5 : level === 2 ? 9 : 13;
-  const maxMul = level === 1 ? 5 : level === 2 ? 9 : 15;
+function makeProportion(rng: Rng, level: 1 | 2 | 3 | 4): ProportionProblem {
+  const maxTerm = [5, 9, 12, 15][level - 1];
+  const maxMul = [5, 9, 12, 15][level - 1];
   const [a, b] = coprimePair(rng, maxTerm);
   const k = randInt(rng, 2, maxMul);
-  const c = a * k;
-  const d = b * k;
-  const pos = randInt(rng, 0, 3);
-  const terms = [a, b, c, d];
-  const answer = terms[pos];
-  const shown = terms.map((t, i) => (i === pos ? "□" : String(t)));
-  const question = `비례식을 완성하세요.\n${shown[0]} : ${shown[1]} = ${shown[2]} : ${shown[3]}`;
-  // 외항의 곱 = 내항의 곱
-  const outer = pos === 0 || pos === 3 ? "외항의 곱" : "내항의 곱";
-  const known = terms.filter((_, i) => i !== pos);
-  const explanation = `비례식에서 외항의 곱 = 내항의 곱 이에요.\n${a} × ${d} = ${b} × ${c}  (= ${a * d})\n그래서 □ = ${answer}`;
-  return {
-    kind: "proportion",
-    question,
-    answer,
-    unit: "",
-    hint: `${outer}과 같은 값을 가진 다른 쪽(내항·외항)의 곱을 이용하세요. 이미 아는 세 수: ${known.join(", ")}`,
-    explanation,
-  };
+  const terms: [number, number, number, number] = [a, b, a * k, b * k];
+  // 높은 난이도에서는 좌우를 바꿔서 "큰 비 = 작은 비" 형태도 낸다
+  if (level >= 3 && rng() < 0.5) {
+    terms.push(...terms.splice(0, 2));
+  }
+  const blank = randInt(rng, 0, 3) as 0 | 1 | 2 | 3;
+  return { kind: "proportion", level, terms, blank, answer: terms[blank] };
 }
 
-/** 전체를 a : b 로 배분 */
-function makeShare2(rng: Rng, level: number): MathProblem {
-  const maxTerm = level === 1 ? 5 : level === 2 ? 8 : 11;
-  const [a, b] = coprimePair(rng, maxTerm);
-  const unitSize = randInt(rng, 2, level === 1 ? 6 : level === 2 ? 12 : 25);
-  const total = (a + b) * unitSize;
-  const item = pick(rng, ITEMS);
-  const [n1, n2] = twoNames(rng);
-  const askFirst = rng() < 0.5;
-  const answer = (askFirst ? a : b) * unitSize;
-  const asked = askFirst ? n1 : n2;
-  const question = `${item.name} ${total}${item.unit}을(를) ${n1}와(과) ${n2}가\n${a} : ${b} 로 나누어 가집니다.\n${asked}가 갖는 양은 얼마일까요?`;
-  const explanation = `전체 비의 합 = ${a} + ${b} = ${a + b}\n${asked}의 몫 = ${total} × ${askFirst ? a : b}/${a + b} = ${answer}`;
-  return {
-    kind: "share2",
-    question,
-    answer,
-    unit: item.unit,
-    hint: `전체를 비의 합(${a} + ${b} = ${a + b})으로 나눈 뒤, ${asked}의 비(${askFirst ? a : b})를 곱하세요.`,
-    explanation,
-  };
-}
-
-/** 전체를 a : b : c 로 배분 */
-function makeShare3(rng: Rng, level: number): MathProblem {
-  const maxTerm = level <= 3 ? 6 : 9;
-  let a = 1;
-  let b = 2;
-  let c = 3;
-  for (let i = 0; i < 100; i++) {
-    a = randInt(rng, 1, maxTerm);
-    b = randInt(rng, 1, maxTerm);
-    c = randInt(rng, 1, maxTerm);
-    if (new Set([a, b, c]).size === 3 && gcd(gcd(a, b), c) === 1) {
-      break;
+function makeShare(rng: Rng, level: 1 | 2 | 3 | 4, parts: 2 | 3): ShareProblem {
+  let ratio: number[];
+  if (parts === 2) {
+    ratio = coprimePair(rng, [5, 8, 11, 13][level - 1]);
+  } else {
+    const max = level <= 3 ? 6 : 9;
+    ratio = [1, 2, 3];
+    for (let i = 0; i < 200; i++) {
+      const r = [randInt(rng, 1, max), randInt(rng, 1, max), randInt(rng, 1, max)];
+      if (new Set(r).size === 3 && gcd(gcd(r[0], r[1]), r[2]) === 1) {
+        ratio = r;
+        break;
+      }
     }
   }
-  const unitSize = randInt(rng, 2, level <= 3 ? 12 : 25);
-  const total = (a + b + c) * unitSize;
-  const item = pick(rng, ITEMS);
-  const names = threeNames(rng);
-  const ratios = [a, b, c];
-  const idx = randInt(rng, 0, 2);
-  const answer = ratios[idx] * unitSize;
-  const question = `${item.name} ${total}${item.unit}을(를)\n${names[0]}, ${names[1]}, ${names[2]}에게 ${a} : ${b} : ${c} 로 나눕니다.\n${names[idx]}가 받는 양은 얼마일까요?`;
+  const sum = ratio.reduce((x, y) => x + y, 0);
+  const unit = randInt(rng, 2, [6, 12, 20, 30][level - 1]);
+  const ask = randInt(rng, 0, parts - 1);
   return {
-    kind: "share3",
-    question,
-    answer,
-    unit: item.unit,
-    hint: `비의 합은 ${a} + ${b} + ${c} = ${a + b + c} 이에요. 전체를 ${a + b + c}로 나눠 보세요.`,
-    explanation: `비의 합 = ${a + b + c}\n${names[idx]}의 몫 = ${total} × ${ratios[idx]}/${a + b + c} = ${answer}`,
+    kind: parts === 2 ? "share2" : "share3",
+    level,
+    item: pick(rng, ITEM_KEYS),
+    total: sum * unit,
+    ratio,
+    ask,
+    answer: ratio[ask] * unit,
   };
 }
 
-/** 두 양의 비와 차이가 주어졌을 때 */
-function makeDifference(rng: Rng, level: number): MathProblem {
-  const [x, y] = coprimePair(rng, level === 3 ? 9 : 12);
-  const hi = Math.max(x, y);
-  const lo = Math.min(x, y);
-  const unitSize = randInt(rng, 2, level === 3 ? 10 : 20);
-  const diff = (hi - lo) * unitSize;
-  const [n1, n2] = twoNames(rng);
-  const askBigger = rng() < 0.5;
-  const answer = (askBigger ? hi : lo) * unitSize;
-  const question = `${n1}와(과) ${n2}의 레벨 비는 ${hi} : ${lo} 이고,\n두 레벨의 차이는 ${diff}입니다.\n${askBigger ? n1 : n2}의 레벨은 얼마일까요?\n(${askBigger ? n1 : n2}는 ${askBigger ? "더 높은" : "더 낮은"} 쪽입니다)`;
+function makeDifference(rng: Rng, level: 1 | 2 | 3 | 4): DifferenceProblem {
+  const [x, y] = coprimePair(rng, level <= 3 ? 9 : 12);
+  const ratio: [number, number] = [Math.max(x, y), Math.min(x, y)];
+  const unit = randInt(rng, 2, level <= 3 ? 10 : 15);
+  const ask = randInt(rng, 0, 1) as 0 | 1;
   return {
     kind: "difference",
-    question,
-    answer,
-    unit: "",
-    hint: `비의 차는 ${hi} - ${lo} = ${hi - lo}. 이것이 실제 차이 ${diff}에 해당해요. 비 1칸의 크기를 구해 보세요.`,
-    explanation: `비의 차 = ${hi} - ${lo} = ${hi - lo} → 실제 ${diff}\n비 1칸 = ${diff} ÷ ${hi - lo} = ${unitSize}\n정답 = ${askBigger ? hi : lo} × ${unitSize} = ${answer}`,
+    level,
+    ratio,
+    diff: (ratio[0] - ratio[1]) * unit,
+    ask,
+    answer: ratio[ask] * unit,
   };
 }
 
-function twoNames(rng: Rng): [string, string] {
-  const first = pick(rng, NAMES);
-  let second = pick(rng, NAMES);
-  while (second === first) {
-    second = pick(rng, NAMES);
-  }
-  return [first, second];
-}
-
-function threeNames(rng: Rng): [string, string, string] {
-  const [a, b] = twoNames(rng);
-  let c = pick(rng, NAMES);
-  while (c === a || c === b) {
-    c = pick(rng, NAMES);
-  }
-  return [a, b, c];
-}
+const POOLS: Record<1 | 2 | 3 | 4, MathProblemKind[]> = {
+  1: ["proportion", "proportion", "share2"],
+  2: ["proportion", "share2", "share2"],
+  3: ["proportion", "share2", "share3", "difference"],
+  4: ["share2", "share3", "difference", "difference"],
+};
 
 /**
  * 웨이브에 맞는 문제를 하나 만든다.
  * @param wave - 방금 클리어한 웨이브(층) 번호
- * @param rng - 난수 함수 (기본 Math.random)
- * @param exclude - 직전 문제 종류와 같은 종류를 피하고 싶을 때
+ * @param rng - 난수 함수 (기본 `Math.random`)
+ * @param exclude - 직전 문제와 같은 종류를 피하고 싶을 때
  */
 export function generateProblem(wave: number, rng: Rng = Math.random, exclude?: MathProblemKind): MathProblem {
   const level = getDifficulty(wave);
-  const pool: MathProblemKind[] =
-    level === 1 ? ["proportion", "proportion", "share2"]
-    : level === 2 ? ["proportion", "share2", "share2"]
-    : level === 3 ? ["proportion", "share2", "share3", "difference"]
-    : ["share2", "share3", "difference", "difference"];
+  const pool = POOLS[level];
   const filtered = pool.filter(k => k !== exclude);
-  const kind = pick(rng, filtered.length > 0 ? filtered : pool);
-  switch (kind) {
+  switch (pick(rng, filtered.length > 0 ? filtered : pool)) {
     case "proportion":
       return makeProportion(rng, level);
     case "share2":
-      return makeShare2(rng, level);
+      return makeShare(rng, level, 2);
     case "share3":
-      return makeShare3(rng, level);
+      return makeShare(rng, level, 3);
     case "difference":
       return makeDifference(rng, level);
   }
+}
+
+/** 정답 판정 */
+export function checkAnswer(problem: MathProblem, input: string): boolean {
+  const trimmed = input.trim();
+  return /^\d+$/.test(trimmed) && Number(trimmed) === problem.answer;
 }

@@ -464,6 +464,15 @@ export class OverridesHelper extends GameManagerHelper {
    * @returns `this`
    */
   // TODO: rename to `fieldSize()`
+  public mathGate(enabled: boolean | null): this {
+    vi.spyOn(activeOverrides, "MATH_GATE_OVERRIDE", "get").mockReturnValue(enabled);
+    this.log(`Math gate override set to ${enabled}!`);
+    return this;
+  }
+
+  /**
+   * Override the field size
+   */
   public battleStyle(fieldSize: FieldSizeOverride | null): this {
     vi.spyOn(activeOverrides, "FIELD_SIZE_OVERRIDE", "get").mockReturnValue(fieldSize);
     this.log(fieldSize === null ? "Field size override disabled!" : `Field size set to ${fieldSize}!`);

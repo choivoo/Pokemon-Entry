@@ -67,6 +67,11 @@ class DefaultOverrides {
   /** a specific seed (default: a random string of 24 characters) */
   readonly SEED_OVERRIDE: string = "";
   /**
+   * 수학 관문(비례식/비례배분 문제) 강제 설정.
+   * `null`이면 일반 플레이에서는 켜지고 자동화 테스트에서는 꺼진다.
+   */
+  readonly MATH_GATE_OVERRIDE: boolean | null = null;
+  /**
    * A {@linkcode CustomDailyRunConfig} or a stringified version thereof
    * used to customize the daily run (such as to use custom starters or final boss).
    */
