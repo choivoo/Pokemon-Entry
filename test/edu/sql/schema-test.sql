@@ -66,6 +66,17 @@ select public.edu_profile_put(current_setting('t.tok'), '{"school":{"code":"T10:
 select pg_temp.check('동의하면 점수가 올라간다', (select (public.edu_submit_solve(current_setting('t.tok'),'math',50,3,1,true)::jsonb ->> 'points') = '50'));
 select pg_temp.check('3초 안에 또 올리면 거절', (select public.edu_submit_solve(current_setting('t.tok'),'math',50,3,1,true)::jsonb ->> 'error') = 'too fast');
 update public.edu_users set last_submit_at = now() - interval '10 seconds';
+update public.edu_users set hour_start = now(), hour_points = 29900, last_submit_at = now() - interval '10 seconds';
+select pg_temp.check('한 시간 한도(3만 점)를 넘으면 거절', (select public.edu_submit_solve(current_setting('t.tok'),'math',200,3,1,true)::jsonb ->> 'error') = 'limit reached');
+update public.edu_users set last_submit_at = now() - interval '10 seconds';
+select pg_temp.check('한도 안이면 허용', (select (public.edu_submit_solve(current_setting('t.tok'),'math',50,3,1,true)::jsonb ->> 'ok') = 'true'));
+update public.edu_users set hour_start = now() - interval '2 hours', hour_points = 30000, last_submit_at = now() - interval '10 seconds';
+select pg_temp.check('한 시간이 지나면 한도가 새로 시작', (select (public.edu_submit_solve(current_setting('t.tok'),'math',10,3,1,true)::jsonb ->> 'ok') = 'true'));
+update public.edu_users set hour_start = null, hour_points = 0, last_submit_at = now() - interval '10 seconds';
+-- 한도 시험으로 쌓인 점수는 지우고, 첫 점수(50점)부터 다시 쌓는다
+delete from public.scores;
+select pg_temp.check('처음부터 다시 50점', (select (public.edu_submit_solve(current_setting('t.tok'),'math',50,3,1,true)::jsonb ->> 'points') = '50'));
+update public.edu_users set last_submit_at = now() - interval '10 seconds';
 select pg_temp.check('250점 초과 거절', (select public.edu_submit_solve(current_setting('t.tok'),'math',251,3,1,true)::jsonb ->> 'error') = 'invalid score');
 select pg_temp.check('0점·음수 거절', (select public.edu_submit_solve(current_setting('t.tok'),'math',-5,3,1,true)::jsonb ->> 'error') = 'invalid score');
 select pg_temp.check('이상한 과목 거절', (select public.edu_submit_solve(current_setting('t.tok'),'art',10,3,1,true)::jsonb ->> 'error') = 'invalid score');

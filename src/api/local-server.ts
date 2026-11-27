@@ -179,6 +179,38 @@ async function currentUser(authorization: string | undefined): Promise<StoredUse
   return username ? s.get<StoredUser>(userKey(username)) : undefined;
 }
 
+export interface LocalAccountExport {
+  username: string;
+  /** 시스템 세이브 (JSON 글자) */
+  system: string | null;
+  sessions: { slot: number; data: string }[];
+}
+
+/**
+ * 이 브라우저에 있는 옛 계정을 꺼낸다 (서버로 옮기기 위해).
+ * 아이디와 비밀번호가 맞을 때만 돌려준다.
+ */
+export async function exportLocalAccount(username: string, password: string): Promise<LocalAccountExport | null> {
+  const s = getStore();
+  let user: StoredUser | undefined;
+  try {
+    user = await s.get<StoredUser>(userKey(username.trim()));
+  } catch {
+    return null;
+  }
+  if (!user || (await hashPassword(password, user.salt)) !== user.hash) {
+    return null;
+  }
+  const sessions: LocalAccountExport["sessions"] = [];
+  for (let slot = 0; slot < 10; slot++) {
+    const data = await s.get<string>(sessionKey(user.username, slot));
+    if (data) {
+      sessions.push({ slot, data });
+    }
+  }
+  return { username: user.username, system: (await s.get<string>(systemKey(user.username))) ?? null, sessions };
+}
+
 /**
  * 게임의 API 요청 하나를 처리한다.
  * @param path - 예: `/account/login`, `/savedata/session/get?slot=0&...`

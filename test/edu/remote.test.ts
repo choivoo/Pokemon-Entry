@@ -1,3 +1,4 @@
+import { localServerFetch, resetLocalServer } from "#api/local-server";
 import { remoteServerFetch } from "#api/remote-server";
 import { SESSION_ID_COOKIE_NAME } from "#app/constants";
 import { backend } from "#app/edu/backend";
@@ -432,6 +433,80 @@ describe("서버 계정 (기기 사이 동기화)", () => {
     await flushQueue("학생01", async () => {});
     expect(loadQueue("학생01")).toHaveLength(0);
     expect(server.scores).toHaveLength(0);
+  });
+
+  describe("서버를 연결하기 전에 이 기기에서 만든 계정", () => {
+    const localPost = (path: string, body: Record<string, string>, token?: string) =>
+      localServerFetch(path, {
+        method: "POST",
+        body: new URLSearchParams(body).toString(),
+        headers: { Authorization: token },
+      });
+
+    beforeEach(() => resetLocalServer());
+
+    it("같은 아이디·비밀번호로 로그인하면 서버로 옮겨지고, 세이브도 따라온다", async () => {
+      await localPost("/account/register", { username: "옛학생", password: "old1234" });
+      const lt = (
+        (await (await localPost("/account/login", { username: "옛학생", password: "old1234" })).json()) as {
+          token: string;
+        }
+      ).token;
+      await localServerFetch("/savedata/system/update", {
+        method: "POST",
+        body: '{"trainerId":9}',
+        headers: { Authorization: lt },
+      });
+      await localServerFetch("/savedata/session/update?slot=3", {
+        method: "POST",
+        body: '{"waveIndex":21}',
+        headers: { Authorization: lt },
+      });
+      expect(server.users.size).toBe(0);
+
+      const res = await call("/account/login", {
+        method: "POST",
+        body: form({ username: "옛학생", password: "old1234" }),
+      });
+      expect(res.ok).toBe(true);
+      const token = ((await res.json()) as { token: string }).token;
+      expect(server.users.get("옛학생")).toBeDefined();
+      expect(await (await call("/savedata/system/get", { token })).text()).toBe('{"trainerId":9}');
+      expect(await (await call("/savedata/session/get?slot=3", { token })).text()).toBe('{"waveIndex":21}');
+      expect((await (await call("/account/info", { token })).json()).lastSessionSlot).toBe(3);
+      // 다음부터는 평소처럼 서버 계정으로 로그인
+      const before = server.calls.filter(c => c.fn === "edu_register").length;
+      expect(
+        (await call("/account/login", { method: "POST", body: form({ username: "옛학생", password: "old1234" }) })).ok,
+      ).toBe(true);
+      expect(server.calls.filter(c => c.fn === "edu_register").length).toBe(before);
+    });
+
+    it("비밀번호가 틀리면 옮기지 않고, 이 기기에 없는 아이디도 옮기지 않는다", async () => {
+      await localPost("/account/register", { username: "옛학생", password: "old1234" });
+      const wrong = await call("/account/login", {
+        method: "POST",
+        body: form({ username: "옛학생", password: "wrong99" }),
+      });
+      expect(wrong.status).toBe(400);
+      expect(await wrong.text()).toBe("account doesn't exist");
+      expect(server.users.size).toBe(0);
+      expect(
+        (await call("/account/login", { method: "POST", body: form({ username: "없는학생", password: "abc123" }) }))
+          .status,
+      ).toBe(400);
+      expect(server.users.size).toBe(0);
+    });
+
+    it("서버에 같은 이름의 다른 계정이 이미 있으면 옮기지 않고 서버의 비밀번호만 따른다", async () => {
+      await localPost("/account/register", { username: "옛학생", password: "old1234" });
+      await call("/account/register", { method: "POST", body: form({ username: "옛학생", password: "serverpw1" }) });
+      const res = await call("/account/login", {
+        method: "POST",
+        body: form({ username: "옛학생", password: "old1234" }),
+      });
+      expect(res.status).toBe(401); // 서버 계정의 비밀번호와 다르다
+    });
   });
 
   it("플레이어 수와 데일리 시드", async () => {

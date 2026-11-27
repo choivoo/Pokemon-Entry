@@ -28,6 +28,10 @@ create table if not exists public.edu_users (
   last_submit_at    timestamptz
 );
 
+-- 시간당 점수 한도 확인용 (이미 만든 테이블에도 안전하게 추가)
+alter table public.edu_users add column if not exists hour_start  timestamptz;
+alter table public.edu_users add column if not exists hour_points int not null default 0;
+
 create table if not exists public.edu_sessions (
   token_hash text primary key,
   user_id    uuid        not null references public.edu_users (id) on delete cascade,
@@ -334,7 +338,7 @@ begin
 end $$;
 
 -- 문제 하나를 풀었을 때 점수를 올린다.
--- 서버가 막는 것: 로그인 안 한 요청, 랭킹 동의가 없는 계정, 한 번에 250점 초과, 3초 안에 연속 요청
+-- 서버가 막는 것: 로그인 안 한 요청, 랭킹 동의가 없는 계정, 한 번에 250점 초과, 3초 안에 연속 요청, 한 시간에 3만 점 초과
 create or replace function public.edu_submit_solve(
   p_token text, p_subject text, p_points int, p_wave int, p_streak int, p_perfect boolean
 )
@@ -365,7 +369,17 @@ begin
   if v_user.last_submit_at is not null and v_user.last_submit_at > now() - interval '3 seconds' then
     return json_build_object('ok', false, 'error', 'too fast');
   end if;
-  update public.edu_users set last_submit_at = now() where id = v_id;
+  -- 한 시간에 3만 점까지 (정상적으로 풀면 닿기 어려운 양이라 자동 프로그램만 걸린다)
+  if v_user.hour_start is null or v_user.hour_start < now() - interval '1 hour' then
+    v_user.hour_start := now();
+    v_user.hour_points := 0;
+  end if;
+  if v_user.hour_points + p_points > 30000 then
+    return json_build_object('ok', false, 'error', 'limit reached');
+  end if;
+  update public.edu_users
+     set last_submit_at = now(), hour_start = v_user.hour_start, hour_points = v_user.hour_points + p_points
+   where id = v_id;
 
   insert into public.scores as s
     (uid, subject, school_code, school_name, grade, class_name, student_no, nickname,

@@ -3,7 +3,14 @@
  * 새 게임을 시작할 때와 메뉴의 "학습 설정"에서 열린다.
  */
 import { DIFFICULTIES, DIFFICULTY_RULES } from "#app/edu/difficulty";
-import { manualSchool, SchoolSearchError, searchSchools } from "#app/edu/neis";
+import {
+  manualSchool,
+  NEIS_REGIONS,
+  type SchoolPage,
+  SchoolSearchError,
+  type SearchOptions,
+  searchSchools,
+} from "#app/edu/neis";
 import { DEFAULT_PROFILE, type LearnerProfile, type School, validateProfile } from "#app/edu/profile";
 import { SUBJECT_NAMES, SUBJECTS, termIndex, termLabel } from "#app/edu/question";
 import { termCategories } from "#app/edu/select";
@@ -20,7 +27,7 @@ export interface SetupOptions {
   /** 시작 버튼 글자 */
   confirmLabel?: string;
   /** 테스트에서 학교 검색을 바꿔 끼운다 */
-  search?: (q: string) => Promise<School[]>;
+  search?: (q: string, opts?: SearchOptions) => Promise<SchoolPage | School[]>;
   /** 학교·반·번호는 이미 정해진 경우(과목·학년만 바꾸는 화면) */
   lockIdentity?: boolean;
 }
@@ -35,6 +42,7 @@ const CSS = `${baseCss(SETUP_OVERLAY_ID)}
 #${SETUP_OVERLAY_ID} .su-unitchips button{min-height:calc(46 * var(--s));font-size:calc(24 * var(--s) * var(--f));padding:0 calc(10 * var(--s))}
 #${SETUP_OVERLAY_ID} .su-consent{display:flex;gap:calc(10 * var(--s));align-items:flex-start;margin-top:calc(12 * var(--s));padding:calc(10 * var(--s)) calc(12 * var(--s));background:#202840;border-radius:calc(9 * var(--s));font-size:calc(23 * var(--s) * var(--f));line-height:1.25;color:#d8e0ff;cursor:pointer}
 #${SETUP_OVERLAY_ID} .su-consent input{flex:none;width:calc(36 * var(--s));min-width:calc(36 * var(--s));height:calc(36 * var(--s));padding:0;accent-color:#38a048}
+#${SETUP_OVERLAY_ID} select{font-family:inherit;font-size:calc(30 * var(--s) * var(--f));height:calc(58 * var(--s));padding:0 calc(8 * var(--s));color:#f8f8f8;background:#101828;border:calc(4 * var(--s)) solid #6878a8;border-radius:calc(9 * var(--s));min-width:calc(120 * var(--s))}
 #${SETUP_OVERLAY_ID} .su-results{display:flex;flex-direction:column;gap:calc(6 * var(--s));max-height:calc(230 * var(--s));overflow:auto;margin-top:calc(8 * var(--s))}
 #${SETUP_OVERLAY_ID} .su-res{display:flex;flex-direction:column;align-items:flex-start;gap:calc(4 * var(--s));text-align:left;min-height:calc(66 * var(--s));padding:calc(8 * var(--s)) calc(14 * var(--s))}
 #${SETUP_OVERLAY_ID} .su-res small{font-size:calc(22 * var(--s) * var(--f));color:#c8d0f8}
@@ -47,7 +55,7 @@ const CSS = `${baseCss(SETUP_OVERLAY_ID)}
 #${SETUP_OVERLAY_ID} .su-chip{min-width:calc(56 * var(--s));padding:0 calc(8 * var(--s))}
 #${SETUP_OVERLAY_ID} .su-field{display:flex;flex-direction:column;gap:calc(4 * var(--s));flex:1;min-width:calc(150 * var(--s))}
 #${SETUP_OVERLAY_ID} .su-field label{font-size:calc(22 * var(--s) * var(--f));color:#b8c8f8}
-#${SETUP_OVERLAY_ID} .su-actions{display:flex;gap:calc(10 * var(--s));margin-top:calc(14 * var(--s))}
+#${SETUP_OVERLAY_ID} .su-actions{display:flex;gap:calc(10 * var(--s));margin-top:calc(14 * var(--s));position:sticky;bottom:calc(-18 * var(--s));z-index:2;background:linear-gradient(to top,#283048 75%,transparent);padding:calc(10 * var(--s)) 0 calc(18 * var(--s))}
 #${SETUP_OVERLAY_ID} .su-actions button{flex:1}
 `;
 
@@ -217,8 +225,13 @@ export function showSetup(opts: SetupOptions = {}): Promise<LearnerProfile | nul
         },
       });
       searchInput.style.flex = "1";
+      const regionSelect = el("select", { attrs: { "aria-label": "지역" } });
+      regionSelect.appendChild(el("option", { text: "전국", attrs: { value: "" } }));
+      for (const [code, name] of NEIS_REGIONS) {
+        regionSelect.appendChild(el("option", { text: name, attrs: { value: code } }));
+      }
       const searchBtn = el("button", { text: "찾기", attrs: { type: "button" } });
-      searchRow.append(searchInput, searchBtn);
+      searchRow.append(regionSelect, searchInput, searchBtn);
       const results = el("div", { class: "su-results" });
       const manualLink = el("button", {
         class: "su-link",
@@ -234,6 +247,10 @@ export function showSetup(opts: SetupOptions = {}): Promise<LearnerProfile | nul
       const manualBtn = el("button", { text: "이 이름으로 정하기", attrs: { type: "button" } });
       manualRow.append(manualInput, manualBtn);
       const searchMsg = el("div", { class: "ek-note" });
+      const moreBtn = el("button", { class: "ghost", text: "더 보기", attrs: { type: "button" } });
+      moreBtn.style.display = "none";
+      moreBtn.style.width = "100%";
+      moreBtn.style.marginTop = "calc(6 * var(--s))";
 
       const showChosen = () => {
         chosen.replaceChildren();
@@ -263,38 +280,59 @@ export function showSetup(opts: SetupOptions = {}): Promise<LearnerProfile | nul
       };
 
       let seq = 0;
-      const runSearch = async () => {
-        const q = searchInput.value.trim();
+      let shown = 0;
+      let nextPage = 1;
+      let lastQuery = "";
+
+      /** 한 쪽을 받아서 목록에 이어 붙인다 (처음 검색이면 목록을 비우고 시작) */
+      const loadPage = async (first: boolean) => {
+        const q = first ? searchInput.value.trim() : lastQuery;
         if (q.length < 2) {
           searchMsg.textContent = "학교 이름을 2글자 이상 적어 주세요.";
           return;
         }
         const mine = ++seq;
+        if (first) {
+          lastQuery = q;
+          nextPage = 1;
+          shown = 0;
+          results.replaceChildren();
+          moreBtn.style.display = "none";
+        }
         searchMsg.textContent = "찾는 중…";
-        results.replaceChildren();
         try {
-          const list = await search(q);
+          const raw = await search(q, { region: regionSelect.value, page: nextPage });
           if (mine !== seq) {
             return;
           }
-          searchMsg.textContent =
-            list.length === 0
-              ? "찾은 학교가 없어요. 이름을 다시 확인하거나 직접 입력해 주세요."
-              : `${list.length}개를 찾았어요. 우리 학교를 눌러 주세요.`;
-          for (const s of list) {
+          const result: SchoolPage = Array.isArray(raw)
+            ? { schools: raw, total: raw.length, page: nextPage, rows: raw.length }
+            : raw;
+          for (const sc of result.schools) {
             const b = el(
               "button",
               { class: "su-res", attrs: { type: "button" } },
-              s.name,
-              el("small", { text: [s.region, s.address].filter(Boolean).join(" ") }),
+              sc.name,
+              el("small", { text: [sc.region, sc.address].filter(Boolean).join(" ") }),
             );
             b.addEventListener("click", () => {
-              p.school = s;
+              p.school = sc;
               showChosen();
             });
             results.appendChild(b);
           }
-          if (list.length === 0) {
+          shown += result.rows;
+          nextPage += 1;
+          const rest = result.total - shown;
+          moreBtn.style.display = rest > 0 && result.rows > 0 ? "" : "none";
+          moreBtn.textContent = `더 보기 (${Math.max(rest, 0)}곳 남음)`;
+          searchMsg.textContent =
+            result.total === 0
+              ? "찾은 학교가 없어요. 이름이나 지역을 다시 확인하거나 직접 입력해 주세요."
+              : rest > 0
+                ? `${result.total}곳 중 ${shown}곳을 보여 줘요. 우리 학교를 눌러 주세요. 안 보이면 지역을 고르거나 '더 보기'를 눌러요.`
+                : `${result.total}곳을 찾았어요. 우리 학교를 눌러 주세요.`;
+          if (result.total === 0) {
             manualRow.style.display = "flex";
           }
         } catch (e) {
@@ -305,6 +343,8 @@ export function showSetup(opts: SetupOptions = {}): Promise<LearnerProfile | nul
           manualRow.style.display = "flex";
         }
       };
+      const runSearch = () => loadPage(true);
+      moreBtn.addEventListener("click", () => loadPage(false));
       searchBtn.addEventListener("click", runSearch);
       searchInput.addEventListener("keydown", e => {
         if (e.key === "Enter") {
@@ -324,7 +364,7 @@ export function showSetup(opts: SetupOptions = {}): Promise<LearnerProfile | nul
         p.school = manualSchool(name);
         showChosen();
       });
-      idBox.append(chosen, searchRow, searchMsg, results, manualLink, manualRow);
+      idBox.append(chosen, searchRow, searchMsg, results, moreBtn, manualLink, manualRow);
       showChosen();
 
       // 반 · 번호 · 별명

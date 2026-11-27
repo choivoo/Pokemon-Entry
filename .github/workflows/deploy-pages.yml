@@ -75,6 +75,8 @@ jobs:
           # 랭킹 서버(Supabase) 주소와 공개 키: 저장소 Settings → Secrets and variables → Actions → Variables 에서 설정
           VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+          # (선택) 학교 검색 인증키: 있으면 한 번에 많은 학교를 불러온다. 없어도 "더 보기"로 검색할 수 있다.
+          VITE_NEIS_KEY: ${{ vars.NEIS_KEY }}
       - name: 용량 확인 (GitHub Pages 최대 1GB)
         run: du -sh dist
       - uses: actions/configure-pages@v5

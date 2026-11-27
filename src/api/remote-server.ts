@@ -5,7 +5,7 @@
  * 응답은 원본 서버와 같은 모양으로 돌려줘서 원본 회원가입·로그인·세이브 화면이 그대로 동작하고,
  * 계정과 세이브, 학습 설정, 점수가 모든 기기에서 같아진다.
  */
-import { dailySeedFor } from "#api/local-server";
+import { dailySeedFor, exportLocalAccount } from "#api/local-server";
 import { rpc } from "#app/edu/backend";
 import { type AccountData, applyAccountData } from "#app/edu/sync";
 
@@ -53,6 +53,34 @@ function errorResponse(error = "error"): Response {
 }
 
 /**
+ * 서버를 연결하기 전에 이 브라우저에서 만든 계정을 서버로 옮긴다.
+ * 이 기기의 계정과 비밀번호가 맞으면 서버에 같은 이름으로 가입시키고 세이브를 올린 뒤 로그인 결과를 돌려준다.
+ * 옮길 계정이 없거나 비밀번호가 다르면 `null`.
+ */
+async function migrateLocalAccount(username: string, password: string): Promise<Reply | null> {
+  const local = await exportLocalAccount(username, password);
+  if (!local) {
+    return null;
+  }
+  const reg = await rpc<Reply>("edu_register", { p_username: local.username, p_password: password });
+  if (!reg.ok) {
+    return null;
+  }
+  const login = await rpc<Reply>("edu_login", { p_username: local.username, p_password: password });
+  if (!login.ok) {
+    return null;
+  }
+  const token = String(login.token);
+  if (local.system) {
+    await rpc<Reply>("edu_save_put", { p_token: token, p_kind: "system", p_slot: 0, p_data: local.system });
+  }
+  for (const { slot, data } of local.sessions) {
+    await rpc<Reply>("edu_save_put", { p_token: token, p_kind: "session", p_slot: slot, p_data: data });
+  }
+  return login;
+}
+
+/**
  * 게임의 API 요청 하나를 서버 함수로 처리한다.
  * @param path - 예: `/account/login`, `/savedata/session/get?slot=0&...`
  */
@@ -70,7 +98,13 @@ export async function remoteServerFetch(path: string, init: Init): Promise<Respo
       return r.ok ? respond("") : errorResponse(r.error);
     }
     case "/account/login": {
-      const r = await rpc<Reply>("edu_login", { p_username: body.username ?? "", p_password: body.password ?? "" });
+      const username = body.username ?? "";
+      const password = body.password ?? "";
+      let r = await rpc<Reply>("edu_login", { p_username: username, p_password: password });
+      if (!r.ok && r.error === "account doesn't exist") {
+        // 서버를 연결하기 전에 이 기기에서 만든 계정이면 서버로 옮기고 이어서 로그인한다
+        r = (await migrateLocalAccount(username, password)) ?? r;
+      }
       return r.ok ? respond({ token: r.token }) : errorResponse(r.error);
     }
     case "/game/titlestats": {

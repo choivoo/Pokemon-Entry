@@ -14,14 +14,43 @@ export function isSafeUrl(url: string): boolean {
   return url.startsWith("https://") || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(url);
 }
 
-/** 서버가 설정되어 있는지 */
-export function isBackendOnline(): boolean {
-  return isSafeUrl(backend.url()) && backend.key().length > 20;
+/** `eyJ…` 로 시작하는 JWT 모양의 키인지 (예전 방식의 anon 키) */
+function isJwt(key: string): boolean {
+  return /^eyJ[\w-]+\.[\w-]+\.[\w-]+$/.test(key);
 }
 
+/**
+ * 비밀 키(service_role, sb_secret_…)는 절대 웹사이트에 넣으면 안 된다.
+ * 실수로 넣었으면 사용을 거부해서 키가 퍼지는 것을 막는다.
+ */
+export function isSecretKey(key: string): boolean {
+  if (key.startsWith("sb_secret_")) {
+    return true;
+  }
+  if (!isJwt(key)) {
+    return false;
+  }
+  try {
+    const payload = JSON.parse(atob(key.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return payload?.role === "service_role";
+  } catch {
+    return false;
+  }
+}
+
+/** 서버가 설정되어 있는지 (주소가 안전하고, 공개 키이고, 비밀 키가 아닌 경우) */
+export function isBackendOnline(): boolean {
+  const key = backend.key();
+  return isSafeUrl(backend.url()) && key.length > 20 && !isSecretKey(key);
+}
+
+/**
+ * 서버에 보낼 헤더.
+ * 예전 anon 키(JWT)는 Authorization 에도 같이 보내고, 새 공개 키(sb_publishable_…)는 apikey 로만 보낸다.
+ */
 export const authHeaders = (extra: Record<string, string> = {}): Record<string, string> => ({
   apikey: backend.key(),
-  Authorization: `Bearer ${backend.key()}`,
+  ...(isJwt(backend.key()) ? { Authorization: `Bearer ${backend.key()}` } : {}),
   "Content-Type": "application/json",
   ...extra,
 });

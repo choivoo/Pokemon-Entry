@@ -53,7 +53,7 @@ describe("학습 설정 화면", () => {
     type(setup('input[aria-label="학교 이름"]') as HTMLInputElement, "테스트초");
     clickText(SETUP_OVERLAY_ID, "찾기");
     await flush();
-    expect(search).toHaveBeenCalledWith("테스트초");
+    expect(search).toHaveBeenCalledWith("테스트초", { region: "", page: 1 });
     const results = all(SETUP_OVERLAY_ID, ".su-res");
     expect(results).toHaveLength(2);
     expect(results[1].textContent).toContain("예시시");
@@ -68,6 +68,38 @@ describe("학습 설정 화면", () => {
     const profile = (await p) as LearnerProfile;
     expect(profile.school?.code).toBe("U10:2222222");
     expect(profile).toMatchObject({ className: "여울반", studentNo: 6 });
+  });
+
+  it("지역을 고르면 그 지역으로 찾고, '더 보기'로 다음 쪽을 이어 받는다", async () => {
+    const mk = (n: number): School => ({
+      code: `T10:${n}`,
+      name: `테스트${n}초등학교`,
+      region: "테스트시",
+      address: "가나구",
+    });
+    const search = vi
+      .fn()
+      .mockResolvedValueOnce({ schools: [mk(1), mk(2), mk(3), mk(4), mk(5)], total: 7, page: 1, rows: 5 })
+      .mockResolvedValueOnce({ schools: [mk(6), mk(7)], total: 7, page: 2, rows: 2 });
+    pending.push(showSetup({ search }));
+    (setup('select[aria-label="지역"]') as HTMLSelectElement).value = "T10";
+    type(setup('input[aria-label="학교 이름"]') as HTMLInputElement, "테스트");
+    clickText(SETUP_OVERLAY_ID, "찾기");
+    await flush();
+    expect(search).toHaveBeenLastCalledWith("테스트", { region: "T10", page: 1 });
+    expect(all(SETUP_OVERLAY_ID, ".su-res")).toHaveLength(5);
+    expect(setup(".ek-note").textContent).toContain("7곳 중 5곳");
+    clickText(SETUP_OVERLAY_ID, "더 보기");
+    await flush();
+    expect(search).toHaveBeenLastCalledWith("테스트", { region: "T10", page: 2 });
+    expect(all(SETUP_OVERLAY_ID, ".su-res")).toHaveLength(7);
+    expect(setup(".ek-note").textContent).toContain("7곳을 찾았어요");
+    expect(all(SETUP_OVERLAY_ID, "button").find(b => b.textContent?.startsWith("더 보기"))!.style.display).toBe("none");
+    // 새로 찾으면 처음부터
+    clickText(SETUP_OVERLAY_ID, "찾기");
+    await flush();
+    expect(search).toHaveBeenCalledTimes(3);
+    expect(search).toHaveBeenLastCalledWith("테스트", { region: "T10", page: 1 });
   });
 
   it("검색이 안 되면 직접 입력할 수 있다", async () => {
