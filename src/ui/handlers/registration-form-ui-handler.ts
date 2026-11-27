@@ -1,12 +1,10 @@
 import { pokerogueApi } from "#api/api";
 import { globalScene } from "#app/global-scene";
-import { TextStyle } from "#enums/text-style";
 import { UiMode } from "#enums/ui-mode";
 import type { LoginPhase } from "#phases/login-phase";
 import type { ModalConfig } from "#types/ui-types";
 import type { InputFieldConfig } from "#ui/form-modal-ui-handler";
 import { LoginRegisterInfoContainerUiHandler } from "#ui/login-register-info-container-ui-handler";
-import { addTextObject } from "#ui/text";
 import { fixedInt } from "#utils/common";
 import i18next from "i18next";
 
@@ -77,13 +75,6 @@ export class RegistrationFormUiHandler extends LoginRegisterInfoContainerUiHandl
 
   public override setup(): void {
     super.setup();
-
-    const label = addTextObject(10, 87, i18next.t("menu:registrationAgeWarning"), TextStyle.TOOLTIP_CONTENT, {
-      fontSize: "42px",
-      wordWrap: { width: 850 },
-    });
-
-    this.modalContainer.add(label);
   }
 
   public override show(args: [ModalConfig, ...any[]]): boolean {
