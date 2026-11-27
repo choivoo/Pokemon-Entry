@@ -8,10 +8,12 @@ type HTTP_URL = `http${"" | "s"}://${string}`;
 interface ImportMetaEnv {
   // TODO: There doesn't appear to be a way to override Vite's definition of MODE;
   // it still shows up as "string"...
-  readonly MODE: "development" | "beta" | "production" | "test" | "app";
+  readonly MODE: "development" | "beta" | "production" | "test" | "app" | "pages";
   readonly VITE_PORT?: `${number}`;
   readonly VITE_BYPASS_LOGIN?: "0" | "1";
   readonly VITE_BYPASS_TUTORIAL?: "0" | "1";
+  /** "1"이면 서버 대신 브라우저 안의 계정 서버(IndexedDB)를 쓴다 (GitHub Pages 배포용) */
+  readonly VITE_LOCAL_SERVER?: "0" | "1";
   readonly VITE_API_BASE_URL?: HTTP_URL;
   readonly VITE_SERVER_URL?: HTTP_URL;
   readonly VITE_DISCORD_CLIENT_ID?: string;

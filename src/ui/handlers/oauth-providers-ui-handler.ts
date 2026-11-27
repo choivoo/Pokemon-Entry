@@ -1,4 +1,5 @@
 import { globalScene } from "#app/global-scene";
+import { useLocalServer } from "#constants/app-constants";
 import { TextStyle } from "#enums/text-style";
 import { LoginRegisterInfoContainerUiHandler } from "#ui/login-register-info-container-ui-handler";
 import { addTextObject } from "#ui/text";
@@ -69,6 +70,11 @@ export abstract class OAuthProvidersUiHandler extends LoginRegisterInfoContainer
   }
 
   protected processExternalProvider(): void {
+    // 브라우저 안 계정 서버에서는 Discord/Google 로그인을 쓸 수 없으므로 숨긴다
+    if (useLocalServer) {
+      this.externalPartyContainer.setVisible(false);
+      return;
+    }
     const titleX = 22;
     this.externalPartyTitle
       .setText(i18next.t("menu:orUse"))

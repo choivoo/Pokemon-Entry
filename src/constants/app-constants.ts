@@ -20,6 +20,12 @@ export const IS_TEST = import.meta.env.MODE === "test";
 
 export const bypassLogin = import.meta.env.VITE_BYPASS_LOGIN === "1";
 
+/**
+ * `true`이면 PokéRogue 서버 대신 브라우저 안의 계정 서버(회원가입·로그인·세이브를 IndexedDB에 저장)를 쓴다.
+ * GitHub Pages 처럼 서버가 없는 곳에 배포할 때 사용한다.
+ */
+export const useLocalServer = import.meta.env.VITE_LOCAL_SERVER === "1";
+
 /** The ratio at which PRSFX sound volumes are played is adjusted since they are sigificantly louder. */
 export const PRSFX_SOUND_ADJUSTMENT_RATIO = 0.5;
 

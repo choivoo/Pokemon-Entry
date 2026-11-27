@@ -3,7 +3,7 @@ import { loggedInUser, updateUserInfo } from "#app/account";
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { handleTutorial, Tutorial } from "#app/tutorial";
-import { bypassLogin, isApp, isBeta, isDev } from "#constants/app-constants";
+import { bypassLogin, isApp, isBeta, isDev, useLocalServer } from "#constants/app-constants";
 import { AdminMode, getAdminModeName } from "#enums/admin-mode";
 import { Button } from "#enums/buttons";
 import { GameDataType } from "#enums/game-data-type";
@@ -607,6 +607,7 @@ export class MenuUiHandler extends OptionSelectUiHandler {
       case MenuOptions.MANAGE_DATA:
         if (
           !bypassLogin
+          && !useLocalServer
           && !this.manageDataConfig.options.some(
             o =>
               o.label === i18next.t("menuUiHandler:linkDiscord")

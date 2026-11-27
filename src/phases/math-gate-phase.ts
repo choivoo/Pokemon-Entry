@@ -1,6 +1,7 @@
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { showMathGate } from "#app/math/math-gate-ui";
+import type { RewardMode } from "#app/math/math-reward-ui";
 import { toMathLang } from "#app/math/math-text";
 import { activeOverrides as Overrides } from "#app/overrides";
 import { Phase } from "#app/phase";
@@ -22,6 +23,39 @@ export function resetMathGateState(): void {
   mathGateState.seed = "";
   mathGateState.clearedWave = -1;
   mathGateState.streak = 0;
+}
+
+const REWARD_MODES: readonly [RewardMode, number][] = [
+  ["roulette", 40],
+  ["box", 30],
+  ["choice", 30],
+];
+
+/**
+ * 정답 후 받을 보상 기회를 정한다.
+ * - 정답: 1번 (룰렛 / 보물 상자 / 보상 고르기 중 무작위)
+ * - 힌트 없이 한 번에 정답: +1번
+ * - 연속 정답 5번마다: 잭팟 룰렛 +1번
+ */
+export function planRewards(perfect: boolean, streak: number, rng: () => number = Math.random): RewardMode[] {
+  const pickMode = (): RewardMode => {
+    let roll = rng() * 100;
+    for (const [mode, weight] of REWARD_MODES) {
+      roll -= weight;
+      if (roll < 0) {
+        return mode;
+      }
+    }
+    return "roulette";
+  };
+  const modes: RewardMode[] = [pickMode()];
+  if (perfect) {
+    modes.push(pickMode());
+  }
+  if (perfect && streak > 0 && streak % 5 === 0) {
+    modes.push("jackpot");
+  }
+  return modes;
 }
 
 /** 관문 화면 함수 (테스트에서 바꿔 끼울 수 있도록 객체로 둔다) */
@@ -64,7 +98,6 @@ export class MathGatePhase extends Phase {
       .getPlayerParty()
       .map(p => p.getNameToRender({ useIllusion: false }))
       .filter(n => !!n);
-    const bonus = Math.max(100, Math.round(wave * 15));
 
     mathGateHooks
       .show({
@@ -72,7 +105,7 @@ export class MathGatePhase extends Phase {
         lang: toMathLang(i18next.resolvedLanguage),
         names,
         streak: mathGateState.streak,
-        bonus,
+        bonus: 1,
         playSound: key => {
           try {
             switch (key) {
@@ -96,11 +129,9 @@ export class MathGatePhase extends Phase {
       })
       .then(result => {
         mathGateState.clearedWave = wave;
-        if (result.perfect) {
-          mathGateState.streak++;
-          globalScene.addMoney(bonus);
-        } else {
-          mathGateState.streak = 0;
+        mathGateState.streak = result.perfect ? mathGateState.streak + 1 : 0;
+        for (const mode of planRewards(result.perfect, mathGateState.streak)) {
+          globalScene.phaseManager.unshiftNew("MathRewardPhase", mode, Math.min(mathGateState.streak, 10) * 0.15);
         }
         this.end();
       });

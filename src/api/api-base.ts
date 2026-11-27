@@ -1,3 +1,4 @@
+import { localServerFetch } from "#api/local-server";
 import { SESSION_ID_COOKIE_NAME } from "#app/constants";
 import { version } from "#package.json";
 import { getCookie } from "#utils/cookies";
@@ -91,6 +92,11 @@ export abstract class ApiBase {
     // can't import `isLocal` due to circular import issues
     if (import.meta.env.MODE === "development") {
       console.log(`Sending ${config.method} request to: `, this.base + path, config);
+    }
+
+    // 수학 포켓로그: 서버 대신 브라우저 안의 계정 서버로 보낸다 (GitHub Pages 배포)
+    if (import.meta.env.VITE_LOCAL_SERVER === "1") {
+      return await localServerFetch(path, config as Parameters<typeof localServerFetch>[1]);
     }
 
     // TODO: need some sort of error handling here?

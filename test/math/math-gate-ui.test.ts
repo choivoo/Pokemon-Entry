@@ -51,7 +51,7 @@ describe("수학 관문 화면", () => {
     const { promise, first, sounds } = open(2);
     type(first.answer);
     expect(document.querySelector(".mg-msg")!.textContent).toContain("4층이 열렸어요");
-    expect(document.querySelector(".mg-msg")!.textContent).toContain("보너스 ₽100");
+    expect(document.querySelector(".mg-msg")!.textContent).toContain("보상 기회 +1");
     await vi.advanceTimersByTimeAsync(2000);
     await expect(promise).resolves.toEqual({ perfect: true, misses: 0, hints: 0 });
     expect(document.getElementById(OVERLAY_ID)).toBeNull();
