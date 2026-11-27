@@ -5,6 +5,7 @@ import { PokeballType } from "#enums/pokeball";
 import { SpeciesId } from "#enums/species-id";
 import type { CommandPhase } from "#phases/command-phase";
 import { mathGateHooks, resetMathGateState } from "#phases/math-gate-phase";
+import { MathRewardPhase } from "#phases/math-reward-phase";
 import { GameManager } from "#test/framework/game-manager";
 import Phaser from "phaser";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -28,6 +29,10 @@ describe("수학 관문 - 게임 흐름", () => {
       gate.calls.push(opts.wave);
       return Promise.resolve({ perfect: gate.perfect, misses: gate.perfect ? 0 : 1, hints: 0 });
     });
+    // 이 파일은 관문 흐름만 본다: 보상 단계는 바로 끝낸다 (보상은 math-reward-flow.test.ts)
+    vi.spyOn(MathRewardPhase.prototype, "start").mockImplementation(function (this: MathRewardPhase) {
+      this.end();
+    });
     game = new GameManager(phaserGame);
     game.override
       .mathGate(true)
@@ -42,36 +47,30 @@ describe("수학 관문 - 게임 흐름", () => {
     vi.restoreAllMocks();
   });
 
-  it("승리하면 관문 → 아이템 선택 → 다음 층 전투 순서로 진행되고, 한 번에 맞히면 보너스를 받는다", async () => {
+  it("승리하면 관문 → 보상 → 아이템 선택 → 다음 층 전투 순서로 진행되고, 한 번에 맞히면 보상 기회가 2번이다", async () => {
     await game.classicMode.startBattle(SpeciesId.PIKACHU);
-    const order: string[] = [];
-
+    const unshift = vi.spyOn(game.scene.phaseManager, "unshiftNew");
     game.move.use(MoveId.SPLASH);
     await game.doKillOpponents();
     await game.phaseInterceptor.to("MathGatePhase", false);
-    order.push("MathGatePhase");
-    const moneyBefore = game.scene.money;
+    await game.phaseInterceptor.to("MathRewardPhase", false);
     await game.phaseInterceptor.to("SelectModifierPhase", false);
-    order.push("SelectModifierPhase");
-
     expect(gate.calls).toEqual([3]);
-    expect(game.scene.money).toBe(moneyBefore + Math.max(100, 3 * 15));
+    expect(unshift.mock.calls.filter(c => c[0] === "MathRewardPhase")).toHaveLength(2);
 
     await game.toNextWave();
     expect(game.scene.currentBattle.waveIndex).toBe(4);
     expect(gate.calls).toEqual([3]); // 한 층에 한 번만
-    expect(order).toEqual(["MathGatePhase", "SelectModifierPhase"]);
   });
 
-  it("틀린 적이 있으면 보너스가 없다", async () => {
+  it("틀린 적이 있으면 보상 기회는 1번", async () => {
     gate.perfect = false;
     await game.classicMode.startBattle(SpeciesId.PIKACHU);
+    const unshift = vi.spyOn(game.scene.phaseManager, "unshiftNew");
     game.move.use(MoveId.SPLASH);
     await game.doKillOpponents();
-    await game.phaseInterceptor.to("MathGatePhase", false);
-    const moneyBefore = game.scene.money;
     await game.phaseInterceptor.to("SelectModifierPhase", false);
-    expect(game.scene.money).toBe(moneyBefore);
+    expect(unshift.mock.calls.filter(c => c[0] === "MathRewardPhase")).toHaveLength(1);
   });
 
   it("포켓몬을 잡아서 끝나도 다음 층 전에 관문이 나온다", async () => {

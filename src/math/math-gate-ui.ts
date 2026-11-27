@@ -36,7 +36,7 @@ export interface MathGateResult {
 }
 
 const CSS = `
-#${OVERLAY_ID}{--s:min(1px,0.118vh,0.15vw);--f:1;position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;
+#${OVERLAY_ID}{--s:min(1px,0.112vh,0.15vw);--f:1;position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;
   background:radial-gradient(ellipse at center,rgba(24,28,56,.72),rgba(6,6,16,.9));
   font-family:emerald,pkmnems,"Noto Sans KR","Malgun Gothic",sans-serif;color:#f8f8f8;line-height:1;
   -webkit-user-select:none;user-select:none;touch-action:manipulation;animation:mg-fade .25s ease-out}
@@ -52,13 +52,15 @@ const CSS = `
 #${OVERLAY_ID} .mg-headtext{flex:1;min-width:0}
 #${OVERLAY_ID} .mg-title{font-size:calc(52 * var(--s) * var(--f));color:#f8d030;text-shadow:calc(3 * var(--s)) calc(3 * var(--s)) 0 #685010}
 #${OVERLAY_ID} .mg-sub{font-size:calc(28 * var(--s) * var(--f));color:#b8c8f8;margin-top:calc(4 * var(--s))}
-#${OVERLAY_ID} .mg-tags{display:flex;flex-direction:column;align-items:flex-end;gap:calc(4 * var(--s));font-size:calc(30 * var(--s) * var(--f))}
+#${OVERLAY_ID} .mg-tags{display:flex;flex-wrap:wrap;justify-content:flex-end;margin-top:calc(8 * var(--s));gap:calc(4 * var(--s));font-size:calc(30 * var(--s) * var(--f))}
 #${OVERLAY_ID} .mg-tag{background:#404868;border-radius:calc(6 * var(--s));padding:calc(3 * var(--s)) calc(10 * var(--s));white-space:nowrap}
 #${OVERLAY_ID} .mg-tag .star{color:#f8d030}
 #${OVERLAY_ID} .mg-tag.streak{background:#b04818}
+#${OVERLAY_ID} .mg-tag.cat{background:#2a7a58}
+#${OVERLAY_ID} .mg-q.long{font-size:calc(34 * var(--s) * var(--f))}
 #${OVERLAY_ID} .mg-q{white-space:pre-line;font-size:calc(42 * var(--s) * var(--f));line-height:1.15;color:#303030;background:#f8f8f8;
-  border:calc(5 * var(--s)) solid #d8a848;border-radius:calc(10 * var(--s));padding:calc(14 * var(--s));margin:calc(12 * var(--s)) 0;
-  min-height:calc(160 * var(--s));display:flex;align-items:center;justify-content:center;text-align:center;
+  border:calc(5 * var(--s)) solid #d8a848;border-radius:calc(10 * var(--s));padding:calc(12 * var(--s));margin:calc(8 * var(--s)) 0 calc(10 * var(--s));
+  min-height:calc(150 * var(--s));display:flex;align-items:center;justify-content:center;text-align:center;
   text-shadow:calc(2 * var(--s)) calc(2 * var(--s)) 0 #d0d0c8}
 #${OVERLAY_ID} .box{display:inline-block;min-width:1.1em;height:1em;border:calc(4 * var(--s)) solid #e05030;border-radius:calc(4 * var(--s));
   vertical-align:-.12em;background:#fff0e8;color:#303030;animation:mg-pulse 1.2s ease-in-out infinite}
@@ -134,8 +136,8 @@ export function showMathGate(opts: MathGateOptions): Promise<MathGateResult> {
         <div class="mg-head">
           <div class="mg-lock" aria-hidden="true">🔒</div>
           <div class="mg-headtext"><div class="mg-title"></div><div class="mg-sub"></div></div>
-          <div class="mg-tags"></div>
         </div>
+        <div class="mg-tags"></div>
         <div class="mg-q" aria-live="polite"></div>
         <div class="mg-display"></div>
         <div class="mg-msg" aria-live="assertive"></div>
@@ -190,12 +192,18 @@ export function showMathGate(opts: MathGateOptions): Promise<MathGateResult> {
     };
 
     const renderQuestion = () => {
-      $(".mg-q").replaceChildren(richText(text.question));
+      const q = $(".mg-q");
+      q.classList.toggle("long", text.question.split("\n").length > 4);
+      q.replaceChildren(richText(text.question));
     };
 
     const renderTags = () => {
       const tags = $(".mg-tags");
       tags.innerHTML = "";
+      const cat = document.createElement("span");
+      cat.className = "mg-tag cat";
+      cat.textContent = text.category;
+      tags.appendChild(cat);
       const lv = document.createElement("span");
       lv.className = "mg-tag";
       lv.append(`${ui(lang, "level")} `);

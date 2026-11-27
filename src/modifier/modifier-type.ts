@@ -1349,7 +1349,7 @@ class TempStatStageBoosterModifierTypeGenerator extends ModifierTypeGenerator {
  * encapsulates the logic for weighting the most useful held item from
  * the current list of {@linkcode items}.
  */
-class SpeciesStatBoosterModifierTypeGenerator extends ModifierTypeGenerator {
+export class SpeciesStatBoosterModifierTypeGenerator extends ModifierTypeGenerator {
   /** Object comprised of the currently available species-based stat boosting held items */
   public static readonly items = {
     LIGHT_BALL: {

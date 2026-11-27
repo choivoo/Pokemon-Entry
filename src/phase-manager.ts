@@ -49,6 +49,7 @@ import { LevelUpPhase } from "#phases/level-up-phase";
 import { LoadMoveAnimPhase } from "#phases/load-move-anim-phase";
 import { LoginPhase } from "#phases/login-phase";
 import { MathGatePhase } from "#phases/math-gate-phase";
+import { MathRewardPhase } from "#phases/math-reward-phase";
 import { MessagePhase } from "#phases/message-phase";
 import { ModifierRewardPhase } from "#phases/modifier-reward-phase";
 import { MoneyRewardPhase } from "#phases/money-reward-phase";
@@ -161,6 +162,7 @@ const PHASES = Object.freeze({
   LoadMoveAnimPhase,
   LoginPhase,
   MathGatePhase,
+  MathRewardPhase,
   MessagePhase,
   ModifierRewardPhase,
   MoneyRewardPhase,
