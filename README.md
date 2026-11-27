@@ -1,29 +1,42 @@
-# 수학 포켓로그 (Math PokéRogue)
+<!--
+SPDX-FileCopyrightText: 2024-2026 Pagefault Games
 
-포케로그(PokéRogue) 베타 소스에 **비례식 · 비례배분 문제**를 넣은 수학 로그라이크입니다.
+SPDX-License-Identifier: CC-BY-NC-SA-4.0
+-->
 
-## 게임 흐름
-1. 포켓몬과 전투해서 승리
-2. 🔒 **수학 관문** — 비례식/비례배분 문제를 풀어야 다음 층이 열림
-3. 정답 → **다음 층 개방** → 보상 아이템 선택
-4. 다음 포켓몬과 전투 … (기본 포케로그 흐름 그대로)
+<div align="center"><picture><img src="https://github.com/pagefaultgames/pokerogue-assets/blob/beta/images/logo.png?raw=true" width="300" alt="PokéRogue"></picture>
 
-- 오답: 힌트 버튼 사용 가능, 3번 틀리면 풀이를 보여주고 새 문제 출제
-- 힌트 없이 한 번에 정답: 보너스 머니
-- 난이도는 층이 올라갈수록 상승: 비례식 → 2분할 비례배분 → 3분할 → 비와 차가 주어진 문제
+[![Discord Static Badge](https://img.shields.io/badge/Community_Discord-blurple?style=flat&logo=discord&logoSize=auto&labelColor=white&color=5865F2)](https://discord.gg/pokerogue)
+[![Test Coverage Endpoint Badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Bertie690/9cdfc49361824d1d5a57b7e8b38855d8/raw/coverage-badge.json)](https://github.com/pagefaultgames/pokerogue/actions/workflows/tests.yml) \
+[![Docs Coverage Static Badge](https://pagefaultgames.github.io/pokerogue/beta/coverage.svg)](https://pagefaultgames.github.io/pokerogue/beta)
+[![Biome Linting Static Badge](https://img.shields.io/badge/Linted_with-Biome-60a5fa?style=flat&logo=biome)](https://biomejs.dev)
+[![GNU AGPLv3 License Static Badge](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+</div>
 
-## 실행
-```bash
-./setup-assets.sh        # 원본 에셋(약 830MB) 다운로드
-pnpm install
-pnpm start:dev           # 개발 서버
-```
+PokéRogue is a browser based Pokémon fangame heavily inspired by the roguelite genre. Battle endlessly while gathering stacking items, exploring many different biomes, fighting trainers, bosses, and more!
 
-## 변경된 파일
-- `src/math/math-problems.ts` — 문제 생성기 (4가지 유형, 난이도 1~4)
-- `src/phases/math-gate-phase.ts` — 수학 관문 단계 (오버레이 UI)
-- `src/phases/victory-phase.ts` — 승리 후 `MathGatePhase` 삽입
-- `src/phase-manager.ts` — 단계 등록
-- `test/math/*` — 테스트
+# Contributing
 
-원본 라이선스(AGPL-3.0 등)는 `LICENSE`를 따릅니다.
+See [CONTRIBUTING.md](./CONTRIBUTING.md), this includes instructions on how to set up the game locally.
+
+# 📝 Credits
+
+> If this project contains assets you have produced and you do not see your name, **please** reach out, either [here on GitHub](https://github.com/pagefaultgames/pokerogue/issues/new) or via [Discord](https://discord.gg/pokerogue).
+
+Thank you to all the wonderful people that have contributed to the PokéRogue project! You can find the credits [here](./CREDITS.md).
+
+# Licensing
+
+This repository seeks to be [REUSE compliant](https://reuse.software/): copyright and/or licensing information for each file is stored
+either in the file itself or in an associated `REUSE.toml` file.
+
+The full licensing information for each file can be found by utilizing [REUSE's tooling](https://github.com/fsfe/reuse-tool), such as via `reuse spdx`. \
+An abbreviated summary of said information is as follows:
+- All source code belonging to the project, unless otherwise noted, is licensed under [AGPL-v3.0-only](LICENSES/AGPL-3.0-only.txt).
+- All forms of documentation (both Markdown files[^1] and any comments explicitly documenting source code) are licensed under [CC-BY-NC-SA-4.0](LICENSES/CC-BY-NC-SA-4.0.txt).
+- Auto-generated files produced by external tools or files of insignificant originality are not copyrighted and are licensed under [CC0-1.0](LICENSES/CC0-1.0.txt).
+- To the extent that the assets we provide are [licensable and applicable](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en#ref-exception-or-limitation), they are licensed under [CC-BY-NC-SA-4.0](LICENSES/CC-BY-NC-SA-4.0.txt) unless otherwise noted.
+  Exceptions can be found in associated `REUSE.toml` files.
+  - ⚠️ Files in `assets/` that are not explicitly licensed via `REUSE.toml` files should be considered to have _no_ licensing / copyright information.
+
+[^1]: Including this README
