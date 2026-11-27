@@ -34,6 +34,8 @@
 | 학교 | 교육부 NEIS 학교 검색으로 찾기 (안 되면 이름 직접 입력) |
 | 반 | 숫자(`1`~`6`) 또는 이름(`여울반`, `새암반` …) |
 | 번호 · 별명 | 번호 1~60, 별명은 선택 (실명 말고 별명!) |
+| 연습할 단원 | 우리 반 교과서와 단원 구성이 다르면 그 학기 단원 중에서 연습할 단원만 골라요 (고르지 않으면 전체) |
+| 랭킹 동의 | 학교·반·번호·별명·점수가 랭킹에 보이는 것에 선생님·보호자와 함께 동의해야 점수가 올라가요 |
 
 ### 난이도
 
@@ -75,15 +77,24 @@
 보상은 원본 게임 아이템 데이터로 만들며(기술머신 322 · 폼체인지 158 · 일반 71 · 진화 44 · 민트 25 · 몬스터볼 25 · 테라피스 19 · 타입강화 18 · 아이템 선택 찬스 12 · 나무열매 11 · 돈 8 · 룰렛권 4 …),
 지금 파티가 쓸 수 없는 것은 나오지 않습니다. 난이도가 높고 연속 정답이 길수록 좋은 등급이 잘 나옵니다.
 
-## 회원가입 · 로그인
+## 회원가입 · 로그인 · 기기 사이 동기화
 
 원본 포케로그의 **회원가입 · 로그인 · 로그아웃 · 비밀번호 변경 · 세이브 불러오기/이어하기** 화면과 흐름이 그대로 동작합니다.
+Discord/Google 로그인, 커뮤니티 메뉴 등 **외부로 나가는 링크는 숨겼습니다.**
 
-- GitHub Pages 에는 서버를 둘 수 없어서, 게임 안에 **브라우저 계정 서버**(`src/api/local-server.ts`)를 넣었습니다.
-  계정과 세이브는 그 브라우저의 IndexedDB 에 저장됩니다. 비밀번호는 PBKDF2(SHA-256, 10만 번)로 해시합니다.
+계정을 어디에 저장하느냐는 서버 연결 여부로 정해집니다.
+
+| | 서버(Supabase) 연결 **안 함** | 서버(Supabase) 연결 **함** (권장) |
+| --- | --- | --- |
+| 계정 · 세이브 | 이 브라우저(IndexedDB)에만 | **서버에 저장 → 어느 기기에서든 같은 계정** |
+| 학습 설정 · 점수 | 이 브라우저에만 | 계정에 저장돼서 다른 기기에서도 그대로 |
+| 랭킹 | 내 기록만 | 같은 반 · 학년 · 학교 친구들과 순위 비교 |
+
+- 서버 모드에서는 비밀번호를 **bcrypt 로 암호화**해서 저장하고(서버도 원래 비밀번호를 모릅니다), 로그인하면 30일짜리 임시 열쇠를 받습니다. 비밀번호를 5번 틀리면 10분 동안 잠깁니다.
+- 계정·세이브 테이블은 인터넷에서 직접 읽을 수 없고, 서버 함수(`edu_*`)로만 다룹니다. (`supabase/schema.sql`)
 - 아이디: 한글·영문·숫자·`_`·`-` 2~16자, 비밀번호: 6자 이상.
-- **같은 브라우저(같은 기기)에서만** 계정이 유지됩니다. 다른 기기에서 같은 계정을 쓰려면 실제 서버가 필요합니다.
-- Discord/Google 로그인, 커뮤니티 메뉴 등 **외부로 나가는 링크는 숨겼습니다.**
+- 인터넷이 잠깐 끊겨서 못 올린 점수는 기기에 보관했다가 연결되면 자동으로 올립니다.
+- ⚠️ 서버를 연결하기 **전에** 브라우저 안에 만든 계정은 서버에 없어서, 서버를 연결한 뒤에는 다시 가입해야 합니다.
 
 ## 🏆 랭킹과 학교 연동
 
@@ -92,27 +103,32 @@
 - 점수 = 문제 수준 × 10 + 한 번에 정답 5 + 연속 정답(최대 20), 거기에 난이도 배율. 문제를 풀 때마다 올라갑니다.
 - 학교는 교육부 **NEIS 교육정보 개방 포털** 학교기본정보 API 로 찾고(초등학교만), 같은 이름은 지역·주소로 구분합니다.
   검색이 안 되면 학교 이름을 직접 입력할 수 있습니다. (이 경우 같은 이름을 똑같이 적은 친구들끼리 한 학교로 묶여요)
+- **랭킹에 동의한 계정만** 점수가 올라갑니다. (학습 설정의 동의 체크)
 
-### 랭킹 서버 연결하기 (한 번만)
+### 점수 조작 막기
 
-모든 친구가 같은 순위표를 보려면 공용 저장소가 필요해서 무료 서버 **Supabase** 를 씁니다. 연결 전에는 "이 기기의 내 기록"만 보입니다.
+점수는 반드시 **로그인한 본인이 서버 함수로만** 올릴 수 있고, 서버가 다음을 막습니다.
+로그인하지 않은 요청 · 랭킹 동의가 없는 계정 · 한 번에 250점 초과 · 3초 안의 연속 요청 · 점수가 줄어드는 갱신.
+(완벽한 방지는 아니에요. 마음먹고 프로그램으로 계속 보내면 천천히 올릴 수는 있으니, 같은 반 친구끼리 즐기는 용도로 쓰세요.)
 
-1. <https://supabase.com> 에서 무료 프로젝트를 만듭니다.
-2. **SQL Editor** 에 [`supabase/schema.sql`](supabase/schema.sql) 내용을 붙여 넣고 **Run**.
+### 서버 연결하기 (한 번만, 약 10분)
+
+1. <https://supabase.com> 에서 무료 프로젝트를 만듭니다. (Region 은 Northeast Asia (Seoul) 를 추천)
+2. 왼쪽 **SQL Editor → New query** 에 [`supabase/schema.sql`](supabase/schema.sql) 내용을 전부 붙여 넣고 **Run** 을 누릅니다.
 3. **Project Settings → API** 에서 `Project URL` 과 `anon public` 키를 복사합니다.
-4. 이 저장소 **Settings → Secrets and variables → Actions → Variables** 에 두 개를 만듭니다.
-   - `SUPABASE_URL` = Project URL
+4. 이 저장소 **Settings → Secrets and variables → Actions → Variables** 탭에서 변수 두 개를 만듭니다.
+   - `SUPABASE_URL` = Project URL (`https://….supabase.co`)
    - `SUPABASE_ANON_KEY` = anon public 키 (공개되어도 되는 키입니다. `service_role` 키는 **절대 넣지 마세요**)
-5. Actions 탭에서 배포를 다시 실행(Run workflow)하면 랭킹이 켜집니다.
+5. **Actions 탭 → 배포 워크플로 → Run workflow** 로 다시 배포하면 서버가 켜집니다.
 
-> ⚠️ 서버 없이 브라우저에서 점수를 올리는 방식이라, 마음먹으면 점수를 조작할 수 있습니다. 같은 반 친구들끼리 즐기는 용도로 쓰세요.
-> 점수가 줄어드는 갱신은 서버가 막고(`scores_guard`), 값의 범위도 제한합니다.
+서버가 연결되었는지는 새로 가입한 뒤 Supabase 의 **Table Editor → edu_users** 에 계정이 생겼는지 보면 됩니다.
 
 ## 개인정보
 
-수집하는 정보: 학교 이름, 학년, 반, 번호, 별명, 점수. **실명·연락처·사진은 받지 않습니다.**
-어린이가 쓰는 서비스라서 별명에 실명을 쓰지 않도록 안내하고, 학교에서 쓸 때는 선생님과 보호자의 동의를 받아 주세요.
-계정과 세이브는 기기(브라우저)에만 저장되고, 랭킹 서버에는 위 정보와 점수만 올라갑니다.
+수집하는 정보: 학교 이름, 학년, 반, 번호, 별명, 점수(그리고 게임 세이브). **실명·연락처·사진은 받지 않습니다.**
+어린이가 쓰는 서비스라서 별명에 실명을 쓰지 않도록 안내하고, 랭킹은 **동의 체크를 한 계정만** 올라갑니다.
+학교에서 쓸 때는 선생님과 보호자의 동의를 받아 주세요.
+서버를 연결하지 않으면 모든 정보가 그 기기(브라우저) 안에만 있습니다.
 
 ## GitHub Pages 배포
 
@@ -135,10 +151,14 @@ pnpm start:pages     # 배포와 같은 설정의 개발 서버 (http://localhos
 pnpm build:pages     # 배포용 빌드 → dist/
 ```
 
+서버(Supabase) 없이 계정 동기화까지 시험해 보려면, 내 컴퓨터의 PostgreSQL 에 `supabase/schema.sql` 을 적용하고
+`node scripts/dev/rpc-bridge.mjs` 를 켠 다음 `VITE_SUPABASE_URL=http://localhost:8788 VITE_SUPABASE_ANON_KEY=<40글자 이상 아무 글자>` 로 실행하면 됩니다.
+
 ## 테스트
 
 ```bash
 pnpm vitest run test/edu test/math   # 국영수 · 랭킹 · 계정 서버 테스트
+psql -f supabase/schema.sql && psql -f test/edu/sql/schema-test.sql   # 서버 함수 검사 (PostgreSQL, 배포할 때 자동 실행)
 pnpm test                            # 원본 게임 테스트 전체
 ```
 
@@ -155,16 +175,19 @@ pnpm test                            # 원본 게임 테스트 전체
 | `src/edu/select.ts` | 과목·학년·학기·난이도에 맞는 문제 뽑기 |
 | `src/edu/profile.ts`, `stats.ts` | 학습자 프로필(학교·반·번호), 내 기록 |
 | `src/edu/neis.ts` | 학교 검색 (NEIS) |
-| `src/edu/ranking.ts`, `ranking-ui.ts`, `supabase/schema.sql` | 랭킹 서버 연결과 순위표 화면 |
+| `src/edu/backend.ts`, `sync.ts` | 서버 연결, 기기 사이 동기화(학습 설정 · 점수) |
+| `src/edu/ranking.ts`, `ranking-ui.ts` | 점수 올리기(대기열 포함)와 순위표 화면 |
+| `supabase/schema.sql` | 서버(Supabase) 테이블과 함수: 계정 · 세이브 · 랭킹 · 점수 조작 방지 |
+| `scripts/dev/rpc-bridge.mjs` | 개발용: 내 컴퓨터의 PostgreSQL 로 서버 요청 전달 |
 | `src/edu/setup-ui.ts`, `ui-kit.ts` | 학습 설정 화면 |
 | `src/math/*` | 비례식·비례배분 20유형, 관문 화면(입력형·선택형·제한 시간), 보상 목록 735종과 보상 화면 |
 | `src/phases/math-gate-phase.ts`, `math-reward-phase.ts` | 관문·보상 단계 |
 | `src/phases/title-phase.ts` | 새 게임을 클래식 전용으로, 시작 전에 학습 설정 |
 | `src/ui/handlers/menu-ui-handler.ts` | 메뉴에 학습 설정 · 랭킹 추가, 외부 커뮤니티 링크 제거 |
 | `src/tutorial.ts`, `index.html` | 처음 접속 안내(외부 주소 제거), 제목 |
-| `src/api/local-server.ts` | 브라우저 계정 서버 |
+| `src/api/local-server.ts`, `remote-server.ts` | 브라우저 계정 서버 / 서버(Supabase) 계정 서버 |
 | `.env.pages`, `scripts/pages/*`, `.github/workflows/deploy-pages.yml` | GitHub Pages 배포 |
-| `test/edu/*`, `test/math/*` | 테스트 |
+| `test/edu/*`, `test/math/*`, `test/edu/sql/*` | 테스트 (서버 함수 검사 SQL 포함) |
 
 ## 라이선스
 

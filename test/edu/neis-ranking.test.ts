@@ -14,8 +14,6 @@ import {
   isRankingOnline,
   type RankRow,
   rankingHooks,
-  submitScore,
-  toRow,
   withRanks,
 } from "#app/edu/ranking";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -131,8 +129,6 @@ describe("랭킹", () => {
     localStorage.clear();
   });
 
-  const stats = { points: 1234, solved: 40, perfect: 20, bestWave: 12, bestStreak: 7, updatedAt: 1 };
-
   it("서버 설정이 없으면 오프라인", () => {
     rankingHooks.url = () => "";
     expect(isRankingOnline()).toBe(false);
@@ -140,47 +136,6 @@ describe("랭킹", () => {
     expect(isRankingOnline()).toBe(false);
     rankingHooks.url = () => "https://example.supabase.co";
     expect(isRankingOnline()).toBe(true);
-  });
-
-  it("서버에 올리는 행: 실명 없이 번호·별명만, 값 범위를 제한", () => {
-    const row = toRow(
-      { ...profile, nickname: "123456789012" },
-      "math",
-      { ...stats, points: 99_999_999 },
-      "uid-12345678",
-    );
-    expect(row).toMatchObject({
-      uid: "uid-12345678",
-      subject: "math",
-      school_code: "T10:1234567",
-      grade: 6,
-      class_name: "여울반",
-      student_no: 6,
-      points: 10_000_000,
-    });
-    expect(row.nickname).toHaveLength(8);
-    expect(Object.keys(row)).not.toContain("name");
-  });
-
-  it("점수 올리기: upsert 주소와 헤더", async () => {
-    const fn = vi.fn().mockResolvedValue({ ok: true });
-    rankingHooks.fetch = fn;
-    expect(await submitScore(profile, "math", stats)).toBe(true);
-    const [url, init] = fn.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
-    expect(url).toBe("https://example.supabase.co/rest/v1/scores?on_conflict=uid,subject");
-    expect(init.method).toBe("POST");
-    expect(init.headers.apikey).toBe("a".repeat(40));
-    expect(init.headers.Prefer).toContain("merge-duplicates");
-    expect(JSON.parse(init.body as string).points).toBe(1234);
-  });
-
-  it("학교가 없거나 서버가 없거나 실패하면 false (게임은 계속)", async () => {
-    const fn = vi.fn().mockRejectedValue(new Error("offline"));
-    rankingHooks.fetch = fn;
-    expect(await submitScore(profile, "math", stats)).toBe(false);
-    expect(await submitScore({ ...profile, school: null }, "math", stats)).toBe(false);
-    rankingHooks.url = () => "";
-    expect(await submitScore(profile, "math", stats)).toBe(false);
   });
 
   it("순위표 요청: 반 / 학년 / 학교 범위", async () => {

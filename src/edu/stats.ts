@@ -78,6 +78,15 @@ export function recordSolve(username: string, rec: SolveRecord, now = Date.now()
   return stats;
 }
 
+/** 서버 계정의 아이디로 바꾼다 (순위표에서 내 줄을 찾는 데 쓴다) */
+export function setUid(uid: string): void {
+  try {
+    storage()?.setItem(UID_KEY, uid);
+  } catch {
+    // 저장 못 하면 이번 접속 동안만 쓴다
+  }
+}
+
 /** 기기마다 정해지는 무작위 아이디 (랭킹에서 같은 사람을 구분하는 용도, 이름·계정과 무관) */
 export function getUid(): string {
   const st = storage();

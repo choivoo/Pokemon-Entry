@@ -51,8 +51,18 @@ describe("관문 ↔ 학습 설정 · 점수 · 랭킹", () => {
   });
 
   it("내가 고른 과목·학년·난이도로 문제를 내고, 점수를 기록하고, 랭킹 서버에 올린다", async () => {
-    setActiveProfile(currentUsername(), profile({ subject: "kor", grade: 5, semester: 1, difficulty: "hard" }));
-    const post = vi.fn().mockResolvedValue({ ok: true });
+    setActiveProfile(
+      currentUsername(),
+      profile({
+        subject: "kor",
+        grade: 5,
+        semester: 1,
+        difficulty: "hard",
+        rankingConsent: true,
+        units: ["속담", "반대말"],
+      }),
+    );
+    const post = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
     rankingHooks.url = () => "https://example.supabase.co";
     rankingHooks.key = () => "k".repeat(40);
     rankingHooks.fetch = post;
@@ -72,17 +82,49 @@ describe("관문 ↔ 학습 설정 · 점수 · 랭킹", () => {
     expect(captured?.rule).toEqual(DIFFICULTY_RULES.hard);
     expect(captured?.lang).toBe("ko");
     for (let i = 0; i < 20; i++) {
-      expect(captured!.question!(undefined).subject).toBe("kor");
+      const q = captured!.question!(undefined);
+      expect(q.subject).toBe("kor");
+      expect(["속담", "반대말"]).toContain(q.category); // 고른 단원만
     }
     // 점수 기록 (3수준 · 하드 ×2 · 한 번에 정답 +5 · 연속 1)
     const kor = loadStats(currentUsername()).kor;
     expect(kor).toMatchObject({ solved: 1, perfect: 1, bestWave: 4, bestStreak: 1 });
     expect(kor.points).toBe(Math.round((10 * 3 + 5 + 1) * 2));
     expect(loadStats(currentUsername()).math.points).toBe(0);
-    // 랭킹 서버에 올라갔다
+    // 랭킹 서버에 올라갔다 (서버 함수 edu_submit_solve)
     await vi.waitFor(() => expect(post).toHaveBeenCalled());
-    const body = JSON.parse((post.mock.calls[0][1] as RequestInit).body as string);
-    expect(body).toMatchObject({ subject: "kor", grade: 5, class_name: "여울반", student_no: 6, points: kor.points });
+    const [url, init] = post.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://example.supabase.co/rest/v1/rpc/edu_submit_solve");
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      p_subject: "kor",
+      p_points: kor.points,
+      p_wave: 3,
+      p_streak: 1,
+      p_perfect: true,
+    });
+  });
+
+  it("랭킹에 동의하지 않았으면 점수는 이 기기에만 쌓이고 서버로 보내지 않는다", async () => {
+    setActiveProfile(currentUsername(), profile({ subject: "math", grade: 2, semester: 2, rankingConsent: false }));
+    const post = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
+    rankingHooks.url = () => "https://example.supabase.co";
+    rankingHooks.key = () => "k".repeat(40);
+    rankingHooks.fetch = post;
+    vi.spyOn(mathGateHooks, "show").mockResolvedValue({
+      perfect: true,
+      misses: 0,
+      hints: 0,
+      level: 1,
+      kind: "gugu",
+      timeouts: 0,
+    });
+    await game.classicMode.startBattle(SpeciesId.PIKACHU);
+    game.move.use(MoveId.SPLASH);
+    await game.doKillOpponents();
+    await game.phaseInterceptor.to("MathGatePhase", false);
+    await game.phaseInterceptor.to("SelectModifierPhase", false);
+    expect(loadStats(currentUsername()).math.solved).toBe(1);
+    expect(post).not.toHaveBeenCalled();
   });
 
   it("영어·수학도 그 과목 문제가 나온다", async () => {

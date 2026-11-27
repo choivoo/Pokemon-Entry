@@ -1,5 +1,7 @@
 import { localServerFetch } from "#api/local-server";
+import { remoteServerFetch } from "#api/remote-server";
 import { SESSION_ID_COOKIE_NAME } from "#app/constants";
+import { isBackendOnline } from "#app/edu/backend";
 import { version } from "#package.json";
 import { getCookie } from "#utils/cookies";
 import type { SetRequired, UndefinedOnPartialDeep } from "type-fest";
@@ -96,6 +98,11 @@ export abstract class ApiBase {
 
     // 수학 포켓로그: 서버 대신 브라우저 안의 계정 서버로 보낸다 (GitHub Pages 배포)
     if (import.meta.env.VITE_LOCAL_SERVER === "1") {
+      // 서버(Supabase)가 설정되어 있으면 계정·세이브를 서버에 저장해서 모든 기기에서 같게 하고,
+      // 없으면 이 브라우저 안의 계정 서버를 쓴다.
+      if (isBackendOnline()) {
+        return await remoteServerFetch(path, config as Parameters<typeof remoteServerFetch>[1]);
+      }
       return await localServerFetch(path, config as Parameters<typeof localServerFetch>[1]);
     }
 

@@ -22,6 +22,10 @@ export interface LearnerProfile {
   className: string;
   studentNo: number;
   nickname: string;
+  /** 내 학교·반·번호·별명·점수가 랭킹에 보이는 것에 선생님·보호자와 함께 동의했는지 */
+  rankingConsent: boolean;
+  /** 연습할 단원 (비어 있으면 그 학기 단원 전체) */
+  units: string[];
 }
 
 export const DEFAULT_PROFILE: LearnerProfile = {
@@ -33,6 +37,8 @@ export const DEFAULT_PROFILE: LearnerProfile = {
   className: "",
   studentNo: 1,
   nickname: "",
+  rankingConsent: false,
+  units: [],
 };
 
 export function profileTerm(p: LearnerProfile): number {
@@ -81,6 +87,9 @@ export function validateProfile(p: LearnerProfile): ProfileErrors {
   }
   if (!Number.isInteger(p.studentNo) || p.studentNo < 1 || p.studentNo > 60) {
     e.studentNo = "번호는 1~60 사이로 적어 주세요.";
+  }
+  if (!Array.isArray(p.units) || p.units.length > 40 || p.units.some(u => typeof u !== "string" || u.length > 40)) {
+    e.units = "연습할 단원을 다시 골라 주세요.";
   }
   if (p.nickname.length > 8 || /[<>"'&]/.test(p.nickname)) {
     e.nickname = "별명은 8글자 이하로 적어 주세요.";
@@ -134,10 +143,22 @@ export function getActiveProfile(username: string): LearnerProfile | null {
   return active;
 }
 
+/** 프로필이 저장될 때 부르는 곳 (서버와 맞추는 코드가 연결한다) */
+export const profileHooks: { onSave?: (username: string, p: LearnerProfile) => void } = {};
+
 export function setActiveProfile(username: string, p: LearnerProfile): void {
   active = p;
   activeUser = username;
   saveProfile(username, p);
+  profileHooks.onSave?.(username, p);
+}
+
+/** 서버에서 받은 프로필로 바꾼다 (다시 서버로 올리지 않는다) */
+export function adoptProfile(username: string, p: LearnerProfile): void {
+  const merged = { ...DEFAULT_PROFILE, ...p };
+  active = merged;
+  activeUser = username;
+  saveProfile(username, merged);
 }
 
 export function clearActiveProfile(): void {

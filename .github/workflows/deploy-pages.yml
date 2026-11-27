@@ -27,9 +27,40 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm vitest run test/math test/edu
 
+  sql:
+    name: 서버 함수 검사 (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Supabase 와 같은 역할(anon) 만들기
+        run: psql -v ON_ERROR_STOP=1 -c "create role anon nologin" -c "create role authenticated nologin"
+      - name: 스키마 적용 (두 번 실행해도 안전해야 함)
+        run: |
+          psql -v ON_ERROR_STOP=1 -q -f supabase/schema.sql
+          psql -v ON_ERROR_STOP=1 -q -f supabase/schema.sql
+      - name: 서버 함수 동작 검사
+        run: psql -v ON_ERROR_STOP=1 -q -f test/edu/sql/schema-test.sql
+
   build:
     name: 빌드
-    needs: test
+    needs: [test, sql]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

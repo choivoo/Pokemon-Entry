@@ -31,6 +31,10 @@ const CSS = `${baseCss(SETUP_OVERLAY_ID)}
 #${SETUP_OVERLAY_ID} .su-grid>div>.ek-h:first-child{margin-top:0}
 @media (orientation:portrait){#${SETUP_OVERLAY_ID} .ek-card{width:calc(780 * var(--s))}#${SETUP_OVERLAY_ID} .su-grid{grid-template-columns:1fr}}
 #${SETUP_OVERLAY_ID} button{white-space:nowrap}
+#${SETUP_OVERLAY_ID} .su-unitchips{display:flex;flex-wrap:wrap;gap:calc(6 * var(--s));margin-top:calc(6 * var(--s))}
+#${SETUP_OVERLAY_ID} .su-unitchips button{min-height:calc(46 * var(--s));font-size:calc(24 * var(--s) * var(--f));padding:0 calc(10 * var(--s))}
+#${SETUP_OVERLAY_ID} .su-consent{display:flex;gap:calc(10 * var(--s));align-items:flex-start;margin-top:calc(12 * var(--s));padding:calc(10 * var(--s)) calc(12 * var(--s));background:#202840;border-radius:calc(9 * var(--s));font-size:calc(23 * var(--s) * var(--f));line-height:1.25;color:#d8e0ff;cursor:pointer}
+#${SETUP_OVERLAY_ID} .su-consent input{flex:none;width:calc(36 * var(--s));min-width:calc(36 * var(--s));height:calc(36 * var(--s));padding:0;accent-color:#38a048}
 #${SETUP_OVERLAY_ID} .su-results{display:flex;flex-direction:column;gap:calc(6 * var(--s));max-height:calc(230 * var(--s));overflow:auto;margin-top:calc(8 * var(--s))}
 #${SETUP_OVERLAY_ID} .su-res{display:flex;flex-direction:column;align-items:flex-start;gap:calc(4 * var(--s));text-align:left;min-height:calc(66 * var(--s));padding:calc(8 * var(--s)) calc(14 * var(--s))}
 #${SETUP_OVERLAY_ID} .su-res small{font-size:calc(22 * var(--s) * var(--f));color:#c8d0f8}
@@ -103,9 +107,51 @@ export function showSetup(opts: SetupOptions = {}): Promise<LearnerProfile | nul
 
     // #region 과목 · 학년 · 학기
     const units = el("div", { class: "su-units" });
+    const unitToggle = el("button", { class: "su-link", attrs: { type: "button" } });
+    const unitChips = el("div", { class: "su-unitchips" });
+    unitChips.style.display = p.units.length > 0 ? "flex" : "none";
+    unitToggle.addEventListener("click", () => {
+      unitChips.style.display = unitChips.style.display === "none" ? "flex" : "none";
+    });
+    const refreshToggle = () => {
+      unitToggle.textContent =
+        p.units.length > 0
+          ? `연습할 단원: ${p.units.length}개 골랐어요 (눌러서 바꾸기)`
+          : "연습할 단원 고르기 (고르지 않으면 모두 나와요)";
+    };
+    let unitKey = "";
+    /** 과목·학년·학기가 바뀌면 단원 목록을 새로 만들고, 골라 둔 단원은 비운다 */
+    const renderUnits = () => {
+      const term = termIndex(p.grade, p.semester);
+      const key = `${p.subject}|${term}`;
+      const cats = termCategories(p.subject, term);
+      if (key !== unitKey) {
+        if (unitKey !== "") {
+          p.units = [];
+        }
+        unitKey = key;
+        unitChips.replaceChildren();
+        for (const c of cats) {
+          const b = el("button", { class: "ghost", text: c, attrs: { type: "button", "data-unit": c } });
+          b.addEventListener("click", () => {
+            p.units = p.units.includes(c) ? p.units.filter(u => u !== c) : [...p.units, c];
+            for (const x of Array.from(unitChips.children) as HTMLElement[]) {
+              x.classList.toggle("on", p.units.includes(x.dataset.unit ?? ""));
+            }
+            refreshToggle();
+          });
+          unitChips.appendChild(b);
+        }
+      }
+      p.units = p.units.filter(u => cats.includes(u));
+      for (const x of Array.from(unitChips.children) as HTMLElement[]) {
+        x.classList.toggle("on", p.units.includes(x.dataset.unit ?? ""));
+      }
+      units.textContent = `${SUBJECT_NAMES[p.subject]} ${termLabel(term)} 단원 ${cats.length}개 (교과서와 다르면 직접 골라요)`;
+      refreshToggle();
+    };
     const onChange = () => {
-      const cats = termCategories(p.subject, termIndex(p.grade, p.semester));
-      units.textContent = `${SUBJECT_NAMES[p.subject]} ${termLabel(termIndex(p.grade, p.semester))}: ${cats.slice(0, 7).join(" · ")}`;
+      renderUnits();
       desc.textContent = `${DIFFICULTY_RULES[p.difficulty].name} — ${DIFFICULTY_RULES[p.difficulty].description}`;
       desc.style.color = DIFFICULTY_RULES[p.difficulty].color;
     };
@@ -137,6 +183,8 @@ export function showSetup(opts: SetupOptions = {}): Promise<LearnerProfile | nul
     semRow.style.marginTop = "calc(8 * var(--s))";
     left.appendChild(semRow);
     left.appendChild(units);
+    left.appendChild(unitToggle);
+    left.appendChild(unitChips);
     // #endregion
 
     // #region 난이도
@@ -329,7 +377,19 @@ export function showSetup(opts: SetupOptions = {}): Promise<LearnerProfile | nul
           text: "반 이름은 숫자(6)나 이름(여울반)으로 적어요. 별명은 친구들 랭킹에 보여요.",
         }),
       );
+      const consentBox = el("input", { attrs: { type: "checkbox", "aria-label": "랭킹 동의" } });
+      consentBox.checked = p.rankingConsent;
+      const consent = el(
+        "label",
+        { class: "su-consent" },
+        consentBox,
+        el("span", {
+          text: "내 학교·학년·반·번호·별명과 점수가 같은 학교 친구들의 랭킹에 보이는 것에 선생님·보호자와 함께 동의했어요. (체크하지 않으면 랭킹에 올라가지 않아요)",
+        }),
+      );
+      idBox.appendChild(consent);
       (root as HTMLElement & { _read?: () => void })._read = () => {
+        p.rankingConsent = consentBox.checked;
         p.className = classInput.value.trim();
         p.studentNo = Number(noInput.value);
         p.nickname = nickInput.value.trim();

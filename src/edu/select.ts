@@ -19,6 +19,8 @@ export interface PickOptions {
   exclude?: string | undefined;
   /** 파티 포켓몬 이름 (비례배분 문제에 쓴다) */
   names?: string[];
+  /** 연습할 단원 (비어 있으면 그 학기 단원 전체) */
+  units?: string[];
 }
 
 /** 비례식 문제를 공통 형식으로 바꾼다 */
@@ -63,12 +65,29 @@ function makeForTerm(subject: Subject, term: number, level: Level, rng: Rng, nam
  * 문제를 뽑는다.
  * - 대부분(약 80%)은 지금 학기 문제, 나머지는 한두 학기 전 복습 문제
  * - 직전과 같은 유형은 되도록 피한다
+ * - 연습할 단원을 골랐으면 그 단원 문제만 낸다 (복습 문제는 내지 않는다)
  */
 export function pickQuestion(opts: PickOptions): Question {
   const rng = opts.rng ?? Math.random;
   const current = termIndex(opts.grade, opts.semester);
   const level = levelForWave(opts.wave, opts.difficulty);
   const names = opts.names ?? [];
+  const units = opts.units ?? [];
+  if (units.length > 0) {
+    let fallback: Question | undefined;
+    for (let i = 0; i < 80; i++) {
+      const q = makeForTerm(opts.subject, current, level, rng, names);
+      if (units.includes(q.category)) {
+        if (q.kind !== opts.exclude) {
+          return q;
+        }
+        fallback = q;
+      }
+    }
+    if (fallback) {
+      return fallback;
+    }
+  }
   let q = makeForTerm(opts.subject, current, level, rng, names);
   for (let i = 0; i < 6; i++) {
     const term = current > 0 && rng() < 0.2 ? current - randInt(rng, 1, Math.min(2, current)) : current;
@@ -87,7 +106,7 @@ export function termCategories(subject: Subject, term: number): string[] {
     return () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
   })();
   const seen = new Set<string>();
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 400; i++) {
     seen.add(makeForTerm(subject, term, 2, rng, []).category);
   }
   return [...seen];

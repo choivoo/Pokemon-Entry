@@ -83,6 +83,34 @@ describe("국영수 문제: 모든 학기 · 과목 · 수준", () => {
     expect(Object.keys(MATH_GENS).length).toBeGreaterThan(70);
   });
 
+  it("연습할 단원을 고르면 그 단원 문제만 나온다", () => {
+    const rng = seeded(99);
+    for (const [subject, grade, semester, units] of [
+      ["math", 5, 1, ["약수와 배수"]],
+      ["math", 5, 1, ["다각형의 넓이", "규칙과 대응"]],
+      ["kor", 5, 1, ["속담"]],
+      ["eng", 4, 2, ["철자", "낱말 분류"]],
+    ] as const) {
+      for (let i = 0; i < 80; i++) {
+        const q = pickQuestion({ subject, grade, semester, difficulty: "normal", wave: 10, rng, units: [...units] });
+        expect(units, `${subject} ${q.category}`).toContain(q.category);
+      }
+    }
+  });
+
+  it("고른 단원이 그 학기에 없으면 평소처럼 문제를 낸다", () => {
+    const q = pickQuestion({
+      subject: "math",
+      grade: 1,
+      semester: 1,
+      difficulty: "easy",
+      wave: 1,
+      rng: seeded(1),
+      units: ["없는단원"],
+    });
+    expect(q.subject).toBe("math");
+  });
+
   it("직전 유형을 되도록 피한다", () => {
     const rng = seeded(5);
     let same = 0;

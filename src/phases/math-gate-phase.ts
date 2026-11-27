@@ -1,7 +1,7 @@
 import { loggedInUser } from "#app/account";
 import { DIFFICULTY_RULES, pointsFor } from "#app/edu/difficulty";
 import { getActiveProfile, type LearnerProfile, setActiveProfile } from "#app/edu/profile";
-import { submitScore } from "#app/edu/ranking";
+import { submitSolve } from "#app/edu/ranking";
 import { pickQuestion } from "#app/edu/select";
 import { showSetup } from "#app/edu/setup-ui";
 import { recordSolve } from "#app/edu/stats";
@@ -145,6 +145,7 @@ export class MathGatePhase extends Phase {
             wave,
             exclude,
             names,
+            units: profile.units,
           }),
         scoreFor: ({ level, perfect }) =>
           pointsFor(level, profile.difficulty, perfect, mathGateState.streak + (perfect ? 1 : 0)),
@@ -173,7 +174,7 @@ export class MathGatePhase extends Phase {
         mathGateState.clearedWave = wave;
         mathGateState.streak = result.perfect ? mathGateState.streak + 1 : 0;
         const points = pointsFor(result.level, profile.difficulty, result.perfect, mathGateState.streak);
-        const stats = recordSolve(user, {
+        recordSolve(user, {
           subject: profile.subject,
           points,
           wave,
@@ -181,7 +182,13 @@ export class MathGatePhase extends Phase {
           perfect: result.perfect,
         });
         // 랭킹 서버에 올린다 (실패해도 게임은 계속된다)
-        void submitScore(profile, profile.subject, stats[profile.subject]);
+        void submitSolve(user, profile, {
+          subject: profile.subject,
+          points,
+          wave,
+          streak: mathGateState.streak,
+          perfect: result.perfect,
+        });
         const luck = Math.min(mathGateState.streak, 10) * 0.15 + rule.rewardLuck;
         for (const mode of planRewards(result.perfect, mathGateState.streak)) {
           globalScene.phaseManager.unshiftNew("MathRewardPhase", mode, luck);

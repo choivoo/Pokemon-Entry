@@ -121,6 +121,9 @@ export function showRanking(opts: RankingOptions): Promise<void> {
       }
       table.replaceChildren();
       msg.textContent = "";
+      if (!profile.rankingConsent) {
+        msg.textContent = "내 점수는 아직 랭킹에 올라가지 않아요. 메뉴의 '학습 설정'에서 동의에 체크하면 올라가요.";
+      }
       if (!online) {
         table.appendChild(
           el("div", {

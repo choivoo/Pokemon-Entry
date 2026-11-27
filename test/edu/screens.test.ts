@@ -116,6 +116,64 @@ describe("학습 설정 화면", () => {
     expect(await p).toBeNull();
   });
 
+  it("랭킹 동의: 처음엔 체크가 없고, 체크해야 랭킹에 올라간다고 저장된다", async () => {
+    const base: LearnerProfile = { ...DEFAULT_PROFILE, school: SCHOOLS[0], className: "2", studentNo: 5 };
+    const consent = () => setup('input[aria-label="랭킹 동의"]') as HTMLInputElement;
+
+    const p1 = showSetup({ initial: base, search: async () => [] });
+    expect(consent().checked).toBe(false);
+    clickText(SETUP_OVERLAY_ID, "저장하고 시작");
+    await vi.advanceTimersByTimeAsync(400);
+    expect(((await p1) as LearnerProfile).rankingConsent).toBe(false);
+
+    const p2 = showSetup({ initial: base, search: async () => [] });
+    consent().click();
+    clickText(SETUP_OVERLAY_ID, "저장하고 시작");
+    await vi.advanceTimersByTimeAsync(400);
+    expect(((await p2) as LearnerProfile).rankingConsent).toBe(true);
+
+    const p3 = showSetup({ initial: { ...base, rankingConsent: true }, allowCancel: true, search: async () => [] });
+    expect(consent().checked).toBe(true);
+    clickText(SETUP_OVERLAY_ID, "취소");
+    pending.push(p3);
+  });
+
+  it("연습할 단원 고르기: 단원을 골라 저장하고, 과목·학년이 바뀌면 비워진다", async () => {
+    const base: LearnerProfile = {
+      ...DEFAULT_PROFILE,
+      subject: "math",
+      grade: 5,
+      semester: 1,
+      school: SCHOOLS[0],
+      className: "2",
+      studentNo: 5,
+    };
+    const p = showSetup({ initial: base, search: async () => [] });
+    expect(setup(".su-unitchips").style.display).toBe("none");
+    expect(setup(".su-link").textContent).toContain("연습할 단원 고르기");
+    (all(SETUP_OVERLAY_ID, ".su-link")[0] as HTMLElement).click(); // 단원 목록 열기
+    expect(setup(".su-unitchips").style.display).not.toBe("none");
+    const chips = all(SETUP_OVERLAY_ID, ".su-unitchips button");
+    expect(chips.length).toBeGreaterThanOrEqual(5);
+    const names = chips.map(c => c.textContent);
+    expect(names).toContain("약수와 배수");
+    chips.find(c => c.textContent === "약수와 배수")!.click();
+    chips.find(c => c.textContent === "다각형의 넓이")!.click();
+    expect(setup(".su-link").textContent).toContain("2개");
+    clickText(SETUP_OVERLAY_ID, "저장하고 시작");
+    await vi.advanceTimersByTimeAsync(400);
+    expect(((await p) as LearnerProfile).units).toEqual(["약수와 배수", "다각형의 넓이"]);
+
+    // 학년을 바꾸면 고른 단원이 비워진다
+    const p2 = showSetup({ initial: { ...base, units: ["약수와 배수"] }, search: async () => [] });
+    expect(setup(".su-link").textContent).toContain("1개");
+    clickText(SETUP_OVERLAY_ID, "6");
+    expect(setup(".su-link").textContent).toContain("연습할 단원 고르기");
+    clickText(SETUP_OVERLAY_ID, "저장하고 시작");
+    await vi.advanceTimersByTimeAsync(400);
+    expect(((await p2) as LearnerProfile).units).toEqual([]);
+  });
+
   it("입력 칸에서 누른 키가 게임(window)까지 올라가지 않는다", () => {
     pending.push(showSetup({ search: async () => [] }));
     const onWindow = vi.fn();
@@ -161,6 +219,30 @@ describe("랭킹 화면", () => {
     pending.push(showRanking({ profile, stats, online: false }));
     expect(sel(RANKING_OVERLAY_ID, ".rk-me").textContent).toContain("777");
     expect(sel(RANKING_OVERLAY_ID, ".rk-table").textContent).toContain("랭킹 서버가 연결되지 않았어요");
+  });
+
+  it("랭킹 동의를 안 했으면 안내 문구가 보인다", async () => {
+    pending.push(
+      showRanking({
+        profile: { ...profile, rankingConsent: false },
+        stats: emptyAllStats(),
+        online: true,
+        fetchRows: async () => [],
+      }),
+    );
+    await flush();
+    expect(sel(RANKING_OVERLAY_ID, ".ek-msg").textContent).toContain("동의");
+    document.getElementById(RANKING_OVERLAY_ID)?.remove();
+    pending.push(
+      showRanking({
+        profile: { ...profile, rankingConsent: true },
+        stats: emptyAllStats(),
+        online: true,
+        fetchRows: async () => [],
+      }),
+    );
+    await flush();
+    expect(sel(RANKING_OVERLAY_ID, ".ek-msg").textContent).toBe("");
   });
 
   it("우리 반 순위: 점수 순, 내 줄 강조, 공동 순위", async () => {
