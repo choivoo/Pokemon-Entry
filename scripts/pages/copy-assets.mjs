@@ -38,6 +38,12 @@ for (const entry of readdirSync(SRC)) {
   cpSync(join(SRC, entry), join(DEST, entry), { recursive: true });
   count++;
 }
+// 이 저장소의 덮어쓰기 파일(overlay/)을 마지막에 복사한다. 예: 인트로 영상의 제작사 이름을 바꾼 것
+const OVERLAY = "overlay";
+if (existsSync(OVERLAY)) {
+  cpSync(OVERLAY, DEST, { recursive: true });
+  console.log("overlay → dist 복사 완료");
+}
 // GitHub Pages 가 밑줄로 시작하는 파일을 무시하지 않도록
 writeFileSync(join(DEST, ".nojekyll"), "");
 console.log(`assets → dist 복사 완료 (${count}개 항목)`);
