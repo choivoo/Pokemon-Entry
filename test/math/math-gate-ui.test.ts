@@ -53,7 +53,7 @@ describe("수학 관문 화면", () => {
     expect(document.querySelector(".mg-msg")!.textContent).toContain("4층이 열렸어요");
     expect(document.querySelector(".mg-msg")!.textContent).toContain("보상 기회 +1");
     await vi.advanceTimersByTimeAsync(2000);
-    await expect(promise).resolves.toEqual({ perfect: true, misses: 0, hints: 0 });
+    await expect(promise).resolves.toMatchObject({ perfect: true, misses: 0, hints: 0, timeouts: 0 });
     expect(document.getElementById(OVERLAY_ID)).toBeNull();
     expect(sounds).toContain("correct");
   });
@@ -67,7 +67,7 @@ describe("수학 관문 화면", () => {
     expect(document.querySelector(".mg-msg")!.className).toContain("hint");
     type(first.answer);
     await vi.advanceTimersByTimeAsync(2000);
-    await expect(promise).resolves.toEqual({ perfect: false, misses: 1, hints: 1 });
+    await expect(promise).resolves.toMatchObject({ perfect: false, misses: 1, hints: 1 });
   });
 
   it(`${MAX_MISSES}번 틀리면 풀이를 보여주고 새 문제를 낸다`, async () => {

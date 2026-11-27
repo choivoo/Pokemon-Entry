@@ -1,6 +1,7 @@
 import { pokerogueApi } from "#api/api";
 import { loggedInUser } from "#app/account";
 import { FAKE_TITLE_LOGO_CHANCE } from "#app/constants";
+import { EDU_TITLE, EDU_VERSION } from "#app/edu/edu-info";
 import { eventBus } from "#app/event-bus";
 import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
@@ -11,7 +12,6 @@ import { getSplashMessages } from "#data/splash-messages";
 import { SpeciesId } from "#enums/species-id";
 import { TextStyle } from "#enums/text-style";
 import { UiMode } from "#enums/ui-mode";
-import { version } from "#package.json";
 import type { SettingsUpdateEventArgs } from "#types/event-bus-types";
 import { TimedEventDisplay } from "#ui/event-display";
 import { OptionSelectUiHandler } from "#ui/option-select-ui-handler";
@@ -197,7 +197,7 @@ export class TitleUiHandler extends OptionSelectUiHandler {
     this.splashMessageText.setText(i18next.t(this.splashMessage, this.getSplashMessageI18nParams()));
 
     const betaText = isBeta || isDev ? " (Beta)" : "";
-    this.appVersionText.setText("v" + version + betaText);
+    this.appVersionText.setText(`${EDU_TITLE} ${EDU_VERSION}${betaText}`);
 
     const ui = this.getUi();
 

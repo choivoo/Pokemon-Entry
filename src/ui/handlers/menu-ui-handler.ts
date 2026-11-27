@@ -1,5 +1,8 @@
 import { pokerogueApi } from "#api/api";
 import { loggedInUser, updateUserInfo } from "#app/account";
+import { getActiveProfile, setActiveProfile } from "#app/edu/profile";
+import { showRanking } from "#app/edu/ranking-ui";
+import { loadStats } from "#app/edu/stats";
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { handleTutorial, Tutorial } from "#app/tutorial";
@@ -9,6 +12,7 @@ import { Button } from "#enums/buttons";
 import { GameDataType } from "#enums/game-data-type";
 import { TextStyle } from "#enums/text-style";
 import { UiMode } from "#enums/ui-mode";
+import { currentUsername, mathGateHooks } from "#phases/math-gate-phase";
 import type { ConfirmModeConfig, OptionSelectItem, OptionSelectModeConfig } from "#types/ui-types";
 import type { AwaitableUiHandler } from "#ui/awaitable-ui-handler";
 import { BgmBar } from "#ui/bgm-bar";
@@ -40,6 +44,8 @@ type ConditionalMenu = {
 );
 
 enum MenuOptions {
+  LEARNING,
+  RANKING,
   GAME_SETTINGS,
   ACHIEVEMENTS,
   STATS,
@@ -51,6 +57,12 @@ enum MenuOptions {
   SAVE_AND_QUIT,
   LOG_OUT,
 }
+
+/** 포케로그 국영수(초등)에서 추가한 메뉴의 이름 */
+const CUSTOM_MENU_LABELS: Partial<Record<MenuOptions, string>> = {
+  [MenuOptions.LEARNING]: "학습 설정",
+  [MenuOptions.RANKING]: "랭킹",
+};
 
 let wikiUrl = import.meta.env.VITE_WIKI_URL;
 const { VITE_DISCORD_URL, VITE_GITHUB_URL, VITE_REDDIT_URL, VITE_DONATE_URL } = import.meta.env;
@@ -82,6 +94,8 @@ export class MenuUiHandler extends OptionSelectUiHandler {
           options: [MenuOptions.EGG_GACHA, MenuOptions.EGG_LIST],
         },
         { excluded: bypassLogin, options: [MenuOptions.LOG_OUT] },
+        // 학교에서 쓰는 앱이라 Discord·Reddit 같은 바깥 링크 메뉴는 뺀다
+        { excluded: true, options: [MenuOptions.COMMUNITY] },
         { excluded: !globalScene.currentBattle, options: [MenuOptions.SAVE_AND_QUIT] },
       ] satisfies ConditionalMenu[];
   }
@@ -196,7 +210,7 @@ export class MenuUiHandler extends OptionSelectUiHandler {
       }
 
       return {
-        label: `${i18next.t(`menuUiHandler:${toCamelCase(MenuOptions[option])}`)}`,
+        label: CUSTOM_MENU_LABELS[option] ?? `${i18next.t(`menuUiHandler:${toCamelCase(MenuOptions[option])}`)}`,
         handler: () => this.optionSelected(option),
         keepOpen: true,
         ...conditionalOpts,
@@ -205,7 +219,7 @@ export class MenuUiHandler extends OptionSelectUiHandler {
 
     return {
       options,
-      maxOptions: 10,
+      maxOptions: 12,
       blockCancelButton: true, // we take care of closing the menu in this handler
       yOffset: 1,
       onResize: (w: number, _h: number) => {
@@ -573,6 +587,34 @@ export class MenuUiHandler extends OptionSelectUiHandler {
     let success = false;
     const ui = this.getUi();
     switch (option) {
+      case MenuOptions.LEARNING: {
+        const user = currentUsername();
+        mathGateHooks
+          .setup({ initial: getActiveProfile(user), allowCancel: true, title: "학습 설정", confirmLabel: "저장" })
+          .then(p => {
+            if (p) {
+              setActiveProfile(user, p);
+            }
+          });
+        success = true;
+        break;
+      }
+      case MenuOptions.RANKING: {
+        const user = currentUsername();
+        const profile = getActiveProfile(user);
+        if (profile) {
+          showRanking({ profile, stats: loadStats(user) });
+        } else {
+          mathGateHooks.setup({ title: "학습 설정", allowCancel: true, confirmLabel: "저장" }).then(p => {
+            if (p) {
+              setActiveProfile(user, p);
+              showRanking({ profile: p, stats: loadStats(user) });
+            }
+          });
+        }
+        success = true;
+        break;
+      }
       case MenuOptions.GAME_SETTINGS:
         ui.setOverlayMode(UiMode.SETTINGS_GENERAL);
         success = true;

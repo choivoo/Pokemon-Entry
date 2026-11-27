@@ -1,0 +1,76 @@
+/**
+ * 서버(Supabase) 연결 설정과 함수 호출.
+ * 주소·공개 키가 없으면 "서버 없음" 상태로, 게임은 이 브라우저 안의 계정 서버로 동작한다.
+ */
+
+export const backend = {
+  fetch: (url: string, init?: RequestInit): Promise<Response> => fetch(url, init),
+  url: (): string => (import.meta.env.VITE_SUPABASE_URL ?? "").replace(/\/+$/, ""),
+  key: (): string => import.meta.env.VITE_SUPABASE_ANON_KEY ?? "",
+};
+
+/** 서버 주소가 안전한지: https 이거나, 내 컴퓨터에서 시험하는 주소 */
+export function isSafeUrl(url: string): boolean {
+  return url.startsWith("https://") || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(url);
+}
+
+/** `eyJ…` 로 시작하는 JWT 모양의 키인지 (예전 방식의 anon 키) */
+function isJwt(key: string): boolean {
+  return /^eyJ[\w-]+\.[\w-]+\.[\w-]+$/.test(key);
+}
+
+/**
+ * 비밀 키(service_role, sb_secret_…)는 절대 웹사이트에 넣으면 안 된다.
+ * 실수로 넣었으면 사용을 거부해서 키가 퍼지는 것을 막는다.
+ */
+export function isSecretKey(key: string): boolean {
+  if (key.startsWith("sb_secret_")) {
+    return true;
+  }
+  if (!isJwt(key)) {
+    return false;
+  }
+  try {
+    const payload = JSON.parse(atob(key.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return payload?.role === "service_role";
+  } catch {
+    return false;
+  }
+}
+
+/** 서버가 설정되어 있는지 (주소가 안전하고, 공개 키이고, 비밀 키가 아닌 경우) */
+export function isBackendOnline(): boolean {
+  const key = backend.key();
+  return isSafeUrl(backend.url()) && key.length > 20 && !isSecretKey(key);
+}
+
+/**
+ * 서버에 보낼 헤더.
+ * 예전 anon 키(JWT)는 Authorization 에도 같이 보내고, 새 공개 키(sb_publishable_…)는 apikey 로만 보낸다.
+ */
+export const authHeaders = (extra: Record<string, string> = {}): Record<string, string> => ({
+  apikey: backend.key(),
+  ...(isJwt(backend.key()) ? { Authorization: `Bearer ${backend.key()}` } : {}),
+  "Content-Type": "application/json",
+  ...extra,
+});
+
+export class BackendError extends Error {}
+
+/** 서버 함수(`edu_*`)를 부른다. 연결이 안 되면 예외. */
+export async function rpc<T>(name: string, args: Record<string, unknown>): Promise<T> {
+  let res: Response;
+  try {
+    res = await backend.fetch(`${backend.url()}/rest/v1/rpc/${name}`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(args),
+    });
+  } catch {
+    throw new BackendError("서버에 연결하지 못했어요.");
+  }
+  if (!res.ok) {
+    throw new BackendError(`서버 오류 (${res.status})`);
+  }
+  return (await res.json()) as T;
+}

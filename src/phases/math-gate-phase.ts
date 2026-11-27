@@ -1,12 +1,22 @@
+import { loggedInUser } from "#app/account";
+import { DIFFICULTY_RULES, pointsFor } from "#app/edu/difficulty";
+import { getActiveProfile, type LearnerProfile, setActiveProfile } from "#app/edu/profile";
+import { submitSolve } from "#app/edu/ranking";
+import { pickQuestion } from "#app/edu/select";
+import { showSetup } from "#app/edu/setup-ui";
+import { recordSolve } from "#app/edu/stats";
 import { audioManager } from "#app/global-audio-manager";
 import { globalScene } from "#app/global-scene";
 import { showMathGate } from "#app/math/math-gate-ui";
 import type { RewardMode } from "#app/math/math-reward-ui";
-import { toMathLang } from "#app/math/math-text";
 import { activeOverrides as Overrides } from "#app/overrides";
 import { Phase } from "#app/phase";
 import { IS_TEST } from "#constants/app-constants";
-import i18next from "i18next";
+
+/** 지금 로그인한 계정 이름 (로그인 전·테스트에서는 guest) */
+export function currentUsername(): string {
+  return loggedInUser?.username ?? "guest";
+}
 
 /** 수학 관문 진행 상황 (런 단위) */
 export const mathGateState = {
@@ -59,7 +69,7 @@ export function planRewards(perfect: boolean, streak: number, rng: () => number 
 }
 
 /** 관문 화면 함수 (테스트에서 바꿔 끼울 수 있도록 객체로 둔다) */
-export const mathGateHooks = { show: showMathGate };
+export const mathGateHooks = { show: showMathGate, setup: showSetup };
 
 /** 수학 관문을 써야 하는지 (자동화 테스트에서는 기본적으로 꺼짐, `MATH_GATE_OVERRIDE`로 강제 가능) */
 export function isMathGateEnabled(): boolean {
@@ -78,9 +88,9 @@ export function needsMathGate(wave: number): boolean {
 }
 
 /**
- * 층 사이의 "수학 관문".
- * 비례식/비례배분 문제를 맞혀야 다음 층이 열린다.
- * 정답 → 다음 층 개방 → (기존 흐름) 아이템 선택 → 다음 포켓몬 전투
+ * 층 사이의 "관문".
+ * 내가 고른 과목·학년·학기·난이도의 문제를 풀어야 다음 층이 열린다.
+ * 정답 → 점수 기록 → 보상(룰렛·상자·고르기) → 다음 층 개방 → (기존 흐름) 아이템 선택 → 다음 포켓몬 전투
  */
 export class MathGatePhase extends Phase {
   public readonly phaseName = "MathGatePhase";
@@ -94,6 +104,25 @@ export class MathGatePhase extends Phase {
       return;
     }
 
+    const user = currentUsername();
+    const profile = getActiveProfile(user);
+    if (profile) {
+      this.ask(wave, user, profile);
+      return;
+    }
+    // 학습 설정이 아직 없으면 먼저 설정을 받는다 (예: 이전 버전의 저장 데이터를 이어서 할 때)
+    mathGateHooks.setup({ title: "학습 설정", confirmLabel: "시작하기" }).then(p => {
+      if (p) {
+        setActiveProfile(user, p);
+        this.ask(wave, user, p);
+      } else {
+        this.end();
+      }
+    });
+  }
+
+  private ask(wave: number, user: string, profile: LearnerProfile): void {
+    const rule = DIFFICULTY_RULES[profile.difficulty];
     const names = globalScene
       .getPlayerParty()
       .map(p => p.getNameToRender({ useIllusion: false }))
@@ -102,10 +131,24 @@ export class MathGatePhase extends Phase {
     mathGateHooks
       .show({
         wave,
-        lang: toMathLang(i18next.resolvedLanguage),
+        lang: "ko",
         names,
         streak: mathGateState.streak,
         bonus: 1,
+        rule,
+        question: exclude =>
+          pickQuestion({
+            subject: profile.subject,
+            grade: profile.grade,
+            semester: profile.semester,
+            difficulty: profile.difficulty,
+            wave,
+            exclude,
+            names,
+            units: profile.units,
+          }),
+        scoreFor: ({ level, perfect }) =>
+          pointsFor(level, profile.difficulty, perfect, mathGateState.streak + (perfect ? 1 : 0)),
         playSound: key => {
           try {
             switch (key) {
@@ -130,8 +173,25 @@ export class MathGatePhase extends Phase {
       .then(result => {
         mathGateState.clearedWave = wave;
         mathGateState.streak = result.perfect ? mathGateState.streak + 1 : 0;
+        const points = pointsFor(result.level, profile.difficulty, result.perfect, mathGateState.streak);
+        recordSolve(user, {
+          subject: profile.subject,
+          points,
+          wave,
+          streak: mathGateState.streak,
+          perfect: result.perfect,
+        });
+        // 랭킹 서버에 올린다 (실패해도 게임은 계속된다)
+        void submitSolve(user, profile, {
+          subject: profile.subject,
+          points,
+          wave,
+          streak: mathGateState.streak,
+          perfect: result.perfect,
+        });
+        const luck = Math.min(mathGateState.streak, 10) * 0.15 + rule.rewardLuck;
         for (const mode of planRewards(result.perfect, mathGateState.streak)) {
-          globalScene.phaseManager.unshiftNew("MathRewardPhase", mode, Math.min(mathGateState.streak, 10) * 0.15);
+          globalScene.phaseManager.unshiftNew("MathRewardPhase", mode, luck);
         }
         this.end();
       });

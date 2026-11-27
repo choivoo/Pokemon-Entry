@@ -1,4 +1,4 @@
-name: 수학 포켓로그 - GitHub Pages 배포
+name: 포케로그 국영수(초등) - GitHub Pages 배포
 
 on:
   push:
@@ -25,11 +25,42 @@ jobs:
           submodules: recursive
       - uses: ./.github/actions/setup-deps
       - run: pnpm typecheck
-      - run: pnpm vitest run test/math
+      - run: pnpm vitest run test/math test/edu
+
+  sql:
+    name: 서버 함수 검사 (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Supabase 와 같은 역할(anon) 만들기
+        run: psql -v ON_ERROR_STOP=1 -c "create role anon nologin" -c "create role authenticated nologin"
+      - name: 스키마 적용 (두 번 실행해도 안전해야 함)
+        run: |
+          psql -v ON_ERROR_STOP=1 -q -f supabase/schema.sql
+          psql -v ON_ERROR_STOP=1 -q -f supabase/schema.sql
+      - name: 서버 함수 동작 검사
+        run: psql -v ON_ERROR_STOP=1 -q -f test/edu/sql/schema-test.sql
 
   build:
     name: 빌드
-    needs: test
+    needs: [test, sql]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -37,10 +68,15 @@ jobs:
         with:
           submodules: recursive
       - uses: ./.github/actions/setup-deps
-      - name: 빌드 (오프라인 모드 + 원본 에셋 포함)
+      - name: 빌드 (브라우저 계정 서버 + 원본 에셋 포함)
         run: pnpm build:pages
         env:
           NODE_ENV: production
+          # 랭킹 서버(Supabase) 주소와 공개 키: 저장소 Settings → Secrets and variables → Actions → Variables 에서 설정
+          VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+          # (선택) 학교 검색 인증키: 있으면 한 번에 많은 학교를 불러온다. 없어도 "더 보기"로 검색할 수 있다.
+          VITE_NEIS_KEY: ${{ vars.NEIS_KEY }}
       - name: 용량 확인 (GitHub Pages 최대 1GB)
         run: du -sh dist
       - uses: actions/configure-pages@v5

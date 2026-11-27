@@ -1,9 +1,10 @@
+import { DEFAULT_PROFILE, setActiveProfile } from "#app/edu/profile";
 import { getRewardCatalog, type RewardDef } from "#app/math/math-rewards";
 import { MoveId } from "#enums/move-id";
 import { PokeballType } from "#enums/pokeball";
 import { SpeciesId } from "#enums/species-id";
 import { ExpBoosterModifier } from "#modifiers/modifier";
-import { mathGateHooks, planRewards, resetMathGateState } from "#phases/math-gate-phase";
+import { currentUsername, mathGateHooks, planRewards, resetMathGateState } from "#phases/math-gate-phase";
 import { MathRewardPhase, mathRewardHooks } from "#phases/math-reward-phase";
 import { GameManager } from "#test/framework/game-manager";
 import Phaser from "phaser";
@@ -28,6 +29,11 @@ describe("수학 관문 보상", () => {
 
   beforeEach(() => {
     resetMathGateState();
+    setActiveProfile(currentUsername(), {
+      ...DEFAULT_PROFILE,
+      school: { code: "manual:테스트초등학교", name: "테스트초등학교", region: "" },
+      className: "1",
+    });
     shown = [];
     game = new GameManager(phaserGame);
     game.override
@@ -37,7 +43,14 @@ describe("수학 관문 보상", () => {
       .enemySpecies(SpeciesId.MAGIKARP)
       .enemyMoveset(MoveId.SPLASH)
       .battleStyle("single");
-    vi.spyOn(mathGateHooks, "show").mockResolvedValue({ perfect: true, misses: 0, hints: 0 });
+    vi.spyOn(mathGateHooks, "show").mockResolvedValue({
+      perfect: true,
+      misses: 0,
+      hints: 0,
+      level: 2,
+      kind: "gugu",
+      timeouts: 0,
+    });
     // 보상 화면 대신 항상 첫 번째 보상을 받는다
     vi.spyOn(mathRewardHooks, "show").mockImplementation(opts => {
       shown.push({ mode: opts.mode, cards: opts.cards.length });
@@ -126,9 +139,8 @@ describe("수학 관문 보상", () => {
     const def = getRewardCatalog().find(d => d.kind === "shop" && d.tiers.length === 4)!;
     const calls = await runReward(def);
     const select = calls.find(c => c[0] === "SelectModifierPhase");
-    expect((select?.[3] as { guaranteedModifierTiers: number[] }).guaranteedModifierTiers).toEqual(
-      def.kind === "shop" ? def.tiers : [],
-    );
+    const settings = select?.[3] as { guaranteedModifierTiers: number[] };
+    expect(settings.guaranteedModifierTiers).toEqual(def.kind === "shop" ? def.tiers : []);
   });
 
   it("룰렛권: 그 수만큼 룰렛 보상이 이어진다", async () => {
