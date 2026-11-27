@@ -267,10 +267,10 @@ export function showRewardScreen(opts: RewardScreenOptions): Promise<number> {
         .map((c, i) => {
           const base = RARITY_COLORS[c.rarity] ?? RARITY_COLORS[0];
           const shade = i % 2 === 0 ? base : `color-mix(in srgb, ${base} 70%, #302840)`;
-          return `${shade} ${i * seg - seg / 2}deg ${(i + 1) * seg - seg / 2}deg`;
+          return `${shade} ${i * seg}deg ${(i + 1) * seg}deg`;
         })
         .join(",");
-      wheel.style.background = `conic-gradient(from 0deg, ${stops})`;
+      wheel.style.background = `conic-gradient(from ${-seg / 2}deg, ${stops})`;
       cards.forEach((c, i) => {
         const slot = document.createElement("div");
         slot.className = "mr-slot";
