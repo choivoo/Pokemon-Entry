@@ -1,6 +1,7 @@
 import { pokerogueApi } from "#api/api";
 import { loggedInUser } from "#app/account";
-import { GameMode, getGameMode } from "#app/game-mode";
+import { getActiveProfile, setActiveProfile } from "#app/edu/profile";
+import { getGameMode } from "#app/game-mode";
 import { audioManager } from "#app/global-audio-manager";
 import { timedEventManager } from "#app/global-event-manager";
 import { globalScene } from "#app/global-scene";
@@ -15,10 +16,10 @@ import { BattleType } from "#enums/battle-type";
 import { GameModes } from "#enums/game-modes";
 import { ModifierPoolType } from "#enums/modifier-pool-type";
 import { UiMode } from "#enums/ui-mode";
-import { Unlockables } from "#enums/unlockables";
 import { getBiomeKey } from "#field/arena";
 import type { Modifier } from "#modifiers/modifier";
 import { getDailyRunStarterModifiers, regenerateModifierPoolThresholds } from "#modifiers/modifier-type";
+import { currentUsername, mathGateHooks, resetMathGateState } from "#phases/math-gate-phase";
 import { vouchers } from "#system/voucher";
 import type { OptionSelectItem, OptionSelectModeConfig } from "#types/ui-types";
 import { SaveSlotUiMode } from "#ui/save-slot-select-ui-handler";
@@ -82,7 +83,7 @@ export class TitlePhase extends Phase {
   }
 
   private async showOptions(lastSessionSlot: number): Promise<void> {
-    const { gameData, ui } = globalScene;
+    const { ui } = globalScene;
     const options: OptionSelectItem[] = [];
     // Add a "continue" menu if the session slot ID is >-1
     if (lastSessionSlot > NO_SAVE_SLOT) {
@@ -98,65 +99,29 @@ export class TitlePhase extends Phase {
       {
         label: i18next.t("menu:newGame"),
         handler: () => {
-          const setModeAndEnd = (gameMode: GameModes) => {
-            this.gameMode = gameMode;
-            ui.setMode(UiMode.MESSAGE);
-            ui.clearText();
-            this.end();
-          };
-          const newGameOptions: OptionSelectItem[] = [];
-          newGameOptions.push({
-            label: GameMode.getModeName(GameModes.CLASSIC),
-            handler: () => {
-              setModeAndEnd(GameModes.CLASSIC);
-              return true;
-            },
-          });
-          newGameOptions.push({
-            label: i18next.t("menu:dailyRun"),
-            handler: () => {
-              this.initDailyRun();
-              return true;
-            },
-          });
-          if (gameData.isUnlocked(Unlockables.ENDLESS_MODE)) {
-            newGameOptions.push({
-              label: GameMode.getModeName(GameModes.CHALLENGE),
-              handler: () => {
-                setModeAndEnd(GameModes.CHALLENGE);
-                return true;
-              },
+          // 포케로그 국영수(초등): 게임 모드는 클래식 하나뿐이다. 시작하기 전에 학습 설정(과목·학년·학교·반·난이도)을 받는다.
+          ui.setMode(UiMode.MESSAGE);
+          ui.clearText();
+          const user = currentUsername();
+          mathGateHooks
+            .setup({
+              initial: getActiveProfile(user),
+              allowCancel: true,
+              title: "새 게임 · 학습 설정",
+              confirmLabel: "게임 시작",
+            })
+            .then(profile => {
+              if (!profile) {
+                // 취소 = 타이틀로 돌아가기
+                globalScene.phaseManager.toTitleScreen();
+                super.end();
+                return;
+              }
+              setActiveProfile(user, profile);
+              resetMathGateState();
+              this.gameMode = GameModes.CLASSIC;
+              this.end();
             });
-            newGameOptions.push({
-              label: GameMode.getModeName(GameModes.ENDLESS),
-              handler: () => {
-                setModeAndEnd(GameModes.ENDLESS);
-                return true;
-              },
-            });
-            if (gameData.isUnlocked(Unlockables.SPLICED_ENDLESS_MODE)) {
-              newGameOptions.push({
-                label: GameMode.getModeName(GameModes.SPLICED_ENDLESS),
-                handler: () => {
-                  setModeAndEnd(GameModes.SPLICED_ENDLESS);
-                  return true;
-                },
-              });
-            }
-          }
-          // Cancel button = back to title
-          newGameOptions.push({
-            label: i18next.t("menu:cancel"),
-            handler: () => {
-              globalScene.phaseManager.toTitleScreen();
-              super.end();
-              return true;
-            },
-          });
-          ui.showText(i18next.t("menu:selectGameMode"), null, () => {
-            const config: OptionSelectModeConfig = { options: newGameOptions, yOffset: 48 };
-            ui.setOverlayMode(UiMode.OPTION_SELECT, config);
-          });
           return true;
         },
       },

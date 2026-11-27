@@ -1,10 +1,11 @@
+import { DEFAULT_PROFILE, setActiveProfile } from "#app/edu/profile";
 import { BattleType } from "#enums/battle-type";
 import { Command } from "#enums/command";
 import { MoveId } from "#enums/move-id";
 import { PokeballType } from "#enums/pokeball";
 import { SpeciesId } from "#enums/species-id";
 import type { CommandPhase } from "#phases/command-phase";
-import { mathGateHooks, resetMathGateState } from "#phases/math-gate-phase";
+import { currentUsername, mathGateHooks, resetMathGateState } from "#phases/math-gate-phase";
 import { MathRewardPhase } from "#phases/math-reward-phase";
 import { GameManager } from "#test/framework/game-manager";
 import Phaser from "phaser";
@@ -23,11 +24,23 @@ describe("수학 관문 - 게임 흐름", () => {
   beforeEach(() => {
     gate.calls = [];
     resetMathGateState();
+    setActiveProfile(currentUsername(), {
+      ...DEFAULT_PROFILE,
+      school: { code: "manual:테스트초등학교", name: "테스트초등학교", region: "" },
+      className: "1",
+    });
     gate.perfect = true;
     // 화면 대신 바로 정답 처리
     vi.spyOn(mathGateHooks, "show").mockImplementation(opts => {
       gate.calls.push(opts.wave);
-      return Promise.resolve({ perfect: gate.perfect, misses: gate.perfect ? 0 : 1, hints: 0 });
+      return Promise.resolve({
+        perfect: gate.perfect,
+        misses: gate.perfect ? 0 : 1,
+        hints: 0,
+        level: 2,
+        kind: "gugu",
+        timeouts: 0,
+      });
     });
     // 이 파일은 관문 흐름만 본다: 보상 단계는 바로 끝낸다 (보상은 math-reward-flow.test.ts)
     vi.spyOn(MathRewardPhase.prototype, "start").mockImplementation(function (this: MathRewardPhase) {

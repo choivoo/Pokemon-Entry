@@ -67,7 +67,8 @@ describe("보상 화면", () => {
   });
 
   it("잭팟 룰렛은 제목이 다르고 영어도 지원한다", () => {
-    showRewardScreen({ mode: "jackpot", cards: cards(8), lang: "en" });
+    const p = showRewardScreen({ mode: "jackpot", cards: cards(8), lang: "en" });
+    expect(p).toBeInstanceOf(Promise);
     expect($(".mr-title").textContent).toBe("Jackpot Roulette");
   });
 });

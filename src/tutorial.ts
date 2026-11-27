@@ -1,3 +1,4 @@
+import { EDU_INTRO } from "#app/edu/edu-info";
 import { globalScene } from "#app/global-scene";
 import { settings } from "#app/global-settings-manager";
 import { activeOverrides } from "#app/overrides";
@@ -30,7 +31,9 @@ function showTutorialDialogue(key: string, callback: () => void): void {
 const tutorialHandlers = {
   [Tutorial.INTRO]: () => {
     return new Promise<void>(resolve => {
-      globalScene.ui.showText(i18next.t("tutorial:intro"), null, () => resolve(), null, true);
+      // 원본 안내에는 외부 커뮤니티(Discord) 안내가 있어서, 학교에서 쓰는 안내로 바꿔 보여 준다
+      const intro = i18next.resolvedLanguage?.startsWith("ko") ? EDU_INTRO.ko : EDU_INTRO.en;
+      globalScene.ui.showText(intro, null, () => resolve(), null, true);
     });
   },
   [Tutorial.ACCESS_MENU]: () => {

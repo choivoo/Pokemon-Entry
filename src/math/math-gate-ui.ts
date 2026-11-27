@@ -2,8 +2,11 @@
  * 수학 관문 화면 (게임 캔버스 위에 뜨는 HTML 창).
  * 게임 폰트(emerald)와 포켓몬 에메랄드풍 창 디자인을 사용하고, 키보드·마우스·터치를 모두 지원한다.
  */
-import { checkAnswer, generateProblem, type MathProblem } from "#app/math/math-problems";
-import { formatProblem, type MathLang, type ProblemText, ui } from "#app/math/math-text";
+import type { DifficultyRule } from "#app/edu/difficulty";
+import { checkQuestionAnswer, type Question } from "#app/edu/question";
+import { ratioToQuestion } from "#app/edu/select";
+import { generateProblem, type MathProblemKind } from "#app/math/math-problems";
+import { type MathLang, ui } from "#app/math/math-text";
 
 /** 오답 몇 번이면 풀이를 보여주고 문제를 바꾸는지 */
 export const MAX_MISSES = 3;
@@ -20,6 +23,12 @@ export interface MathGateOptions {
   streak: number;
   /** 한 번에 맞혔을 때 줄 보너스 금액 */
   bonus: number;
+  /** 문제를 만드는 함수 (없으면 비례식·비례배분 문제). `exclude`는 직전 문제 유형 */
+  question?: (exclude?: string) => Question;
+  /** 난이도 규칙 (오답 허용 횟수, 힌트 횟수, 제한 시간) */
+  rule?: DifficultyRule;
+  /** 정답을 맞혔을 때 받는 점수 (화면에 "+N점"으로 보여 준다) */
+  scoreFor?: (info: { level: number; perfect: boolean }) => number;
   /** 효과음 재생 */
   playSound?: (key: "select" | "error" | "correct" | "open") => void;
   /** 테스트용 난수 */
@@ -27,6 +36,11 @@ export interface MathGateOptions {
 }
 
 export interface MathGateResult {
+  /** 푼 문제의 수준(1~4)과 유형 */
+  level: number;
+  kind: string;
+  /** 시간 초과 횟수 */
+  timeouts: number;
   /** 힌트 없이 한 번에 맞혔는지 */
   perfect: boolean;
   /** 전체 오답 수 */
@@ -97,6 +111,19 @@ const CSS = `
 @keyframes mg-spin{50%{transform:scale(1.3) rotate(-12deg)}}
 @keyframes mg-shake{20%{transform:translateX(-12px)}40%{transform:translateX(12px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
 @keyframes mg-burst{to{transform:translate(var(--x),var(--y)) rotate(540deg);opacity:0}}
+#${OVERLAY_ID} .mg-timer{position:relative;height:calc(18 * var(--s));margin:calc(2 * var(--s)) 0 calc(8 * var(--s));background:#101828;border:calc(3 * var(--s)) solid #6878a8;border-radius:calc(9 * var(--s));overflow:hidden}
+#${OVERLAY_ID} .mg-timer i{position:absolute;inset:0 auto 0 0;width:100%;background:linear-gradient(90deg,#58d068,#f8d030);transition:width .2s linear}
+#${OVERLAY_ID} .mg-timer.low i{background:linear-gradient(90deg,#f05868,#f8a038)}
+#${OVERLAY_ID} .mg-timer span{position:absolute;inset:0;display:grid;place-items:center;font-size:calc(18 * var(--s) * var(--f));color:#fff;text-shadow:0 0 calc(4 * var(--s)) #000}
+#${OVERLAY_ID} .mg-choices{display:grid;grid-template-columns:1fr;gap:calc(8 * var(--s))}
+#${OVERLAY_ID} .mg-choices.two{grid-template-columns:1fr 1fr}
+#${OVERLAY_ID} .mg-choice{display:flex;align-items:center;gap:calc(10 * var(--s));text-align:left;padding:0 calc(14 * var(--s));height:auto;min-height:calc(66 * var(--s));font-size:calc(36 * var(--s) * var(--f));line-height:1.1;word-break:keep-all}
+#${OVERLAY_ID} .mg-choice b{flex:none;display:grid;place-items:center;width:calc(40 * var(--s));height:calc(40 * var(--s));border-radius:50%;background:#f8f8f8;color:#283070;font-size:calc(28 * var(--s) * var(--f))}
+#${OVERLAY_ID} .mg-choice.wrong{background:#a04048;box-shadow:inset 0 calc(-6 * var(--s)) 0 #602028;opacity:.7}
+#${OVERLAY_ID} .mg-choice.right{background:#38a048;box-shadow:inset 0 calc(-6 * var(--s)) 0 #206028}
+#${OVERLAY_ID} .mg-rowbtn{display:flex;gap:calc(8 * var(--s));margin-top:calc(8 * var(--s))}
+#${OVERLAY_ID} .mg-rowbtn button{flex:1}
+#${OVERLAY_ID} .hidden{display:none!important}
 @media (orientation:portrait){#${OVERLAY_ID}{--s:min(1px,0.15vw);--f:1.5}#${OVERLAY_ID} .mg-sub,#${OVERLAY_ID} .mg-keys{display:none}}
 `;
 
@@ -106,23 +133,35 @@ const MAX_DIGITS = 6;
 let activeCleanup: (() => void) | undefined;
 
 /**
- * 수학 관문을 띄우고, 정답을 맞혀 문이 열리면 resolve 된다.
+ * 관문을 띄우고, 정답을 맞혀 문이 열리면 resolve 된다.
+ * 숫자를 입력하는 문제와 번호를 고르는(선택형) 문제를 모두 지원한다.
  */
 export function showMathGate(opts: MathGateOptions): Promise<MathGateResult> {
   return new Promise(resolve => {
-    const { wave, lang } = opts;
+    const { wave, lang, rule } = opts;
     const floor = wave + 1;
     const rng = opts.rng ?? Math.random;
     const sound = opts.playSound ?? (() => {});
+    const maxMisses = rule?.maxMisses ?? MAX_MISSES;
+    const hintLimit = rule ? rule.hints : null;
+    const timeLimit = rule?.timeLimit ?? null;
 
-    let problem: MathProblem | undefined;
-    let lastKind: MathProblem["kind"] | undefined;
-    let text!: ProblemText;
+    const source =
+      opts.question
+      ?? ((exclude?: string) =>
+        ratioToQuestion(generateProblem(wave, rng, exclude as MathProblemKind | undefined), lang, opts.names));
+
+    let problem!: Question;
+    let lastKind: string | undefined;
     let input = "";
     let misses = 0;
     let totalMisses = 0;
+    let timeouts = 0;
     let hints = 0;
+    let hintsThisProblem = 0;
     let done = false;
+    let deadline = 0;
+    let timerId: ReturnType<typeof setInterval> | undefined;
 
     activeCleanup?.();
     document.getElementById(OVERLAY_ID)?.remove();
@@ -138,10 +177,13 @@ export function showMathGate(opts: MathGateOptions): Promise<MathGateResult> {
           <div class="mg-headtext"><div class="mg-title"></div><div class="mg-sub"></div></div>
         </div>
         <div class="mg-tags"></div>
+        <div class="mg-timer hidden"><i></i><span></span></div>
         <div class="mg-q" aria-live="polite"></div>
+        <div class="mg-choices hidden"></div>
         <div class="mg-display"></div>
         <div class="mg-msg" aria-live="assertive"></div>
         <div class="mg-pad"></div>
+        <div class="mg-rowbtn hidden"></div>
         <div class="mg-keys"></div>
       </div>`;
     document.body.appendChild(root);
@@ -149,27 +191,29 @@ export function showMathGate(opts: MathGateOptions): Promise<MathGateResult> {
     const $ = (sel: string) => root.querySelector(sel) as HTMLElement;
     $(".mg-title").textContent = ui(lang, "title", { floor });
     $(".mg-sub").textContent = ui(lang, "subtitle");
-    $(".mg-keys").textContent = ui(lang, "keys");
 
     const pad = $(".mg-pad");
     const buttons = new Map<string, HTMLButtonElement>();
-    const addButton = (key: string, label: string, cls = "") => {
+    const makeButton = (key: string, label: string, cls = ""): HTMLButtonElement => {
       const b = document.createElement("button");
       b.type = "button";
       b.textContent = label;
       b.className = cls;
       b.dataset.key = key;
       b.addEventListener("click", () => handle(key));
-      pad.appendChild(b);
       buttons.set(key, b);
+      return b;
     };
     for (const d of ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]) {
-      addButton(d, d);
+      pad.appendChild(makeButton(d, d));
     }
-    addButton("back", "←", "mg-del");
-    addButton("clear", "C", "mg-del");
-    addButton("hint", `💡 ${ui(lang, "hint")}`, "mg-hint");
-    addButton("ok", `${ui(lang, "confirm")} ✔`, "mg-ok");
+    pad.appendChild(makeButton("back", "←", "mg-del"));
+    pad.appendChild(makeButton("clear", "C", "mg-del"));
+    const hintBtn = makeButton("hint", "", "mg-hint");
+    pad.appendChild(hintBtn);
+    pad.appendChild(makeButton("ok", `${ui(lang, "confirm")} ✔`, "mg-ok"));
+    // 선택형 문제에서는 힌트 버튼만 아래에 따로 둔다
+    const rowBtn = $(".mg-rowbtn");
 
     const setMsg = (msg: string, cls: "" | "good" | "bad" | "hint" = "") => {
       const m = $(".mg-msg");
@@ -191,27 +235,29 @@ export function showMathGate(opts: MathGateOptions): Promise<MathGateResult> {
       return el;
     };
 
-    const renderQuestion = () => {
-      const q = $(".mg-q");
-      q.classList.toggle("long", text.question.split("\n").length > 4);
-      q.replaceChildren(richText(text.question));
-    };
-
     const renderTags = () => {
       const tags = $(".mg-tags");
       tags.innerHTML = "";
       const cat = document.createElement("span");
       cat.className = "mg-tag cat";
-      cat.textContent = text.category;
+      cat.textContent = problem.category;
       tags.appendChild(cat);
       const lv = document.createElement("span");
       lv.className = "mg-tag";
       lv.append(`${ui(lang, "level")} `);
       const stars = document.createElement("span");
       stars.className = "sym star";
-      stars.textContent = "★".repeat(problem!.level) + "☆".repeat(4 - problem!.level);
+      stars.textContent = "★".repeat(problem.level) + "☆".repeat(4 - problem.level);
       lv.appendChild(stars);
       tags.appendChild(lv);
+      if (rule) {
+        const d = document.createElement("span");
+        d.className = "mg-tag";
+        d.style.background = rule.color;
+        d.style.color = "#101828";
+        d.textContent = rule.name;
+        tags.appendChild(d);
+      }
       if (opts.streak > 0) {
         const st = document.createElement("span");
         st.className = "mg-tag streak";
@@ -229,22 +275,107 @@ export function showMathGate(opts: MathGateOptions): Promise<MathGateResult> {
         ph.textContent = "?";
         d.appendChild(ph);
       } else {
-        d.append(input + text.unit);
+        d.append(input + problem.unit);
       }
       const c = document.createElement("span");
       c.className = "cursor";
       d.appendChild(c);
     };
 
+    const hintsLeft = () => (hintLimit === null ? Number.POSITIVE_INFINITY : hintLimit - hintsThisProblem);
+
+    const renderHintButton = () => {
+      const left = hintsLeft();
+      const label = `💡 ${ui(lang, "hint")}${Number.isFinite(left) ? ` (${left})` : ""}`;
+      hintBtn.textContent = label;
+      hintBtn.disabled = left <= 0;
+      hintBtn.classList.toggle("hidden", hintLimit === 0);
+    };
+
+    /** 이 문제가 선택형이면 true */
+    const isChoice = () => !!problem.choices;
+
+    const renderQuestion = () => {
+      const q = $(".mg-q");
+      q.classList.toggle("long", problem.prompt.split("\n").length > 4);
+      q.replaceChildren(richText(problem.prompt));
+      const box = $(".mg-choices");
+      const choice = isChoice();
+      box.classList.toggle("hidden", !choice);
+      $(".mg-display").classList.toggle("hidden", choice);
+      pad.classList.toggle("hidden", choice);
+      rowBtn.classList.toggle("hidden", !choice || hintLimit === 0);
+      $(".mg-keys").textContent = ui(lang, choice ? "keysChoice" : "keys");
+      box.replaceChildren();
+      if (choice) {
+        const short = problem.choices!.every(c => c.length <= 6);
+        box.classList.toggle("two", short);
+        problem.choices!.forEach((c, i) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "mg-choice";
+          b.dataset.key = `c${i + 1}`;
+          const num = document.createElement("b");
+          num.textContent = String(i + 1);
+          num.className = "sym";
+          const txt = document.createElement("span");
+          txt.textContent = c;
+          b.append(num, txt);
+          b.addEventListener("click", () => handle(String(i + 1)));
+          box.appendChild(b);
+        });
+        // 힌트 버튼을 선택지 아래로 옮긴다
+        rowBtn.replaceChildren(hintBtn);
+      } else {
+        // 숫자 키패드 안의 원래 자리로
+        pad.insertBefore(hintBtn, buttons.get("ok")!);
+      }
+    };
+
+    // #region 제한 시간
+
+    const stopTimer = () => {
+      if (timerId !== undefined) {
+        clearInterval(timerId);
+        timerId = undefined;
+      }
+    };
+
+    const tick = () => {
+      const left = Math.max(0, deadline - Date.now());
+      const bar = $(".mg-timer");
+      (bar.querySelector("i") as HTMLElement).style.width = `${(left / ((timeLimit ?? 1) * 1000)) * 100}%`;
+      (bar.querySelector("span") as HTMLElement).textContent = `${Math.ceil(left / 1000)}`;
+      bar.classList.toggle("low", left < 10_000);
+      if (left <= 0 && !done) {
+        onTimeout();
+      }
+    };
+
+    const startTimer = () => {
+      stopTimer();
+      if (!timeLimit) {
+        return;
+      }
+      $(".mg-timer").classList.remove("hidden");
+      deadline = Date.now() + timeLimit * 1000;
+      tick();
+      timerId = setInterval(tick, 200);
+    };
+
+    // #endregion
+
     const newProblem = () => {
-      problem = generateProblem(wave, rng, lastKind);
+      problem = source(lastKind);
       lastKind = problem.kind;
-      text = formatProblem(problem, lang, opts.names);
       input = "";
       misses = 0;
+      hintsThisProblem = 0;
       renderQuestion();
       renderTags();
       renderInput();
+      renderHintButton();
+      startTimer();
     };
 
     const burst = () => {
@@ -271,52 +402,99 @@ export function showMathGate(opts: MathGateOptions): Promise<MathGateResult> {
       }
     };
 
-    const submit = () => {
-      if (input === "") {
-        sound("error");
-        setMsg(ui(lang, "needInput"), "bad");
-        return;
-      }
-      if (checkAnswer(problem!, input)) {
-        done = true;
-        const perfect = totalMisses === 0 && hints === 0;
-        sound("correct");
-        root.classList.add("solved");
-        ($(".mg-lock") as HTMLElement).textContent = "🔓";
-        setMsg(
-          ui(lang, "correct", { floor })
-            + (perfect && opts.bonus > 0 ? `\n${ui(lang, "bonus", { bonus: opts.bonus })}` : ""),
-          "good",
-        );
-        for (const b of buttons.values()) {
-          b.disabled = true;
-        }
-        burst();
-        setTimeout(() => {
-          sound("open");
-          root.classList.add("closing");
-          setTimeout(() => {
-            cleanup();
-            resolve({ perfect, misses: totalMisses, hints });
-          }, 450);
-        }, 1300);
-        return;
-      }
+    /** 오답(또는 시간 초과) 처리 */
+    const miss = (reason: "wrong" | "timeout", choiceKey?: string) => {
       misses++;
       totalMisses++;
+      if (reason === "timeout") {
+        timeouts++;
+      }
       input = "";
       sound("error");
       root.classList.remove("shake");
       root.getBoundingClientRect(); // 애니메이션 재시작
       root.classList.add("shake");
-      if (misses >= MAX_MISSES) {
-        const explanation = text.explanation;
+      if (misses >= maxMisses) {
+        const explanation = problem.explanation;
         newProblem();
-        setMsg(`${ui(lang, "newProblem")}\n${explanation}`, "bad");
+        setMsg(`${ui(lang, reason === "timeout" ? "timeoutNew" : "newProblem")}\n${explanation}`, "bad");
       } else {
-        setMsg(ui(lang, "wrong", { n: misses, max: MAX_MISSES }), "bad");
+        if (choiceKey) {
+          const b = root.querySelector(`.mg-choice[data-key="${choiceKey}"]`) as HTMLButtonElement | null;
+          b?.classList.add("wrong");
+          if (b) {
+            b.disabled = true;
+          }
+        }
+        setMsg(ui(lang, reason === "timeout" ? "timeout" : "wrong", { n: misses, max: maxMisses }), "bad");
         renderInput();
+        if (reason === "timeout") {
+          startTimer();
+        }
       }
+    };
+
+    function onTimeout() {
+      miss("timeout");
+    }
+
+    const submit = (choiceKey?: string) => {
+      if (input === "") {
+        sound("error");
+        setMsg(ui(lang, "needInput"), "bad");
+        return;
+      }
+      if (checkQuestionAnswer(problem, input)) {
+        done = true;
+        stopTimer();
+        const perfect = totalMisses === 0 && hints === 0;
+        sound("correct");
+        root.classList.add("solved");
+        ($(".mg-lock") as HTMLElement).textContent = "🔓";
+        if (choiceKey) {
+          root.querySelector(`.mg-choice[data-key="${choiceKey}"]`)?.classList.add("right");
+        }
+        setMsg(
+          ui(lang, "correct", { floor })
+            + (perfect && opts.bonus > 0 ? `\n${ui(lang, "bonus", { bonus: opts.bonus })}` : "")
+            + (opts.scoreFor ? ` ${ui(lang, "points", { n: opts.scoreFor({ level: problem.level, perfect }) })}` : ""),
+          "good",
+        );
+        for (const b of [...buttons.values(), ...Array.from(root.querySelectorAll<HTMLButtonElement>(".mg-choice"))]) {
+          b.disabled = true;
+        }
+        burst();
+        const result: MathGateResult = {
+          perfect,
+          misses: totalMisses,
+          hints,
+          level: problem.level,
+          kind: problem.kind,
+          timeouts,
+        };
+        setTimeout(() => {
+          sound("open");
+          root.classList.add("closing");
+          setTimeout(() => {
+            cleanup();
+            resolve(result);
+          }, 450);
+        }, 1300);
+        return;
+      }
+      miss("wrong", choiceKey);
+    };
+
+    const useHint = () => {
+      if (hintsLeft() <= 0) {
+        sound("error");
+        return;
+      }
+      hints++;
+      hintsThisProblem++;
+      sound("select");
+      setMsg(`💡 ${problem.hint}`, "hint");
+      renderHintButton();
     };
 
     const handle = (key: string) => {
@@ -324,6 +502,22 @@ export function showMathGate(opts: MathGateOptions): Promise<MathGateResult> {
         return;
       }
       flash(key);
+      if (key === "hint") {
+        useHint();
+        return;
+      }
+      if (isChoice()) {
+        const n = Number(key);
+        if (/^[1-9]$/.test(key) && n <= problem.choices!.length) {
+          const btn = root.querySelector(`.mg-choice[data-key="c${n}"]`) as HTMLButtonElement | null;
+          if (btn?.disabled) {
+            return;
+          }
+          input = key;
+          submit(`c${n}`);
+        }
+        return;
+      }
       if (/^\d$/.test(key)) {
         if (input.length < MAX_DIGITS) {
           input = input === "0" ? key : input + key;
@@ -336,10 +530,6 @@ export function showMathGate(opts: MathGateOptions): Promise<MathGateResult> {
       } else if (key === "clear") {
         input = "";
         renderInput();
-      } else if (key === "hint") {
-        hints++;
-        sound("select");
-        setMsg(`💡 ${text.hint}`, "hint");
       } else if (key === "ok") {
         submit();
       }
@@ -347,6 +537,11 @@ export function showMathGate(opts: MathGateOptions): Promise<MathGateResult> {
 
     // 게임(Phaser)이 키 입력을 가져가지 못하도록 캡처 단계에서 막는다.
     const onKeyDown = (e: KeyboardEvent) => {
+      if (!root.isConnected) {
+        // 화면이 이미 사라졌으면 남은 키 입력 가로채기를 풀어 준다
+        cleanup();
+        return;
+      }
       e.stopImmediatePropagation();
       e.preventDefault();
       if (e.repeat && !/^\d$/.test(e.key)) {
@@ -370,6 +565,7 @@ export function showMathGate(opts: MathGateOptions): Promise<MathGateResult> {
     window.addEventListener("keyup", swallow, true);
 
     const cleanup = () => {
+      stopTimer();
       if (activeCleanup === cleanup) {
         activeCleanup = undefined;
       }

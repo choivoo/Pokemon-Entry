@@ -326,6 +326,10 @@ export function showRewardScreen(opts: RewardScreenOptions): Promise<number> {
     btn.addEventListener("click", () => confirm());
 
     const onKeyDown = (e: KeyboardEvent) => {
+      if (!root.isConnected) {
+        cleanup();
+        return;
+      }
       e.stopImmediatePropagation();
       e.preventDefault();
       if (e.repeat) {
