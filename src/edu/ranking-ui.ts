@@ -215,6 +215,10 @@ export function showRanking(opts: RankingOptions): Promise<void> {
       }
       e.stopImmediatePropagation();
       e.preventDefault();
+      // 키를 누르고 있으면 같은 키가 계속 들어온다. 그때마다 닫고 다시 열리는 것을 막는다.
+      if (e.repeat) {
+        return;
+      }
       if (e.key === "Escape" || e.key === "Enter" || e.key.toLowerCase() === "x") {
         finish();
       }

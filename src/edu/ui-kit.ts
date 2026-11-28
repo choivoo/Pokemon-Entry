@@ -64,6 +64,12 @@ export function isolateKeys(root: HTMLElement): void {
   for (const type of ["keydown", "keyup", "keypress"]) {
     root.addEventListener(type, e => e.stopPropagation());
   }
+  // 누르고 있는 Enter·Space 가 버튼을 계속 누르는 것을 막는다 (따따따 연타 방지)
+  root.addEventListener("keydown", e => {
+    if (e.repeat && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+    }
+  });
 }
 
 /** 화면 닫는 애니메이션 후 지운다 */
