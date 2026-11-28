@@ -253,6 +253,22 @@ describe("랭킹 화면", () => {
     expect(sel(RANKING_OVERLAY_ID, ".rk-table").textContent).toContain("랭킹 서버가 연결되지 않았어요");
   });
 
+  it("Enter 를 누르고 있어도(반복 입력) 랭킹 화면이 바로 닫히지 않는다", () => {
+    pending.push(showRanking({ profile, stats: emptyAllStats(), online: false }));
+    const root = document.getElementById(RANKING_OVERLAY_ID);
+    expect(root).not.toBeNull();
+    // 누르고 있는 키의 반복 입력은 무시한다
+    for (let i = 0; i < 5; i++) {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", repeat: true, bubbles: true }));
+    }
+    vi.advanceTimersByTime(400);
+    expect(document.getElementById(RANKING_OVERLAY_ID)).not.toBeNull();
+    // 새로 누른 Enter 는 닫는다
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    vi.advanceTimersByTime(400);
+    expect(document.getElementById(RANKING_OVERLAY_ID)).toBeNull();
+  });
+
   it("랭킹 동의를 안 했으면 안내 문구가 보인다", async () => {
     pending.push(
       showRanking({
